@@ -9,7 +9,6 @@ A tiny, shell-native, fuzzy searching, directory navigator with colored previews
 
 <div align="center">
   <img src="https://i.imgur.com/InGa0TZ.png" alt="fzd - a cli dir navigator & fuzzy finder">
-  <a href="https://github.com/seanap/fzd?tab=MIT-1-ov-file#readme"><img src="https://img.shields.io/github/license/seanap/fzd" alt="License"></a>
   <a href="https://github.com/seanap/fzd/graphs/contributors"><img src="https://img.shields.io/github/contributors/seanap/fzd" alt="Contributors"></a>
   <a href="https://github.com/seanap/fzd/stargazers"><img src="https://img.shields.io/github/stars/seanap/fzd?style=flat" alt="Stars"></a>
 </div>
