@@ -34,34 +34,13 @@ Open a new shell (or source ~/.zshrc) and run:
 
 If you want to tweak the search roots/excludes later, edit `~/.fzd/fzd.conf`.
 
-Config
+## Config
 Edit ~/.fzd/fzd.conf (installed from share/fzd.conf.example).
 
-Requirements (Ubuntu/WSL)
-fzf (>=0.50), fd/fdfind, bat/batcat, eza, tree, file, micro, plocate.
 
-Installer handles these; see docs/REQUIREMENTS.md for details and WSL tips.
+## REQUIREMENTS
 
-Uninstall
-bash
-Copy
-Edit
-~/.fzd/fzd.sh --help  # (soon)
-./uninstall.sh
-MIT © You
-
-perl
-Copy
-Edit
-
----
-
-## 7) `docs/REQUIREMENTS.md` (focused)
-
-```markdown
-# fzd requirements & setup notes
-
-## Core tools
+### Core tools
 - **fzf ≥ 0.50** – we rely on `start:pos(N)` (caret preselect)
 - **fd** (or `fdfind` on Ubuntu) – fast filesystem listing for cache mode
 - **plocate** – global search backend; we call `locate -i -e -l N QUERY`
@@ -70,14 +49,14 @@ Edit
 - **micro** (or `$EDITOR`) – used when pressing Enter on files
 - `tree`, `file`, `hexdump` – fallbacks/extra info
 
-## WSL / locate tuning
+### WSL / locate tuning
 - Avoid indexing Windows mounts for speed/stability:
   - `sudo cp /etc/updatedb.conf /etc/updatedb.conf.bak`
   - Ensure `/mnt` appears in `PRUNEPATHS`, and `PRUNE_BIND_MOUNTS = yes`
   - `sudo updatedb`
 - Keep `FZD_GLOBAL_PATHS` to Linux paths; exclude `/mnt` via `FZD_GLOBAL_XEXCLUDES`.
 
-## Useful env vars (in `~/.fzd/fzd.conf`)
+### Useful env vars (in `~/.fzd/fzd.conf`)
 - `FZD_GLOBAL_BACKEND=locate|cache|auto`
 - `FZD_GLOBAL_PATHS="/ /etc /opt /srv /home/$USER"` (space-separated)
 - `FZD_GLOBAL_XEXCLUDES="proc,sys,dev,run,proc/*,sys/*,dev/*,run/*,mnt,..."`

@@ -26,24 +26,24 @@
 
 ## FZD files
 
-fzd/
-├─ bin/
-│  └─ fzd.sh
-├─ share/
-│  └─ fzd.conf.example       # editable defaults
-├─ shell/
-│  ├─ lf.zsh                 # `lf` function that runs fzd then cd's
-│  └─ fzd.zsh                # hotkey widget
-├─ install.sh                # one-shot installer (Ubuntu/WSL-first)
-├─ uninstall.sh              # clean removal
-├─ README.md
-├─ docs/
-│  └─ REQUIREMENTS.md
-├─ .editorconfig
-├─ .gitignore
-├─ LICENSE                   # MIT
-└─ .github/workflows/
-   └─ shellcheck.yml         # CI lint
+fzd/  
+├─ bin/  
+│  └─ fzd.sh  
+├─ share/  
+│  └─ fzd.conf.example       # editable defaults  
+├─ shell/  
+│  ├─ lf.zsh                 # `lf` function that runs fzd then cd's  
+│  └─ fzd.zsh                # hotkey widget  
+├─ install.sh                # one-shot installer (Ubuntu/WSL-first)  
+├─ uninstall.sh              # clean removal  
+├─ README.md  
+├─ docs/  
+│  └─ REQUIREMENTS.md  
+├─ .editorconfig  
+├─ .gitignore  
+├─ LICENSE                   # MIT  
+└─ .github/workflows/  
+   └─ shellcheck.yml         # CI lint  
 
 
 ## Defaults we set
