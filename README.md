@@ -3,7 +3,7 @@
 `fzd` is a tiny, fast fuzzy directory navigator for zsh.  
 It uses `fzf` for the UI, `eza`/`bat` for pretty previews, and `plocate` for lightning–fast global search.
 
-![fzd dmeo](fzd/share/demo/fzd_demo.gif)
+![fzd dmeo](/share/demo/fzd_demo.gif)
 
 
 Why? A lot of other tools were too bloated with tons of amazing features that I would instantly forget how to use, or they used vim keybinds. I just wanted something for the casual user, something intuitive, fast, and pretty.
