@@ -1,7 +1,7 @@
 # fzd — dir nav + preview + fuzzy search
 
 `fzd` is a tiny, fast fuzzy directory navigator for zsh.  
-It uses `fzf` for the UI, `eza`/`bat` for pretty previews, 'micro' for editing, and `plocate` for lightning–fast global search.
+It uses `fzf` for the UI, `eza`/`bat` for pretty previews, `micro` for editing, and `plocate` for lightning–fast global search.
 
 ![fzd dmeo](/share/demo/fzd_demo.gif)
 
