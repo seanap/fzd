@@ -1,0 +1,11 @@
+# editor & OS
+.DS_Store
+*.swp
+*.swo
+*.log
+
+# repo build artifacts
+/.venv/
+/node_modules/
+
+# fzd runtime (user's home, not repo)
