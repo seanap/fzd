@@ -1,0 +1,30 @@
+# ~/.config/fzd/fzd.conf
+
+# --- Global search tuning ---
+FZD_GLOBAL_BACKEND=locate          # auto|locate|cache|live
+FZD_GLOBAL_MINLEN=2
+FZD_GLOBAL_MAXDEPTH=6
+FZD_GLOBAL_MAXRESULTS=5000
+FZD_GLOBAL_PATHS="/etc /opt /srv /home/$USER"
+FZD_GLOBAL_XEXCLUDES="mnt,proc,sys,dev,run,proc/*,sys/*,dev/*,run/*,snap,lost+found,var/lib/docker"
+
+# plocate DB(s) (default path on Arch)
+FZD_LOCATE_DBS="/var/lib/plocate/plocate.db"
+
+# Excludes for dir trees and fd/find fallbacks
+FZD_EXCLUDES=".git,node_modules,.cache,.venv,.tox,dist,build,__pycache__,.DS_Store"
+
+# Preview
+FZD_PREVIEW_DEPTH=2
+FZD_PREVIEW_TIMEOUT=2
+FZD_PREVIEW_MAX_LINES=200
+
+# Optional label colors (hex). Leave commented to inherit your fzf/system theme.
+# FZD_COLOR_DIR="#f9e2af"
+# FZD_COLOR_FILE="#cdd6f4"
+
+# always sees home with no DB
+FZD_GLOBAL_BACKEND=cache
+FZD_GLOBAL_PATHS="/etc /opt /srv /home/$USER"
+
+
