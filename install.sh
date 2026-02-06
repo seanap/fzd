@@ -132,19 +132,19 @@ ensure_core(){
   case "$PM" in
     pacman)
       # Arch packages map closely to binary names
-      best_effort_install fzf fd plocate tree file util-linux coreutils
+      best_effort_install fzf fd plocate tree file util-linux coreutils || true
       best_effort_install eza bat micro vivid curl ca-certificates tar || true
       ;;
     apt)
       # Debian/Ubuntu: fd is fd-find (binary fdfind), bat binary may be batcat
-      best_effort_install fzf fd-find plocate tree file util-linux coreutils
+      best_effort_install fzf fd-find plocate tree file util-linux coreutils || true
       # optional: bat and micro exist; eza/vivid may or may not depending on distro version
       best_effort_install bat micro || true
       best_effort_install eza vivid curl ca-certificates tar || true
       ;;
     dnf)
       # Fedora: fd is often fd-find; keep best-effort.
-      best_effort_install fzf fd-find plocate tree file util-linux coreutils
+      best_effort_install fzf fd-find plocate tree file util-linux coreutils || true
       best_effort_install bat micro eza vivid curl ca-certificates tar || true
       ;;
   esac
