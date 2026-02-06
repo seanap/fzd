@@ -141,9 +141,10 @@ ensure_core(){
       # Debian/Ubuntu: fd is fd-find (binary fdfind), bat binary may be batcat
       best_effort_install fzf fd-find plocate tree file util-linux coreutils || true
       best_effort_install bat micro curl ca-certificates tar || true
-      # vivid is used to generate Catppuccin Mocha LS_COLORS (recommended)
+      # vivid is used to generate Catppuccin Mocha LS_COLORS (recommended; preview theming depends on it)
       best_effort_install vivid || true
       best_effort_install eza || true
+      have vivid || warn "vivid not installed; eza previews may not be Catppuccin Mocha"
       ;;
     dnf)
       # Fedora: fd is often fd-find; keep best-effort.
@@ -358,9 +359,10 @@ FZD_PREVIEW_DEPTH=2
 FZD_PREVIEW_TIMEOUT=2
 FZD_PREVIEW_MAX_LINES=200
 
-# Optional label colors (hex). Leave commented to inherit your fzf/system theme.
-# FZD_COLOR_DIR="#f9e2af"
-# FZD_COLOR_FILE="#cdd6f4"
+# Label colors (hex). These also drive the preview pane's dir/file colors.
+# Defaults are Catppuccin Mocha (dir = manila-ish, file = text-ish).
+FZD_COLOR_DIR="#f9e2af"
+FZD_COLOR_FILE="#cdd6f4"
 EOF
     log "Wrote default config -> ${CFG_DIR}/fzd.conf"
   fi
