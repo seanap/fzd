@@ -248,19 +248,42 @@ update_rc_file(){
   local rc="$1"; shift
   local content="$1"; shift
 
+  # Robust multi-line block update.
+  # Avoid passing large multi-line strings via awk -v (can break on some systems).
+  local tmpc; tmpc="$(mktemp)"
+  printf '%s\n' "$content" > "$tmpc"
+
   if [[ -f "$rc" ]]; then
     if grep -Fq "$START_MARK" "$rc"; then
-      awk -v s="$START_MARK" -v e="$END_MARK" -v block="$content" '
-        $0==s {print; inb=1; print block; next}
-        $0==e {inb=0; print; next}
-        !inb {print}
-      ' "$rc" > "${rc}.tmp" && mv "${rc}.tmp" "$rc"
+      # Replace everything between START_MARK and END_MARK (exclusive) with our content.
+      # Preserve the markers exactly as-is.
+      python3 - "$rc" "$tmpc" "$START_MARK" "$END_MARK" > "${rc}.tmp" <<'PY'
+import re, sys
+rc_path, content_path, start, end = sys.argv[1:]
+rc = open(rc_path, 'r', encoding='utf-8', errors='surrogateescape').read()
+block = open(content_path, 'r', encoding='utf-8', errors='surrogateescape').read().rstrip('\n')
+pat = re.compile(re.escape(start) + r"\n.*?\n" + re.escape(end), re.S)
+new = start + "\n" + block + "\n" + end
+if not pat.search(rc):
+    # markers present but pattern didn't match cleanly; fall back to append
+    rc = rc.rstrip('\n') + "\n" + new + "\n"
+else:
+    rc = pat.sub(new, rc, count=1)
+sys.stdout.write(rc)
+PY
+      mv "${rc}.tmp" "$rc"
     else
-      printf "\n%s\n%s\n%s\n" "$START_MARK" "$content" "$END_MARK" >> "$rc"
+      printf "\n%s\n" "$START_MARK" >> "$rc"
+      cat "$tmpc" >> "$rc"
+      printf "%s\n" "$END_MARK" >> "$rc"
     fi
   else
-    printf "%s\n%s\n%s\n" "$START_MARK" "$content" "$END_MARK" > "$rc"
+    printf "%s\n" "$START_MARK" > "$rc"
+    cat "$tmpc" >> "$rc"
+    printf "%s\n" "$END_MARK" >> "$rc"
   fi
+
+  rm -f "$tmpc"
 }
 
 install_bashrc(){
