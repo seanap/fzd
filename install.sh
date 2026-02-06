@@ -99,13 +99,26 @@ install_with_dnf(){
   sudo dnf install -y "${pkgs[@]}"
 }
 
+sudo_ok(){
+  # Non-interactive safe sudo probe.
+  sudo -n true >/dev/null 2>&1
+}
+
 best_effort_install(){
   # attempt install, but do not fail the whole installer for optional deps
+  local -a pkgs=("$@")
+  (( ${#pkgs[@]} )) || return 0
+
+  if ! sudo_ok; then
+    warn "sudo not available non-interactively; skipping package install: ${pkgs[*]}"
+    return 1
+  fi
+
   set +e
   case "$PM" in
-    pacman) install_with_pacman "$@";;
-    apt)    install_with_apt "$@";;
-    dnf)    install_with_dnf "$@";;
+    pacman) install_with_pacman "${pkgs[@]}";;
+    apt)    install_with_apt "${pkgs[@]}";;
+    dnf)    install_with_dnf "${pkgs[@]}";;
   esac
   local rc=$?
   set -e
