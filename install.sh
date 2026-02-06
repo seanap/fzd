@@ -382,22 +382,6 @@ if ! command -v lf >/dev/null 2>&1 || [[ "$(type -t lf)" != "file" ]]; then
 fi
 __FZD_COMMON__
 
-bash_fzf_sources() {
-  # Arch-ish
-  [[ -f /usr/share/fzf/key-bindings.bash ]] && echo ". /usr/share/fzf/key-bindings.bash"
-  [[ -f /usr/share/fzf/completion.bash   ]] && echo ". /usr/share/fzf/completion.bash"
-  # Debian/Ubuntu-ish
-  [[ -f /usr/share/doc/fzf/examples/key-bindings.bash ]] && echo ". /usr/share/doc/fzf/examples/key-bindings.bash"
-  [[ -f /usr/share/doc/fzf/examples/completion.bash   ]] && echo ". /usr/share/doc/fzf/examples/completion.bash"
-}
-
-zsh_fzf_sources() {
-  [[ -f /usr/share/fzf/key-bindings.zsh ]] && echo ". /usr/share/fzf/key-bindings.zsh"
-  [[ -f /usr/share/fzf/completion.zsh   ]] && echo ". /usr/share/fzf/completion.zsh"
-  [[ -f /usr/share/doc/fzf/examples/key-bindings.zsh ]] && echo ". /usr/share/doc/fzf/examples/key-bindings.zsh"
-  [[ -f /usr/share/doc/fzf/examples/completion.zsh   ]] && echo ". /usr/share/doc/fzf/examples/completion.zsh"
-}
-
 update_rc_file(){
   local rc="$1"; shift
   local content="$1"; shift
@@ -440,15 +424,78 @@ PY
   rm -f "$tmpc"
 }
 
+write_shell_init_files(){
+  local xdg_conf="${XDG_CONFIG_HOME:-$HOME/.config}"
+  local init_dir="$xdg_conf/fzd"
+  mkdir -p "$init_dir"
+
+  # Bash init
+  cat > "$init_dir/init.bash" <<'EOF'
+# fzd shell init (bash)
+
+# Ensure ~/.local/bin is on PATH
+case ":$PATH:" in
+  *:"$HOME/.local/bin":*) ;;
+  *) export PATH="$HOME/.local/bin:$PATH" ;;
+esac
+
+# Tell fzd where the config lives (XDG)
+export FZD_CONF_FILE="${FZD_CONF_FILE:-$HOME/.config/fzd/fzd.conf}"
+
+# Editor default for fzd if user hasn't set one
+export EDITOR="${EDITOR:-micro}"
+
+# 'lf' shortcut: run fzd and cd to the chosen directory
+# (guarded so we don't clobber an existing 'lf' executable)
+if ! command -v lf >/dev/null 2>&1 || [[ "$(type -t lf)" != "file" ]]; then
+  lf() {
+    local dest rc
+    dest="$(fzd "$@")"; rc=$?
+    (( rc == 130 )) && return 0
+    [[ -n "$dest" && -d "$dest" ]] && builtin cd -- "$dest"
+  }
+fi
+EOF
+
+  # Zsh init (still runs bash-script fzd; this is just shell wiring)
+  cat > "$init_dir/init.zsh" <<'EOF'
+# fzd shell init (zsh)
+
+# Ensure ~/.local/bin is on PATH
+case ":$PATH:" in
+  *:"$HOME/.local/bin":*) ;;
+  *) export PATH="$HOME/.local/bin:$PATH" ;;
+esac
+
+# Tell fzd where the config lives (XDG)
+export FZD_CONF_FILE="${FZD_CONF_FILE:-$HOME/.config/fzd/fzd.conf}"
+
+# Editor default for fzd if user hasn't set one
+export EDITOR="${EDITOR:-micro}"
+
+# 'lf' shortcut: run fzd and cd to the chosen directory
+# (guarded so we don't clobber an existing 'lf' executable)
+if ! command -v lf >/dev/null 2>&1 || [[ "$(type -t lf)" != "file" ]]; then
+  lf() {
+    local dest rc
+    dest="$(fzd "$@")"; rc=$?
+    (( rc == 130 )) && return 0
+    [[ -n "$dest" && -d "$dest" ]] && builtin cd -- "$dest"
+  }
+fi
+EOF
+
+  log "Wrote shell init files -> $init_dir/init.bash, $init_dir/init.zsh"
+}
+
 install_bashrc(){
   local rc="$HOME/.bashrc"
-  local fzf_lines; fzf_lines="$(bash_fzf_sources | awk '!seen[$0]++')"
   local block
-  block=$(cat <<__BASH_BLOCK__
-# fzf: bash key-bindings + completion (if available)
-${fzf_lines}
-
-${COMMON_BLOCK}
+  block=$(cat <<'__BASH_BLOCK__'
+# fzd: source shell init (bash)
+if [[ -f "$HOME/.config/fzd/init.bash" ]]; then
+  . "$HOME/.config/fzd/init.bash"
+fi
 __BASH_BLOCK__
 )
   update_rc_file "$rc" "$block"
@@ -457,18 +504,19 @@ __BASH_BLOCK__
 
 install_zshrc(){
   local rc="$HOME/.zshrc"
-  local fzf_lines; fzf_lines="$(zsh_fzf_sources | awk '!seen[$0]++')"
   local block
-  block=$(cat <<__ZSH_BLOCK__
-# fzf: zsh key-bindings + completion (if available)
-${fzf_lines}
-
-${COMMON_BLOCK}
+  block=$(cat <<'__ZSH_BLOCK__'
+# fzd: source shell init (zsh)
+if [[ -f "$HOME/.config/fzd/init.zsh" ]]; then
+  source "$HOME/.config/fzd/init.zsh"
+fi
 __ZSH_BLOCK__
 )
   update_rc_file "$rc" "$block"
   log "Updated ${rc}"
 }
+
+write_shell_init_files
 
 case "$SHELL_TARGET" in
   both) install_bashrc; install_zshrc;;
