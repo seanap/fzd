@@ -17,7 +17,8 @@ have(){ command -v "$1" >/dev/null 2>&1; }
 
 SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 FZD_SRC_SCRIPT_DEFAULT="$SCRIPT_DIR/fzd.sh"
-FZD_SRC_CONF_DEFAULT="$SCRIPT_DIR/share/fzd.conf.example"
+# Prefer the repo-root example config (ships with this repo)
+FZD_SRC_CONF_DEFAULT="$SCRIPT_DIR/fzd.conf.example"
 
 # ----------------- args -----------------
 DO_UPDATEDB=1
@@ -133,19 +134,23 @@ ensure_core(){
     pacman)
       # Arch packages map closely to binary names
       best_effort_install fzf fd plocate tree file util-linux coreutils || true
-      best_effort_install eza bat micro vivid curl ca-certificates tar || true
+      best_effort_install eza bat micro curl ca-certificates tar || true
+      best_effort_install vivid || true
       ;;
     apt)
       # Debian/Ubuntu: fd is fd-find (binary fdfind), bat binary may be batcat
       best_effort_install fzf fd-find plocate tree file util-linux coreutils || true
-      # optional: bat and micro exist; eza/vivid may or may not depending on distro version
-      best_effort_install bat micro || true
-      best_effort_install eza vivid curl ca-certificates tar || true
+      best_effort_install bat micro curl ca-certificates tar || true
+      # vivid is used to generate Catppuccin Mocha LS_COLORS (recommended)
+      best_effort_install vivid || true
+      best_effort_install eza || true
       ;;
     dnf)
       # Fedora: fd is often fd-find; keep best-effort.
       best_effort_install fzf fd-find plocate tree file util-linux coreutils || true
-      best_effort_install bat micro eza vivid curl ca-certificates tar || true
+      best_effort_install bat micro curl ca-certificates tar || true
+      best_effort_install vivid || true
+      best_effort_install eza || true
       ;;
   esac
 }
@@ -455,8 +460,35 @@ esac
 # Tell fzd where the config lives (XDG)
 export FZD_CONF_FILE="${FZD_CONF_FILE:-$HOME/.config/fzd/fzd.conf}"
 
+# Source user config (for FZD_COLOR_DIR/FZD_COLOR_FILE etc.)
+[[ -f "$FZD_CONF_FILE" ]] && . "$FZD_CONF_FILE"
+
 # Editor default for fzd if user hasn't set one
 export EDITOR="${EDITOR:-micro}"
+
+# Catppuccin Mocha LS_COLORS (used by eza/ls previews)
+# Generate palette via vivid when available, then override di/fi via FZD_COLOR_DIR/FZD_COLOR_FILE.
+if command -v vivid >/dev/null 2>&1; then
+  _fzd_lscolors_base="$(vivid generate catppuccin-mocha 2>/dev/null || true)"
+  if [[ -n "${_fzd_lscolors_base:-}" ]]; then
+    _fzd_di=""; _fzd_fi=""
+    if [[ -n "${FZD_COLOR_DIR:-}" && "${FZD_COLOR_DIR}" =~ ^#?[0-9A-Fa-f]{6}$ ]]; then
+      _h="${FZD_COLOR_DIR#\#}"; _r=$((16#${_h:0:2})); _g=$((16#${_h:2:2})); _b=$((16#${_h:4:2}))
+      _fzd_di="di=38;2;${_r};${_g};${_b}"
+    fi
+    if [[ -n "${FZD_COLOR_FILE:-}" && "${FZD_COLOR_FILE}" =~ ^#?[0-9A-Fa-f]{6}$ ]]; then
+      _h="${FZD_COLOR_FILE#\#}"; _r=$((16#${_h:0:2})); _g=$((16#${_h:2:2})); _b=$((16#${_h:4:2}))
+      _fzd_fi="fi=38;2;${_r};${_g};${_b}"
+    fi
+    _fzd_lscolors="$(printf '%s' "$_fzd_lscolors_base" | sed -E 's/(^|:)di=[^:]*:?//g; s/(^|:)fi=[^:]*:?//g; s/^:+|:+$//g')"
+    [[ -n "$_fzd_lscolors" && ( -n "$_fzd_di" || -n "$_fzd_fi" ) ]] && _fzd_lscolors+="${_fzd_lscolors:+:}"
+    [[ -n "$_fzd_di" ]] && _fzd_lscolors+="$_fzd_di"
+    [[ -n "$_fzd_di" && -n "$_fzd_fi" ]] && _fzd_lscolors+=':'
+    [[ -n "$_fzd_fi" ]] && _fzd_lscolors+="$_fzd_fi"
+    export LS_COLORS="$_fzd_lscolors"
+  fi
+  unset _fzd_lscolors_base _fzd_lscolors _fzd_di _fzd_fi _h _r _g _b
+fi
 
 # 'lf' shortcut: run fzd and cd to the chosen directory
 # (guarded so we don't clobber an existing 'lf' executable)
@@ -483,8 +515,34 @@ esac
 # Tell fzd where the config lives (XDG)
 export FZD_CONF_FILE="${FZD_CONF_FILE:-$HOME/.config/fzd/fzd.conf}"
 
+# Source user config (for FZD_COLOR_DIR/FZD_COLOR_FILE etc.)
+[[ -f "$FZD_CONF_FILE" ]] && source "$FZD_CONF_FILE"
+
 # Editor default for fzd if user hasn't set one
 export EDITOR="${EDITOR:-micro}"
+
+# Catppuccin Mocha LS_COLORS (used by eza/ls previews)
+if command -v vivid >/dev/null 2>&1; then
+  _fzd_lscolors_base="$(vivid generate catppuccin-mocha 2>/dev/null || true)"
+  if [[ -n "${_fzd_lscolors_base:-}" ]]; then
+    _fzd_di=""; _fzd_fi=""
+    if [[ -n "${FZD_COLOR_DIR:-}" && "${FZD_COLOR_DIR}" =~ ^#?[0-9A-Fa-f]{6}$ ]]; then
+      _h="${FZD_COLOR_DIR#\#}"; _r=$((16#${_h:0:2})); _g=$((16#${_h:2:2})); _b=$((16#${_h:4:2}))
+      _fzd_di="di=38;2;${_r};${_g};${_b}"
+    fi
+    if [[ -n "${FZD_COLOR_FILE:-}" && "${FZD_COLOR_FILE}" =~ ^#?[0-9A-Fa-f]{6}$ ]]; then
+      _h="${FZD_COLOR_FILE#\#}"; _r=$((16#${_h:0:2})); _g=$((16#${_h:2:2})); _b=$((16#${_h:4:2}))
+      _fzd_fi="fi=38;2;${_r};${_g};${_b}"
+    fi
+    _fzd_lscolors="$(printf '%s' "$_fzd_lscolors_base" | sed -E 's/(^|:)di=[^:]*:?//g; s/(^|:)fi=[^:]*:?//g; s/^:+|:+$//g')"
+    [[ -n "$_fzd_lscolors" && ( -n "$_fzd_di" || -n "$_fzd_fi" ) ]] && _fzd_lscolors+="${_fzd_lscolors:+:}"
+    [[ -n "$_fzd_di" ]] && _fzd_lscolors+="$_fzd_di"
+    [[ -n "$_fzd_di" && -n "$_fzd_fi" ]] && _fzd_lscolors+=':'
+    [[ -n "$_fzd_fi" ]] && _fzd_lscolors+="$_fzd_fi"
+    export LS_COLORS="$_fzd_lscolors"
+  fi
+  unset _fzd_lscolors_base _fzd_lscolors _fzd_di _fzd_fi _h _r _g _b
+fi
 
 # 'lf' shortcut: run fzd and cd to the chosen directory
 # (guarded so we don't clobber an existing 'lf' executable)
