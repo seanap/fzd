@@ -199,13 +199,60 @@ _timeout_wrap() { local s="$1"; shift; if (( s > 0 )) && _have timeout; then tim
 
 _preview_dir() {
   local dir="$1" depth="${2:-2}"
+
+  # Prefer eza for previews.
+  # We want the preview to follow the same dir/file colors as the left pane when possible.
+  # eza uses LS_COLORS. We'll generate Catppuccin Mocha LS_COLORS via vivid when available,
+  # then override just di/fi using the user's FZD_COLOR_DIR/FZD_COLOR_FILE.
   if command -v eza >/dev/null 2>&1; then
     local IFS=','; read -ra _ex <<<"$FZD_EXCLUDES"
     local ig=(); for g in "${_ex[@]}"; do [[ -n "$g" ]] && ig+=( --ignore-glob "$g" ); done
-    _timeout_wrap "$FZD_PREVIEW_TIMEOUT" eza --tree -L "$depth" --group-directories-first --color=always --icons \
-      "${ig[@]}" -- "$dir"
+
+    _lscolors_override() {
+      # Output LS_COLORS string to stdout.
+      # If vivid exists, start from its catppuccin-mocha preset; else start from current LS_COLORS.
+      local base="${LS_COLORS:-}"
+      if command -v vivid >/dev/null 2>&1; then
+        base="$(vivid generate catppuccin-mocha 2>/dev/null || true)"
+      fi
+
+      # If user provided hex colors, translate to SGR for LS_COLORS.
+      # LS_COLORS expects codes like: di=38;2;R;G;B; fi=38;2;R;G;B
+      # (works with GNU dircolors/ls; eza follows LS_COLORS too.)
+      local di="" fi=""
+      if [[ -n "${FZD_COLOR_DIR:-}" && "${FZD_COLOR_DIR}" =~ ^#?[0-9A-Fa-f]{6}$ ]]; then
+        local h="${FZD_COLOR_DIR#\#}"
+        local r=$((16#${h:0:2})) g=$((16#${h:2:2})) b=$((16#${h:4:2}))
+        di="di=38;2;${r};${g};${b}"
+      fi
+      if [[ -n "${FZD_COLOR_FILE:-}" && "${FZD_COLOR_FILE}" =~ ^#?[0-9A-Fa-f]{6}$ ]]; then
+        local h="${FZD_COLOR_FILE#\#}"
+        local r=$((16#${h:0:2})) g=$((16#${h:2:2})) b=$((16#${h:4:2}))
+        fi="fi=38;2;${r};${g};${b}"
+      fi
+
+      # Strip existing di/fi and append overrides.
+      # This is intentionally simple: keep whatever vivid/system provides for other file types.
+      local out="$base"
+      out="$(printf '%s' "$out" | sed -E 's/(^|:)di=[^:]*:?//g; s/(^|:)fi=[^:]*:?//g; s/^:+|:+$//g')"
+      [[ -n "$out" && ( -n "$di" || -n "$fi" ) ]] && out+="${out:+:}"
+      [[ -n "$di" ]] && out+="$di"
+      [[ -n "$di" && -n "$fi" ]] && out+=':'
+      [[ -n "$fi" ]] && out+="$fi"
+      printf '%s' "$out"
+    }
+
+    local lsc; lsc="$(_lscolors_override)"
+    if [[ -n "$lsc" ]]; then
+      LS_COLORS="$lsc" _timeout_wrap "$FZD_PREVIEW_TIMEOUT" eza --tree -L "$depth" --group-directories-first --color=always --icons \
+        "${ig[@]}" -- "$dir"
+    else
+      _timeout_wrap "$FZD_PREVIEW_TIMEOUT" eza --tree -L "$depth" --group-directories-first --color=always --icons \
+        "${ig[@]}" -- "$dir"
+    fi
     return
   fi
+
   if command -v tree >/dev/null 2>&1; then
     local IFS=','; read -ra _ex <<<"$FZD_EXCLUDES"
     local patt=""; for g in "${_ex[@]}"; do [[ -n "$patt" ]] && patt+='|'; patt+="$g"; done

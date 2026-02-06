@@ -120,19 +120,19 @@ ensure_core(){
     pacman)
       # Arch packages map closely to binary names
       best_effort_install fzf fd plocate tree file util-linux coreutils
-      best_effort_install eza bat micro || true
+      best_effort_install eza bat micro vivid curl ca-certificates tar || true
       ;;
     apt)
       # Debian/Ubuntu: fd is fd-find (binary fdfind), bat binary may be batcat
       best_effort_install fzf fd-find plocate tree file util-linux coreutils
-      # optional: bat and micro exist; eza might not (depends on distro version)
+      # optional: bat and micro exist; eza/vivid may or may not depending on distro version
       best_effort_install bat micro || true
-      best_effort_install eza || true
+      best_effort_install eza vivid curl ca-certificates tar || true
       ;;
     dnf)
       # Fedora: fd is often fd-find; keep best-effort.
       best_effort_install fzf fd-find plocate tree file util-linux coreutils
-      best_effort_install bat micro eza || true
+      best_effort_install bat micro eza vivid curl ca-certificates tar || true
       ;;
   esac
 }
@@ -152,7 +152,7 @@ install_fzf_upstream(){
   # Install a modern fzf into ~/.local/bin/fzf (user-local) without touching system packages.
   # This is needed on some distros (e.g., Ubuntu) where repo fzf is < 0.50.
 
-  # Best effort prerequisites
+  # Best effort prerequisites (usually installed already by ensure_core)
   case "$PM" in
     pacman) best_effort_install curl ca-certificates tar || true ;;
     apt)    best_effort_install curl ca-certificates tar || true ;;
@@ -230,6 +230,86 @@ fi
 if ! have plocate && ! have locate; then
   warn "No locate backend found (plocate/locate). Ctrl-F global search will fall back to fd/find."
 fi
+
+# ----------------- theme setup (bat + micro) -----------------
+setup_bat_theme(){
+  local batbin=""; have bat && batbin="bat"; [[ -z "$batbin" ]] && have batcat && batbin="batcat"
+  [[ -n "$batbin" ]] || { warn "bat/batcat not found; skipping bat theme"; return 0; }
+
+  local bconf; bconf="$($batbin --config-dir 2>/dev/null || true)"
+  [[ -n "$bconf" ]] || { warn "Could not determine bat config dir; skipping"; return 0; }
+
+  local themes_dir="$bconf/themes"
+  mkdir -p "$themes_dir"
+
+  local theme_file="$themes_dir/Catppuccin Mocha.tmTheme"
+  if [[ ! -f "$theme_file" ]]; then
+    log "Installing bat theme: Catppuccin Mocha"
+    # shellcheck disable=SC2016
+    curl -fsSL "https://github.com/catppuccin/bat/raw/main/themes/Catppuccin%20Mocha.tmTheme" -o "$theme_file" \
+      || { warn "Failed to download Catppuccin Mocha bat theme"; return 1; }
+  fi
+
+  # Ensure bat knows about the new theme
+  if $batbin cache --build >/dev/null 2>&1; then
+    :
+  else
+    warn "bat cache --build failed (non-fatal)"
+  fi
+
+  # Set default theme for bat
+  mkdir -p "$bconf"
+  local bcfg="$bconf/config"
+  if [[ -f "$bcfg" ]]; then
+    # remove existing --theme lines
+    grep -vE '^\s*--theme=' "$bcfg" > "${bcfg}.tmp" || true
+    mv "${bcfg}.tmp" "$bcfg"
+  fi
+  printf "\n--theme=\"Catppuccin Mocha\"\n" >> "$bcfg"
+  log "Configured bat theme in ${bcfg}"
+}
+
+setup_micro_theme(){
+  have micro || { warn "micro not found; skipping micro theme"; return 0; }
+
+  local mconf="$HOME/.config/micro"
+  local themes="$mconf/colorschemes"
+  mkdir -p "$themes"
+
+  local theme_path="$themes/catppuccin-mocha.micro"
+  if [[ ! -f "$theme_path" ]]; then
+    log "Installing micro theme: catppuccin-mocha"
+    curl -fsSL "https://raw.githubusercontent.com/catppuccin/micro/main/themes/catppuccin-mocha.micro" -o "$theme_path" \
+      || { warn "Failed to download Catppuccin micro theme"; return 1; }
+  fi
+
+  local settings="$mconf/settings.json"
+  if have python3; then
+    python3 - "$settings" <<'PY'
+import json, os, sys
+path = sys.argv[1]
+try:
+    with open(path, 'r', encoding='utf-8') as f:
+        data = json.load(f)
+except FileNotFoundError:
+    data = {}
+except Exception:
+    data = {}
+# micro expects scheme name without extension
+data['colorscheme'] = 'catppuccin-mocha'
+os.makedirs(os.path.dirname(path), exist_ok=True)
+with open(path, 'w', encoding='utf-8') as f:
+    json.dump(data, f, indent=2)
+    f.write('\n')
+PY
+    log "Configured micro colorscheme in ${settings}"
+  else
+    warn "python3 not found; can't auto-edit micro settings.json (theme file installed though)"
+  fi
+}
+
+setup_bat_theme || true
+setup_micro_theme || true
 
 # ----------------- install fzd binary -----------------
 install -m 0755 "$FZD_SRC_SCRIPT_DEFAULT" "${BIN_DIR}/fzd"

@@ -62,8 +62,9 @@ Installed from `share/fzd.conf.example`
 - **fd** (or `fdfind` on Ubuntu) – fast filesystem listing for cache mode
 - **plocate** – global search backend; we call `locate -i -e -l N QUERY`
 - **eza** (optional) – colored tree preview, `--icons`
-- **bat** (or `batcat`) – syntax-highlight file preview
-- **micro** (or `$EDITOR`) – used when pressing Enter on files
+  - Preview colors come from `LS_COLORS` (Catppuccin recommended). fzd will also try to align dir/file colors with `FZD_COLOR_DIR`/`FZD_COLOR_FILE` in previews.
+- **bat** (or `batcat`) – syntax-highlight file preview (installer will add Catppuccin Mocha theme)
+- **micro** (or `$EDITOR`) – used when pressing Enter on files (installer will add Catppuccin Mocha theme)
 - `tree`, `file`, `hexdump` – fallbacks/extra info
 - Nerd Font for those icons
 
