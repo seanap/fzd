@@ -30,7 +30,7 @@ cd fzd
 chmod +x install.sh
 ./install.sh
 ```
-Open a new shell (or `source ~/.zshrc`)
+Open a new shell (or `source ~/.zshrc` / `source ~/.bashrc`)
 
 ### Controls
 - Arrow **Left**: go to parent; preselect the child you came from (needs `fzf >= 0.50`).
@@ -49,7 +49,7 @@ Open a new shell (or `source ~/.zshrc`)
 * Quick hotkey anywhere: **Ctrl+O** (our ZLE `fzd-cd-widget`).
 
 ## Config
-If you want to tweak the search roots/excludes later, edit `~/.fzd/fzd.conf`.
+If you want to tweak the search roots/excludes later, edit `~/.config/fzd/fzd.conf`.
 
 Installed from `share/fzd.conf.example`
 

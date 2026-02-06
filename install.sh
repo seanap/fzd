@@ -1,17 +1,56 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+# fzd installer
+# Goals:
+# - Works on Arch (pacman), Debian/Ubuntu (apt), Fedora (dnf)
+# - Installs into XDG locations and ~/.local/bin
+# - Adds shell init to BOTH ~/.bashrc and ~/.zshrc (configurable)
+# - Keeps 'lf' shortcut (guarded so we don't clobber a real lf executable)
+
+# ----------------- helpers -----------------
 die(){ echo "ERR: $*" >&2; exit 1; }
+log(){ echo ":: $*"; }
+warn(){ echo "!! $*" >&2; }
 
-# --- args ---
-FZD_SRC_SCRIPT="${1:-}"; [[ -n "${FZD_SRC_SCRIPT}" ]] || die "First arg must be path to fzd.sh"
-[[ -f "${FZD_SRC_SCRIPT}" ]] || die "fzd.sh not found at: ${FZD_SRC_SCRIPT}"
-FZD_SRC_CONF="${2:-}"
+have(){ command -v "$1" >/dev/null 2>&1; }
 
-# --- Arch/Omarchy preflight ---
-command -v pacman >/dev/null 2>&1 || die "This installer is for Arch/Omarchy (pacman not found)."
+SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
+FZD_SRC_SCRIPT_DEFAULT="$SCRIPT_DIR/fzd.sh"
+FZD_SRC_CONF_DEFAULT="$SCRIPT_DIR/share/fzd.conf.example"
 
-# --- dirs ---
+# ----------------- args -----------------
+DO_UPDATEDB=1
+SHELL_TARGET="both"   # both|bash|zsh
+
+usage(){
+  cat <<'USAGE'
+Usage:
+  ./install.sh [--no-updatedb] [--shell both|bash|zsh]
+
+Notes:
+- Installs fzd to ~/.local/bin/fzd
+- Installs config to ~/.config/fzd/fzd.conf (unless already present)
+- Adds init blocks to ~/.bashrc and/or ~/.zshrc
+USAGE
+}
+
+while (($#)); do
+  case "$1" in
+    -h|--help) usage; exit 0;;
+    --no-updatedb) DO_UPDATEDB=0; shift;;
+    --shell)
+      shift
+      [[ -n "${1:-}" ]] || die "--shell requires: both|bash|zsh"
+      SHELL_TARGET="$1"; shift
+      ;;
+    *) die "Unknown arg: $1 (try --help)";;
+  esac
+done
+
+[[ -f "$FZD_SRC_SCRIPT_DEFAULT" ]] || die "Missing fzd.sh at: $FZD_SRC_SCRIPT_DEFAULT"
+
+# ----------------- dirs (XDG) -----------------
 XDG_CONFIG_HOME="${XDG_CONFIG_HOME:-$HOME/.config}"
 XDG_STATE_HOME="${XDG_STATE_HOME:-$HOME/.local/state}"
 XDG_CACHE_HOME="${XDG_CACHE_HOME:-$HOME/.cache}"
@@ -23,46 +62,113 @@ CACHE_DIR="$XDG_CACHE_HOME/fzd"
 
 mkdir -p "$BIN_DIR" "$CFG_DIR" "$STATE_DIR" "$CACHE_DIR"
 
-# --- packages ---
-need_pkgs=(fzf fd plocate eza bat micro tree file util-linux)
-missing=()
-for p in "${need_pkgs[@]}"; do pacman -Qi "$p" >/dev/null 2>&1 || missing+=("$p"); done
-if ((${#missing[@]})); then
-  echo ":: Installing with pacman: ${missing[*]}"
-  sudo pacman -S --needed --noconfirm "${missing[@]}" || true
-fi
+# ----------------- package manager detection -----------------
+detect_pm(){
+  if have pacman; then echo pacman; return; fi
+  if have apt-get; then echo apt; return; fi
+  if have dnf; then echo dnf; return; fi
+  die "Unsupported system: need pacman (Arch), apt (Debian/Ubuntu), or dnf (Fedora)."
+}
 
-# AUR helper fallback only if still missing
-helper=""
-for h in yay paru; do command -v "$h" >/dev/null 2>&1 && helper="$h" && break; done
-left=()
-for p in "${need_pkgs[@]}"; do pacman -Qi "$p" >/dev/null 2>&1 || left+=("$p"); done
-if ((${#left[@]})) && [[ -n "$helper" ]]; then
-  echo ":: Installing with $helper: ${left[*]}"
-  "$helper" -S --needed --noconfirm "${left[@]}"
-fi
+PM="$(detect_pm)"
+log "Detected package manager: $PM"
 
-# Final sanity: fzf must exist (prefer >=0.50 for caret support)
-command -v fzf >/dev/null 2>&1 || die "fzf missing after install"
-fzv="$(fzf --version | awk '{print $1}')"
+# ----------------- dependency installation -----------------
+# We check for binaries (not package DB) because names differ across distros.
+# We'll install a best-effort set; optional tools are allowed to fail.
+
+install_with_pacman(){
+  local -a pkgs=("$@")
+  (( ${#pkgs[@]} )) || return 0
+  log "Installing with pacman: ${pkgs[*]}"
+  sudo pacman -S --needed --noconfirm "${pkgs[@]}"
+}
+
+install_with_apt(){
+  local -a pkgs=("$@")
+  (( ${#pkgs[@]} )) || return 0
+  log "Installing with apt: ${pkgs[*]}"
+  sudo apt-get update -y
+  sudo apt-get install -y "${pkgs[@]}"
+}
+
+install_with_dnf(){
+  local -a pkgs=("$@")
+  (( ${#pkgs[@]} )) || return 0
+  log "Installing with dnf: ${pkgs[*]}"
+  sudo dnf install -y "${pkgs[@]}"
+}
+
+best_effort_install(){
+  # attempt install, but do not fail the whole installer for optional deps
+  set +e
+  case "$PM" in
+    pacman) install_with_pacman "$@";;
+    apt)    install_with_apt "$@";;
+    dnf)    install_with_dnf "$@";;
+  esac
+  local rc=$?
+  set -e
+  return $rc
+}
+
+ensure_core(){
+  # Core deps: fzf, file/tree, locate backend, fd.
+  # Optional: eza, bat, micro.
+
+  case "$PM" in
+    pacman)
+      # Arch packages map closely to binary names
+      best_effort_install fzf fd plocate tree file util-linux coreutils
+      best_effort_install eza bat micro || true
+      ;;
+    apt)
+      # Debian/Ubuntu: fd is fd-find (binary fdfind), bat binary may be batcat
+      best_effort_install fzf fd-find plocate tree file util-linux coreutils
+      # optional: bat and micro exist; eza might not (depends on distro version)
+      best_effort_install bat micro || true
+      best_effort_install eza || true
+      ;;
+    dnf)
+      # Fedora: fd is often fd-find; keep best-effort.
+      best_effort_install fzf fd-find plocate tree file util-linux coreutils
+      best_effort_install bat micro eza || true
+      ;;
+  esac
+}
+
+ensure_core
+
+# ----------------- sanity checks / versions -----------------
+have fzf || die "fzf missing after install"
+
+# fzf version (prefer >= 0.50)
+fzv="$(fzf --version 2>/dev/null | awk '{print $1}' || true)"
 ver_ge(){ printf '%s\n%s\n' "$2" "$1" | sort -V -C; }
-if ! ver_ge "$fzv" "0.50.0"; then
-  echo "!! Warning: fzf ${fzv} < 0.50 (caret preselect may not work)."
+if [[ -n "$fzv" ]] && ! ver_ge "$fzv" "0.50.0"; then
+  warn "fzf ${fzv} < 0.50 (caret preselect may not work)."
 fi
 
-# --- install fzd binary ---
-install -m 0755 "$FZD_SRC_SCRIPT" "${BIN_DIR}/fzd"
-echo ":: Installed fzd -> ${BIN_DIR}/fzd"
+if ! have fd && ! have fdfind; then
+  warn "fd not found (neither 'fd' nor 'fdfind' in PATH). Global cache/live backends may be slower."
+fi
 
-# --- install config (optional) ---
-if [[ -n "${FZD_SRC_CONF}" ]]; then
-  [[ -f "${FZD_SRC_CONF}" ]] || die "Config not found: ${FZD_SRC_CONF}"
-  install -m 0644 "$FZD_SRC_CONF" "${CFG_DIR}/fzd.conf"
-  echo ":: Installed config -> ${CFG_DIR}/fzd.conf"
-else
-  if [[ ! -f "${CFG_DIR}/fzd.conf" ]]; then
+if ! have plocate && ! have locate; then
+  warn "No locate backend found (plocate/locate). Ctrl-F global search will fall back to fd/find."
+fi
+
+# ----------------- install fzd binary -----------------
+install -m 0755 "$FZD_SRC_SCRIPT_DEFAULT" "${BIN_DIR}/fzd"
+log "Installed fzd -> ${BIN_DIR}/fzd"
+
+# ----------------- install config -----------------
+if [[ ! -f "${CFG_DIR}/fzd.conf" ]]; then
+  if [[ -f "$FZD_SRC_CONF_DEFAULT" ]]; then
+    install -m 0644 "$FZD_SRC_CONF_DEFAULT" "${CFG_DIR}/fzd.conf"
+    log "Installed config -> ${CFG_DIR}/fzd.conf"
+  else
     cat > "${CFG_DIR}/fzd.conf" <<'EOF'
-# fzd.conf (Omarchy/XDG)
+# fzd.conf (XDG)
 
 # --- Global search tuning ---
 FZD_GLOBAL_BACKEND=locate
@@ -71,9 +177,6 @@ FZD_GLOBAL_MAXDEPTH=6
 FZD_GLOBAL_MAXRESULTS=5000
 FZD_GLOBAL_PATHS="/etc /opt /srv /home/$USER"
 FZD_GLOBAL_XEXCLUDES="mnt,proc,sys,dev,run,proc/*,sys/*,dev/*,run/*,snap,lost+found,var/lib/docker"
-
-# plocate DB(s) (default path on Arch)
-FZD_LOCATE_DBS="/var/lib/plocate/plocate.db"
 
 # Excludes for dir trees and fd/find fallbacks
 FZD_EXCLUDES=".git,node_modules,.cache,.venv,.tox,dist,build,__pycache__,.DS_Store"
@@ -87,31 +190,25 @@ FZD_PREVIEW_MAX_LINES=200
 # FZD_COLOR_DIR="#f9e2af"
 # FZD_COLOR_FILE="#cdd6f4"
 EOF
-    echo ":: Wrote default config stub -> ${CFG_DIR}/fzd.conf"
+    log "Wrote default config -> ${CFG_DIR}/fzd.conf"
   fi
+else
+  log "Config already exists -> ${CFG_DIR}/fzd.conf (leaving as-is)"
 fi
 
-# --- ~/.bashrc block (idempotent, includes lf() function) ---
-BASHRC="$HOME/.bashrc"
+# ----------------- shell init block (idempotent) -----------------
 START_MARK="# >>> fzd init >>>"
 END_MARK="# <<< fzd init <<<"
 
-BLOCK_CONTENT=$(cat <<'____FZD_BLOCK____'
-# >>> fzd init >>>
+read -r -d '' COMMON_BLOCK <<'__FZD_COMMON__' || true
 # Ensure ~/.local/bin is on PATH
 case ":$PATH:" in
   *:"$HOME/.local/bin":*) ;;
   *) export PATH="$HOME/.local/bin:$PATH" ;;
 esac
 
-# fzf: bash key-bindings + completion (if available)
-[[ -f /usr/share/fzf/key-bindings.bash ]] && . /usr/share/fzf/key-bindings.bash
-[[ -f /usr/share/fzf/completion.bash   ]] && . /usr/share/fzf/completion.bash
-
 # Tell fzd where the config lives (XDG)
 export FZD_CONF_FILE="${FZD_CONF_FILE:-$HOME/.config/fzd/fzd.conf}"
-
-# Respect system theme: do NOT override FZF_DEFAULT_OPTS here.
 
 # Editor default for fzd if user hasn't set one
 export EDITOR="${EDITOR:-micro}"
@@ -124,36 +221,95 @@ if ! command -v lf >/dev/null 2>&1 || [[ "$(type -t lf)" != "file" ]]; then
     dest="$(fzd "$@")"; rc=$?
     # Esc/close from fzd uses exit 130; treat as no-op
     if (( rc == 130 )); then return 0; fi
-    # If fzd printed a directory, cd into it
     if [[ -n "$dest" && -d "$dest" ]]; then
       builtin cd -- "$dest"
     fi
   }
 fi
-# <<< fzd init <<<
-____FZD_BLOCK____
-)
+__FZD_COMMON__
 
-if [[ -f "$BASHRC" ]]; then
-  if grep -Fq "$START_MARK" "$BASHRC"; then
-    awk -v s="$START_MARK" -v e="$END_MARK" '
-      $0==s {print; inb=1; print ENVIRON["BLOCK_CONTENT"]; next}
-      $0==e {inb=0; next}
-      !inb {print}
-    ' BLOCK_CONTENT="$BLOCK_CONTENT" "$BASHRC" > "$BASHRC.tmp" && mv "$BASHRC.tmp" "$BASHRC"
+bash_fzf_sources() {
+  # Arch-ish
+  [[ -f /usr/share/fzf/key-bindings.bash ]] && echo ". /usr/share/fzf/key-bindings.bash"
+  [[ -f /usr/share/fzf/completion.bash   ]] && echo ". /usr/share/fzf/completion.bash"
+  # Debian/Ubuntu-ish
+  [[ -f /usr/share/doc/fzf/examples/key-bindings.bash ]] && echo ". /usr/share/doc/fzf/examples/key-bindings.bash"
+  [[ -f /usr/share/doc/fzf/examples/completion.bash   ]] && echo ". /usr/share/doc/fzf/examples/completion.bash"
+}
+
+zsh_fzf_sources() {
+  [[ -f /usr/share/fzf/key-bindings.zsh ]] && echo ". /usr/share/fzf/key-bindings.zsh"
+  [[ -f /usr/share/fzf/completion.zsh   ]] && echo ". /usr/share/fzf/completion.zsh"
+  [[ -f /usr/share/doc/fzf/examples/key-bindings.zsh ]] && echo ". /usr/share/doc/fzf/examples/key-bindings.zsh"
+  [[ -f /usr/share/doc/fzf/examples/completion.zsh   ]] && echo ". /usr/share/doc/fzf/examples/completion.zsh"
+}
+
+update_rc_file(){
+  local rc="$1"; shift
+  local content="$1"; shift
+
+  if [[ -f "$rc" ]]; then
+    if grep -Fq "$START_MARK" "$rc"; then
+      awk -v s="$START_MARK" -v e="$END_MARK" -v block="$content" '
+        $0==s {print; inb=1; print block; next}
+        $0==e {inb=0; print; next}
+        !inb {print}
+      ' "$rc" > "${rc}.tmp" && mv "${rc}.tmp" "$rc"
+    else
+      printf "\n%s\n%s\n%s\n" "$START_MARK" "$content" "$END_MARK" >> "$rc"
+    fi
   else
-    printf "\n%s\n%s\n" "$START_MARK" "$BLOCK_CONTENT" >> "$BASHRC"
+    printf "%s\n%s\n%s\n" "$START_MARK" "$content" "$END_MARK" > "$rc"
+  fi
+}
+
+install_bashrc(){
+  local rc="$HOME/.bashrc"
+  local fzf_lines; fzf_lines="$(bash_fzf_sources | awk '!seen[$0]++')"
+  local block
+  block=$(cat <<__BASH_BLOCK__
+# fzf: bash key-bindings + completion (if available)
+${fzf_lines}
+
+${COMMON_BLOCK}
+__BASH_BLOCK__
+)
+  update_rc_file "$rc" "$block"
+  log "Updated ${rc}"
+}
+
+install_zshrc(){
+  local rc="$HOME/.zshrc"
+  local fzf_lines; fzf_lines="$(zsh_fzf_sources | awk '!seen[$0]++')"
+  local block
+  block=$(cat <<__ZSH_BLOCK__
+# fzf: zsh key-bindings + completion (if available)
+${fzf_lines}
+
+${COMMON_BLOCK}
+__ZSH_BLOCK__
+)
+  update_rc_file "$rc" "$block"
+  log "Updated ${rc}"
+}
+
+case "$SHELL_TARGET" in
+  both) install_bashrc; install_zshrc;;
+  bash) install_bashrc;;
+  zsh)  install_zshrc;;
+  *) die "Invalid --shell value: $SHELL_TARGET";;
+esac
+
+# ----------------- updatedb (optional) -----------------
+if (( DO_UPDATEDB == 1 )); then
+  if have updatedb; then
+    log "Updating locate DB (updatedb) — sudo may prompt"
+    sudo updatedb || true
+  else
+    log "updatedb not found; skipping locate DB update"
   fi
 else
-  printf "%s\n%s\n" "$START_MARK" "$BLOCK_CONTENT" > "$BASHRC"
-fi
-
-echo ":: Updated ${BASHRC} (fzf bindings, PATH, FZD_CONF_FILE, EDITOR, lf function)"
-
-# --- plocate DB (optional but useful) ---
-if command -v plocate >/dev/null 2>&1; then
-  echo ":: Updating plocate DB (sudo may prompt)"
-  sudo updatedb || true
+  log "Skipping updatedb (--no-updatedb)"
 fi
 
 cat <<'OK'
@@ -164,7 +320,7 @@ Config:   ~/.config/fzd/fzd.conf
 State:    ~/.local/state/fzd    (created on demand by fzd)
 Cache:    ~/.cache/fzd          (created on demand by fzd)
 
-Open a new shell (or: source ~/.bashrc) and use:
+Open a new shell (or source your rc file) and use:
   lf         # launches fzd and cd's to your selection
   fzd        # launches raw fzd (prints dir on Enter)
 OK
