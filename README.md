@@ -58,6 +58,7 @@ Installed from `share/fzd.conf.example`
 
 ### Core tools
 - **fzf ≥ 0.50** – we rely on `start:pos(N)` (caret preselect)
+  - Note: Ubuntu/Debian repos may ship an older `fzf`. The installer will bootstrap a newer `fzf` into `~/.local/bin` if needed.
 - **fd** (or `fdfind` on Ubuntu) – fast filesystem listing for cache mode
 - **plocate** – global search backend; we call `locate -i -e -l N QUERY`
 - **eza** (optional) – colored tree preview, `--icons`

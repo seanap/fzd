@@ -142,11 +142,85 @@ ensure_core
 # ----------------- sanity checks / versions -----------------
 have fzf || die "fzf missing after install"
 
-# fzf version (prefer >= 0.50)
-fzv="$(fzf --version 2>/dev/null | awk '{print $1}' || true)"
 ver_ge(){ printf '%s\n%s\n' "$2" "$1" | sort -V -C; }
+
+fzf_ver(){
+  fzf --version 2>/dev/null | awk '{print $1}' || true
+}
+
+install_fzf_upstream(){
+  # Install a modern fzf into ~/.local/bin/fzf (user-local) without touching system packages.
+  # This is needed on some distros (e.g., Ubuntu) where repo fzf is < 0.50.
+
+  # Best effort prerequisites
+  case "$PM" in
+    pacman) best_effort_install curl ca-certificates tar || true ;;
+    apt)    best_effort_install curl ca-certificates tar || true ;;
+    dnf)    best_effort_install curl ca-certificates tar || true ;;
+  esac
+
+  have curl || { warn "curl not available; cannot bootstrap newer fzf"; return 1; }
+
+  local os="linux"
+  local arch
+  arch="$(uname -m)"
+  case "$arch" in
+    x86_64|amd64) arch="amd64";;
+    aarch64|arm64) arch="arm64";;
+    *) warn "Unsupported arch for upstream fzf bootstrap: ${arch}"; return 1;;
+  esac
+
+  local api="https://api.github.com/repos/junegunn/fzf/releases/latest"
+  local tag
+  tag="$(curl -fsSL "$api" | awk -F'"' '/"tag_name"/ {print $4; exit}')"
+  [[ -n "$tag" ]] || { warn "Could not determine latest fzf release tag from GitHub"; return 1; }
+
+  local ver="${tag#v}"
+  if ! ver_ge "$ver" "0.50.0"; then
+    warn "Latest fzf release tag looks older than 0.50? tag=$tag (skipping)";
+    return 1
+  fi
+
+  local asset="fzf-${ver}-${os}_${arch}.tar.gz"
+  local url="https://github.com/junegunn/fzf/releases/download/${tag}/${asset}"
+
+  local tmpd; tmpd="$(mktemp -d)"
+  set +e
+  curl -fL --retry 3 --retry-delay 1 -o "${tmpd}/${asset}" "$url"
+  local dl_rc=$?
+  set -e
+  if (( dl_rc != 0 )); then
+    warn "Failed to download upstream fzf (${url})"
+    rm -rf "$tmpd"
+    return 1
+  fi
+
+  tar -xzf "${tmpd}/${asset}" -C "$tmpd" || { warn "Failed to extract fzf tarball"; rm -rf "$tmpd"; return 1; }
+  [[ -x "${tmpd}/fzf" ]] || { warn "fzf binary not found in tarball"; rm -rf "$tmpd"; return 1; }
+
+  install -m 0755 "${tmpd}/fzf" "${BIN_DIR}/fzf"
+  rm -rf "$tmpd"
+
+  local newv; newv="$(${BIN_DIR}/fzf --version 2>/dev/null | awk '{print $1}' || true)"
+  if [[ -z "$newv" ]] || ! ver_ge "$newv" "0.50.0"; then
+    warn "Upstream fzf install did not produce a >=0.50 fzf (got '${newv:-?}')"
+    return 1
+  fi
+
+  log "Bootstrapped upstream fzf ${newv} -> ${BIN_DIR}/fzf"
+  return 0
+}
+
+# fzf version (require >= 0.50 for best UX)
+fzv="$(fzf_ver)"
 if [[ -n "$fzv" ]] && ! ver_ge "$fzv" "0.50.0"; then
-  warn "fzf ${fzv} < 0.50 (caret preselect may not work)."
+  warn "fzf ${fzv} < 0.50; attempting to install a newer fzf to ~/.local/bin"
+  if install_fzf_upstream; then
+    # re-check with PATH preference (we add ~/.local/bin in rc blocks)
+    fzv="$(fzf_ver)"
+  else
+    warn "Could not upgrade fzf automatically. fzd will still work, but caret preselect may not."
+  fi
 fi
 
 if ! have fd && ! have fdfind; then
