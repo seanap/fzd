@@ -30,7 +30,7 @@ cd fzd
 chmod +x install.sh
 ./install.sh
 ```
-Open a new shell (or `source ~/.zshrc`)
+Open a new shell (or `source ~/.zshrc` / `source ~/.bashrc`)
 
 ### Controls
 - Arrow **Left**: go to parent; preselect the child you came from (needs `fzf >= 0.50`).
@@ -49,7 +49,7 @@ Open a new shell (or `source ~/.zshrc`)
 * Quick hotkey anywhere: **Ctrl+O** (our ZLE `fzd-cd-widget`).
 
 ## Config
-If you want to tweak the search roots/excludes later, edit `~/.fzd/fzd.conf`.
+If you want to tweak the search roots/excludes later, edit `~/.config/fzd/fzd.conf`.
 
 Installed from `share/fzd.conf.example`
 
@@ -58,11 +58,13 @@ Installed from `share/fzd.conf.example`
 
 ### Core tools
 - **fzf ≥ 0.50** – we rely on `start:pos(N)` (caret preselect)
+  - Note: Ubuntu/Debian repos may ship an older `fzf`. The installer will bootstrap a newer `fzf` into `~/.local/bin` if needed.
 - **fd** (or `fdfind` on Ubuntu) – fast filesystem listing for cache mode
 - **plocate** – global search backend; we call `locate -i -e -l N QUERY`
 - **eza** (optional) – colored tree preview, `--icons`
-- **bat** (or `batcat`) – syntax-highlight file preview
-- **micro** (or `$EDITOR`) – used when pressing Enter on files
+  - Preview colors come from `LS_COLORS` (Catppuccin recommended). fzd will also try to align dir/file colors with `FZD_COLOR_DIR`/`FZD_COLOR_FILE` in previews.
+- **bat** (or `batcat`) – syntax-highlight file preview (installer will add Catppuccin Mocha theme)
+- **micro** (or `$EDITOR`) – used when pressing Enter on files (installer will add Catppuccin Mocha theme)
 - `tree`, `file`, `hexdump` – fallbacks/extra info
 - Nerd Font for those icons
 
