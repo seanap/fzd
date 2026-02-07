@@ -19,9 +19,9 @@ A tiny, shell-native, fuzzy searching, directory navigator with colored previews
 
 
 ### Why? 
-A lot of other tools were too bloated with tons of amazing features that I would instantly forget how to use, or they used vim keybinds. I just wanted something simple, intuitive, fast, and pretty. No daemons, no heavy deps, just a fast Bash script with smart defaults.
+A lot of other great tools can do what this does but I found they were too bloated with tons of amazing features that I would instantly forget how to use, or they used vim keybinds. I just wanted something simple, intuitive, fast, and pretty.
 
-`fzd` is built on `fzf`. Browse your directory tree with your arrow keys, colorized previews with `eza`/`bat`, hit Enter to edit files, and pop a `Ctrl-F` for instant global search via `plocate`, hit Enter on a dir and drop right back into your shell at the dir you selected. 
+`fzd` (Fuzzy-Directory) is built on `fzf`. Browse your directory tree with your **arrow keys**, colorized previews with `eza`/`bat`, hit Enter to edit files, and `Ctrl-F` for instant global search via `plocate`, hit Enter on a dir and drop right back into your shell at the dir you selected. 
 
 ### Install
 ```bash
@@ -34,7 +34,7 @@ Open a new shell (or `source ~/.zshrc` / `source ~/.bashrc`)
 
 ### Controls
 - Arrow **Left**: go to parent; preselect the child you came from (needs `fzf >= 0.50`).
-- Arrow **Right**: enter directory.
+- Arrow **Right**: drills down into directory.
 - **Enter** on dir: exit & `cd`; on file: open in `$EDITOR` (default: micro).
 - **Esc**: exit.
 - typing: Just start typing to fuzzy filter current directory.
@@ -43,10 +43,12 @@ Open a new shell (or `source ~/.zshrc` / `source ~/.bashrc`)
 ## Daily use cheatsheet
 
 * Launch browser: `lf`
-* Jump anywhere: press **Ctrl+F**, type ≥ 2 chars → live global search (no `/mnt`).
-* Enter on dir → shell cd’s there.
-  Enter on file → opens in `micro` (or `$EDITOR`), then returns.
-* Quick hotkey anywhere: **Ctrl+O** (our ZLE `fzd-cd-widget`).
+* Use `left` or `right` arrows to navigate directory tree
+* Just start typing to fuzzy-filter current directory
+* Global Search from anywhere: `Ctrl+F`, type ≥ 2 chars
+* `Enter` on highlighted dir returns to shell and cd’s into that directory.
+* `Enter` on highlighted file opens in `micro` (or `$EDITOR`), exiting the editor returns to fzd.
+* `esc` exits fzd
 
 ## Config
 If you want to tweak the search roots/excludes later, edit `~/.config/fzd/fzd.conf`.
@@ -56,7 +58,7 @@ Installed from `share/fzd.conf.example`
 
 ## REQUIREMENTS
 
-### Core tools
+### Core tools (installed via install script)
 - **fzf ≥ 0.50** – we rely on `start:pos(N)` (caret preselect)
   - Note: Ubuntu/Debian repos may ship an older `fzf`. The installer will bootstrap a newer `fzf` into `~/.local/bin` if needed.
 - **fd** (or `fdfind` on Ubuntu) – fast filesystem listing for cache mode
