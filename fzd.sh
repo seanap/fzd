@@ -729,6 +729,7 @@ _history_remember() {
 }
 _history_visit() {
   [[ $CUR != "${H_PATHS[H_INDEX]}" ]] || return 0
+  FZD_QUERY=''
   H_PATHS=("${H_PATHS[@]:0:H_INDEX+1}" "$CUR")
   H_SELECTIONS=("${H_SELECTIONS[@]:0:H_INDEX+1}" "")
   if ((${#H_PATHS[@]} > 100)); then
@@ -774,6 +775,18 @@ _explorer_load() {
   FZD_STATUS='Explorer helpers missing; reinstall FZD'
   return 1
 }
+_explorer_bindings() {
+  local control=$1 scope=${2:-local} pair key action
+  EXPLORER_BINDS=()
+  local pairs=()
+  if [[ $scope == local ]]; then
+    pairs+=('alt-left:BACK' 'alt-right:FORWARD' 'alt-h:RECENTS' 'f1:HELP')
+  fi
+  for pair in "${pairs[@]}"; do
+    key=${pair%%:*}; action=${pair#*:}
+    EXPLORER_BINDS+=(--bind "$key:execute-silent(echo A:$action:{1} > $control)+print-query")
+  done
+}
 
 # ----------------- MAIN LOOP -----------------
 main() {
@@ -797,24 +810,27 @@ main() {
     fi
     START_POS=""
 
-    local CTRL self_command control_command
+    local CTRL self_command control_command prompt
     _make_temp || return 1; CTRL=$REPLY
     self_command=$(_shell_quote "$FZD_SELF")
     control_command=$(_shell_quote "$CTRL")
+    _explorer_bindings "$control_command"
+    _display_name "${CUR/#$HOME/~}"; prompt=$REPLY
     FZD_SCREEN_ACTIVE=${#FZD_SCREEN_OPTS[@]}
     mapfile -t FZF_OUT < <(
       printf '%s\n' "${LINES[@]}" | "$FZF_BIN" \
         "${FZD_SCREEN_OPTS[@]}" \
         --ansi --height=100% --layout=reverse --border --no-mouse \
         --delimiter "$DELIM" --with-nth=2.. \
-        --prompt "$(ppath "$CUR")/ > " \
+        --prompt "$prompt/ > " --border-label " F1 help ${FZD_STATUS:+· $FZD_STATUS }" \
         --print-query --history="$HIST_FILE" --history-size=4000 \
+        --query="${FZD_QUERY:-}" \
         "${START_OPT[@]}" \
         --preview "$self_command --_preview {1}" \
         --preview-window=right,60%:wrap \
-        --expect=ctrl-f \
+        "${EXPLORER_BINDS[@]}" \
         --bind "esc:abort" \
-        --bind "ctrl-f:abort" \
+        --bind "ctrl-f:execute-silent(echo A:GLOBAL:{1} > $control_command)+abort" \
         --bind "enter:execute-silent(echo A:ENTER:{1} > $control_command)+abort" \
         --bind "left:execute-silent(echo A:LEFT:{1} > $control_command)+abort" \
         --bind "right:execute-silent(echo A:RIGHT:{1} > $control_command)+abort" \
@@ -838,8 +854,16 @@ main() {
     [[ -z "${action:-}" ]] && { dbg "fzf aborted (Esc/close)"; exit 130; }
     _decode_path "$raw_b64"; RAW=$REPLY
     _history_remember
+    FZD_STATUS=''
+    FZD_QUERY=''
+    case "$action" in HELP|RECENTS) FZD_QUERY=${FZF_OUT[0]:-} ;; esac
 
     case "$action" in
+      BACK) _history_step -1 ;;
+      FORWARD) _history_step 1 ;;
+      GLOBAL) _run_global_overlay ;;
+      RECENTS) if _explorer_load ui; then _ui_recents || true; fi ;;
+      HELP) if _explorer_load ui; then _ui_help; fi ;;
       LEFT)
         go_up
         ;;

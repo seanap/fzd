@@ -23,6 +23,7 @@ for arg; do
   if [[ "$arg" == *"echo A:${FZD_STUB_ACTION}:"* ]]; then
     control=${arg##* > }
     control=${control%)+abort}
+    control=${control%)+print-query}
     # Later command strings quote fixed paths; the fixture path contains no quotes.
     control=${control#\'}
     control=${control%\'}
