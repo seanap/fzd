@@ -23,13 +23,22 @@ setup_fixture() {
   export FZD_GLOBAL_FULLPATH=0
   unset FZD_STATE_DIR FZD_CACHE_DIR FZD_COLOR_DIR FZD_COLOR_FILE
   unset FZF_DEFAULT_OPTS FZF_DEFAULT_OPTS_FILE FZD_STUB_LOCATE_STATUS
-  unset FZD_STUB_FD_STATUS FZD_STUB_ACTION FZD_STUB_SELECTION
+  unset FZD_STUB_FD_STATUS FZD_STUB_ACTION FZD_STUB_SELECTION FZD_STUB_PLAN FZD_STUB_FZF_LOG
   : >"$FZD_STUB_RESULTS"
-  for utility in bash sh env base64 tr find head sort awk sed grep cut dirname basename mktemp mkdir rm sleep cat ls file timeout ln wc chmod; do
+  for utility in bash sh env base64 tr find head sort awk sed grep cut dirname basename mktemp mkdir rm sleep cat ls file timeout ln wc chmod tail; do
     ln -s "$(command -v "$utility")" "$UTILITY_BIN/$utility"
   done
   ln -s "$FZD_REPO/tests/helpers/fzf-stub" "$TEST_BIN/fzf"
   export PATH="$TEST_BIN:$UTILITY_BIN"
+}
+
+plan_action() {
+  printf '%s\t%s\n' "$1" "$(printf '%s' "$2" | base64 | tr -d '\n')" >>"$FZD_STUB_PLAN"
+}
+
+run_planned_session() {
+  # shellcheck disable=SC2016 # Positional parameters belong to the child shell.
+  run --separate-stderr bash -c 'cd -- "$1"; exec bash "$2"' _ "$FIXTURE_ROOT" "$FZD_SCRIPT"
 }
 
 use_fd_stub() {

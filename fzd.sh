@@ -13,47 +13,49 @@
 # - Do NOT clobber FZF_DEFAULT_OPTS so Omarchy/Hyprland/Alacritty themes are inherited.
 # - Optional per-entry color via FZD_COLOR_DIR / FZD_COLOR_FILE (hex like #aabbcc). Default: no extra color.
 
-set -euo pipefail
-shopt -s lastpipe 2>/dev/null || true
-export LC_ALL=C
+_fzd_init() {
+  # ----------------- XDG + PATHS -----------------
+  : "${XDG_CONFIG_HOME:=$HOME/.config}"
+  : "${XDG_STATE_HOME:=$HOME/.local/state}"
+  : "${XDG_CACHE_HOME:=$HOME/.cache}"
+  # tmp: prefer runtime dir (per-session), else cache
+  if [[ -n "${XDG_RUNTIME_DIR:-}" ]]; then
+    : "${FZD_TMP_DIR:=$XDG_RUNTIME_DIR/fzd}"
+  else
+    : "${FZD_TMP_DIR:=$XDG_CACHE_HOME/fzd/tmp}"
+  fi
+  : "${FZD_STATE_DIR:=$XDG_STATE_HOME/fzd}"
+  : "${FZD_CACHE_DIR:=$XDG_CACHE_HOME/fzd}"
 
-# ----------------- XDG + PATHS -----------------
-: "${XDG_CONFIG_HOME:=$HOME/.config}"
-: "${XDG_STATE_HOME:=$HOME/.local/state}"
-: "${XDG_CACHE_HOME:=$HOME/.cache}"
-# tmp: prefer runtime dir (per-session), else cache
-if [[ -n "${XDG_RUNTIME_DIR:-}" ]]; then
-  : "${FZD_TMP_DIR:=$XDG_RUNTIME_DIR/fzd}"
-else
-  : "${FZD_TMP_DIR:=$XDG_CACHE_HOME/fzd/tmp}"
-fi
-: "${FZD_STATE_DIR:=$XDG_STATE_HOME/fzd}"
-: "${FZD_CACHE_DIR:=$XDG_CACHE_HOME/fzd}"
+  mkdir -p "$FZD_STATE_DIR" "$FZD_CACHE_DIR" "$FZD_TMP_DIR" 2>/dev/null || true
+  export TMPDIR="$FZD_TMP_DIR"
 
-mkdir -p "$FZD_STATE_DIR" "$FZD_CACHE_DIR" "$FZD_TMP_DIR" 2>/dev/null || true
-# Encourage mktemp to use our tmp dir
-export TMPDIR="$FZD_TMP_DIR"
-
-# ----------------- CONFIG DEFAULTS -----------------
-# Load user config from XDG (no legacy ~/.fzd)
-FZD_CONF_FILE="${FZD_CONF_FILE:-$XDG_CONFIG_HOME/fzd/fzd.conf}"
+  # ----------------- CONFIG DEFAULTS -----------------
+  # Configuration is trusted Bash code, sourced only at application entry.
+  FZD_CONF_FILE="${FZD_CONF_FILE:-$XDG_CONFIG_HOME/fzd/fzd.conf}"
+  # shellcheck source=/dev/null
   [[ -f "$FZD_CONF_FILE" ]] && source "$FZD_CONF_FILE"
 
-: "${FZD_GLOBAL_BACKEND:=auto}"           # auto|locate|cache|live (auto prefers locate if present)
-: "${FZD_GLOBAL_MINLEN:=2}"
-: "${FZD_GLOBAL_MAXDEPTH:=6}"
-: "${FZD_GLOBAL_MAXRESULTS:=1200}"
-: "${FZD_GLOBAL_PATHS:=/etc /opt /srv /mnt /home/$USER}"
-: "${FZD_GLOBAL_FULLPATH:=0}"
-: "${FZD_LOCATE_DBS:=}" 
-: "${FZD_GLOBAL_XEXCLUDES:=proc,sys,dev,run,proc/*,sys/*,dev/*,run/*,snap,lost+found,var/lib/docker}"
+  : "${FZD_GLOBAL_BACKEND:=auto}" # auto|locate|cache|live
+  : "${FZD_GLOBAL_MINLEN:=2}"
+  : "${FZD_GLOBAL_MAXDEPTH:=6}"
+  : "${FZD_GLOBAL_MAXRESULTS:=1200}"
+  : "${FZD_GLOBAL_PATHS:=/etc /opt /srv /mnt /home/$USER}"
+  : "${FZD_GLOBAL_FULLPATH:=0}"
+  : "${FZD_LOCATE_DBS:=}"
+  : "${FZD_GLOBAL_XEXCLUDES:=proc,sys,dev,run,proc/*,sys/*,dev/*,run/*,snap,lost+found,var/lib/docker}"
+  : "${FZD_DEBUG:=0}"
+  : "${FZD_GLOBAL_ROOT:=/}" # filesystem root label for overlay prompt
+  : "${FZD_EXCLUDES:=.git,node_modules,.cache,.venv,__pycache__}"
+  : "${FZD_PREVIEW_DEPTH:=2}"
+  : "${FZD_PREVIEW_MAX_LINES:=200}"
+  : "${FZD_PREVIEW_TIMEOUT:=2}"
 
-: "${FZD_DEBUG:=0}"
-: "${FZD_GLOBAL_ROOT:=/}"                 # filesystem root label for overlay prompt
-: "${FZD_EXCLUDES:=.git,node_modules,.cache,.venv,__pycache__}"
-: "${FZD_PREVIEW_DEPTH:=2}"
-: "${FZD_PREVIEW_MAX_LINES:=200}"
-: "${FZD_PREVIEW_TIMEOUT:=2}"
+  c_dir=""; c_file=""
+  if [[ -n "${FZD_COLOR_DIR:-}" ]]; then c_dir="$(hex_to_ansi "$FZD_COLOR_DIR")"; fi
+  if [[ -n "${FZD_COLOR_FILE:-}" ]]; then c_file="$(hex_to_ansi "$FZD_COLOR_FILE")"; fi
+  export FZD_CONF_FILE
+}
 
 # ----------------- THEME (inherit system unless user opts-in) -----------------
 # If the user sets FZD_COLOR_DIR/FILE to hex (#RRGGBB), use that; else leave empty to inherit fzf theme.
@@ -63,20 +65,8 @@ hex_to_ansi() {
   [[ ${#h} -eq 6 ]] || return 0
   printf '\033[38;2;%d;%d;%dm' $((16#${h:0:2})) $((16#${h:2:2})) $((16#${h:4:2}))
 }
-c_dir=""; c_file=""
-[[ -n "${FZD_COLOR_DIR:-}"  ]] && c_dir="$(hex_to_ansi "$FZD_COLOR_DIR")"
-[[ -n "${FZD_COLOR_FILE:-}" ]] && c_file="$(hex_to_ansi "$FZD_COLOR_FILE")"
-
-# ----------------- FZF hardening -----------------
-FZF_BIN="$(type -P fzf 2>/dev/null || command -v fzf || true)"
-[[ -x "$FZF_BIN" ]] || { echo "fzd: ERROR: fzf not found" >&2; exit 1; }
-
-# Preserve FZF_DEFAULT_OPTS so system theme applies;
-# but neutralize default picker commands that could interfere with our UI.
-unset FZF_CTRL_T_COMMAND FZF_ALT_C_COMMAND FZF_DEFAULT_COMMAND 2>/dev/null || true
-
 # ----------------- DEBUG -----------------
-dbg() { (( FZD_DEBUG == 1 )) && printf 'fzd: %s\n' "$*" > /dev/tty || true; }
+dbg() { if (( ${FZD_DEBUG:-0} == 1 )); then printf 'fzd: %s\n' "$*" > /dev/tty || true; fi; }
 ppath() { printf '%s' "${1/#$HOME/~}"; }
 
 # ----------------- COMMON HELPERS -----------------
@@ -90,25 +80,47 @@ normalize_path() {
   [[ "$p" != "/" ]] && p="${p%/}"
   printf '%s' "$p"
 }
-get_cwd() { ( CDPATH= cd -L -- "${1:-$PWD}" 2>/dev/null && pwd -L ) || pwd -L; }
+get_cwd() { ( CDPATH='' cd -L -- "${1:-$PWD}" 2>/dev/null && printf '%s' "$PWD" ) || printf '%s' "$PWD"; }
 join_path() { local base="$1" child="${2#/}"; [[ "$base" == "/" ]] && printf '/%s' "$child" || printf '%s/%s' "$base" "$child"; }
 b64()   { printf '%s' "$1" | base64 | tr -d '\n'; }
 deb64() { printf '%s' "$1" | base64 -d 2>/dev/null || true; }
 
+# Return paths through REPLY: command substitution strips trailing newlines.
+_parent_path() {
+  local path=${1%/}
+  REPLY=${path%/*}
+  [[ -n "$REPLY" ]] || REPLY=/
+}
+_decode_path() {
+  REPLY="$(deb64 "$1"; printf '.')"
+  REPLY=${REPLY%.}
+  [[ "$REPLY" == / ]] || REPLY=${REPLY%/}
+}
+_display_name() {
+  REPLY=${1//\\/\\\\}
+  REPLY=${REPLY//$'\n'/\\n}; REPLY=${REPLY//$'\r'/\\r}; REPLY=${REPLY//$'\t'/\\t}
+  REPLY=${REPLY//$'\033'/\\e}
+}
+
 remember_child() { local parent="$1" child="$2"; [[ -n "$parent" && -n "$child" ]] && LAST_CHILD["$parent"]="$child" && dbg "remember_child: [$parent]='$child'"; }
 go_up() {
   local parent child
-  parent="$(normalize_path "$(dirname "$CUR")")"
-  child="$(basename "$CUR")"
+  _parent_path "$CUR"; parent=$REPLY
+  child=${CUR##*/}
   remember_child "$parent" "$child"
   CUR="$parent"
   dbg "LEFT -> CUR=$CUR (preselect child='$child')"
 }
 enter_dir_from_raw() {
-  local parent; parent="$(normalize_path "$(dirname "$CUR")")"
-  [[ -z "${RAW:-}" || ! -d "$RAW" || "$RAW" == "$parent" ]] && { dbg "RIGHT ignored (RAW='$RAW')"; return; }
-  remember_child "$CUR" "$(basename "$RAW")"
-  CUR="$(normalize_path "$RAW")"
+  local parent; _parent_path "$CUR"; parent=$REPLY
+  [[ -z "${RAW:-}" || ! -d "$RAW" || "$RAW" == "$parent" ]] && { dbg "RIGHT ignored (RAW='${RAW:-}')"; return 0; }
+  if [[ ! -r "$RAW" || ! -x "$RAW" ]]; then
+    printf 'fzd: cannot access directory: %q\n' "$RAW" >&2
+    return 0
+  fi
+  remember_child "$CUR" "${RAW##*/}"
+  CUR=$RAW
+  [[ "$CUR" == / ]] || CUR=${CUR%/}
   dbg "RIGHT -> into '$CUR'"
 }
 print_cd_target() { printf '%s\n' "$RAW"; }
@@ -135,10 +147,10 @@ list_entries() {
   done
 
   if (( ${#DIRS[@]} > 1 )); then
-    IFS=$'\n' read -r -d '' -a DIRS < <(printf '%s\n' "${DIRS[@]}" | sort -f && printf '\0')
+    mapfile -d '' -t DIRS < <(printf '%s\0' "${DIRS[@]}" | sort -zf)
   fi
   if (( ${#FILES[@]} > 1 )); then
-    IFS=$'\n' read -r -d '' -a FILES < <(printf '%s\n' "${FILES[@]}" | sort -f && printf '\0')
+    mapfile -d '' -t FILES < <(printf '%s\0' "${FILES[@]}" | sort -zf)
   fi
 
   eval "$oldopt" 2>/dev/null || true
@@ -146,25 +158,30 @@ list_entries() {
 
 build_lines() {
   LINES=(); START_POS=""
-  local parent; parent="$(normalize_path "$(dirname "$CUR")")"
+  local parent; _parent_path "$CUR"; parent=$REPLY
   LINES+=("$(b64 "$parent")${DELIM}${c_dir}../${c_reset}")
 
   local want_child="${LAST_CHILD[$CUR]:-}"
   local idx=0
   for d in "${DIRS[@]}"; do
     local name="${d%/}"
-    local p; p="$(normalize_path "$(join_path "$CUR" "$name")")"
-    LINES+=("$(b64 "$p")${DELIM}${c_dir}${d}${c_reset}")
+    local p="${CUR%/}/$name"
+    _display_name "$d"
+    LINES+=("$(b64 "$p")${DELIM}${c_dir}${REPLY}${c_reset}")
     if [[ -n "$want_child" && "$name" == "$want_child" ]]; then
       START_POS=$(( 2 + idx ))   # 1=../, dirs start at 2; idx is 0-based
     fi
     ((idx+=1))
   done
   for f in "${FILES[@]}"; do
-    local p; p="$(normalize_path "$(join_path "$CUR" "$f")")"
-    LINES+=("$(b64 "$p")${DELIM}${c_file}${f}${c_reset}")
+    local p="${CUR%/}/$f"
+    _display_name "$f"
+    LINES+=("$(b64 "$p")${DELIM}${c_file}${REPLY}${c_reset}")
   done
 }
+
+# ---- Build a one-shot index (fd) for cache backend ----
+# The implementation is below; all subcommands dispatch after definitions.
 
 # ----------------- PREVIEW (early exit; no debug) -----------------
 _have() { command -v "$1" >/dev/null 2>&1; }
@@ -256,24 +273,15 @@ _preview_file() {
     command -v hexdump >/dev/null 2>&1 && { echo; hexdump -C -- "$file" | head -n 64; }
   fi
 }
-if [[ "${1:-}" == "--_preview" ]]; then
+_preview() {
   FZD_DEBUG=0
-  b64_in="$2"; sel_path="$(printf '%s' "$b64_in" | base64 -d 2>/dev/null || true)"
-  [[ -z "$sel_path" ]] && exit 0
+  local sel_path; _decode_path "$1"; sel_path=$REPLY
+  [[ -z "$sel_path" ]] && return 0
   if [[ -d "$sel_path" ]]; then _preview_dir "$sel_path" "$FZD_PREVIEW_DEPTH"
   elif [[ -f "$sel_path" ]]; then _preview_file "$sel_path"
   else echo "(missing)"; fi
-  exit 0
-fi
-
-# ----------------- caret support probe -----------------
-HAS_POS=0
-if printf 'x\n' | "$FZF_BIN" --bind='start:pos(1)' --select-1 --exit-0 >/dev/null 2>&1; then HAS_POS=1; fi
-dbg "start:pos supported: $HAS_POS"
-
-# ----------------- EDITOR -----------------
-EDITOR_CMD="${EDITOR:-${VISUAL:-micro}}"
-command -v "$EDITOR_CMD" >/dev/null 2>&1 || EDITOR_CMD="micro"
+  return 0
+}
 
 _open_in_editor() {
   local file="$1"
@@ -299,6 +307,7 @@ _global_expand_vars() {
 _global_prepare() {
   local declaration root expanded name
   GLOBAL_ROOTS=(); GLOBAL_EXCLUDES=()
+  # shellcheck disable=SC2153 # Optional array can be declared by configuration.
   declaration=$(declare -p FZD_GLOBAL_ROOTS 2>/dev/null || true)
   if [[ "$declaration" == 'declare -a '* ]]; then
     # shellcheck disable=SC2153 # Optional Bash array supplied by user configuration.
@@ -381,9 +390,7 @@ _global_format() {
     fi
     encoded=$(b64 "$path") || return 1
     # Encode identity independently; control characters must not create records.
-    base=${base//\\/\\\\}
-    base=${base//$'\n'/\\n}; base=${base//$'\r'/\\r}; base=${base//$'\t'/\\t}
-    base=${base//$'\033'/\\e}
+    _display_name "$base"; base=$REPLY
     printf '%s\t%s%s%s%s\n' "$encoded" "$color" "$base" "$suffix" "$c_reset" || return 1
     ((count += 1))
     if ((count >= FZD_GLOBAL_MAXRESULTS)); then break; fi
@@ -466,50 +473,53 @@ _global_list() {
 _run_global_overlay() {
   dbg "GLOBAL overlay start (backend=${FZD_GLOBAL_BACKEND:-auto})"
   local backend="${FZD_GLOBAL_BACKEND:-auto}"
+  _global_prepare || return 0
   local have_loc
   have_loc="$(command -v plocate 2>/dev/null || command -v locate 2>/dev/null || true)"
 
   # auto-pick: prefer locate, else cache
   [[ "$backend" == "auto" ]] && { if [[ -n "$have_loc" ]]; then backend="locate"; else backend="cache"; fi; }
 
-  local CTRL SRC
-  if [[ "$backend" == "locate" ]]; then
+  local CTRL SRC self_command control_command
+  self_command=$(_shell_quote "$FZD_SELF")
+  if [[ "$backend" == "locate" || "$backend" == "live" ]]; then
     CTRL="$(mktemp)"
+    control_command=$(_shell_quote "$CTRL")
     "$FZF_BIN" \
       --ansi --height=100% --layout=reverse --border --no-mouse \
       --delimiter "$DELIM" --with-nth=2.. \
       --prompt "global:${FZD_GLOBAL_ROOT%/}/ > " \
       --disabled \
-      --preview "$0 --_preview {1}" \
+      --preview "$self_command --_preview {1}" \
       --preview-window=right,60%:wrap \
-      --bind "change:reload:$0 --_global_list --q {q}" \
+      --bind "change:reload:$self_command --_global_list --q {q} || true" \
       --bind "esc:abort" \
-      --bind "enter:execute-silent(echo A:G_ENTER:{1} > $CTRL)+abort" \
-      --bind "left:execute-silent(echo A:G_LEFT:{1} > $CTRL)+abort" \
-      --bind "right:execute-silent(echo A:G_RIGHT:{1} > $CTRL)+abort" \
-      >/dev/null || true
+      --bind "enter:execute-silent(echo A:G_ENTER:{1} > $control_command)+abort" \
+      --bind "left:execute-silent(echo A:G_LEFT:{1} > $control_command)+abort" \
+      --bind "right:execute-silent(echo A:G_RIGHT:{1} > $control_command)+abort" \
+      </dev/null >/dev/null || true
 
   elif [[ "$backend" == "cache" ]]; then
     CTRL="$(mktemp)"
     SRC="$(mktemp)"
-    "$0" --_global_index > "$SRC"
-    cat "$SRC" | "$FZF_BIN" \
+    control_command=$(_shell_quote "$CTRL")
+    if ! "$FZD_SELF" --_global_index > "$SRC"; then
+      rm -f -- "$SRC" "$CTRL"
+      return 0
+    fi
+    "$FZF_BIN" \
       --ansi --height=100% --layout=reverse --border --no-mouse \
       --delimiter "$DELIM" --with-nth=2.. \
       --prompt "global:${FZD_GLOBAL_ROOT%/}/ > " \
-      --preview "$0 --_preview {1}" \
+      --preview "$self_command --_preview {1}" \
       --preview-window=right,60%:wrap \
       --bind "esc:abort" \
-      --bind "enter:execute-silent(echo A:G_ENTER:{1} > $CTRL)+abort" \
-      --bind "left:execute-silent(echo A:G_LEFT:{1} > $CTRL)+abort" \
-      --bind "right:execute-silent(echo A:G_RIGHT:{1} > $CTRL)+abort" \
-      >/dev/null || true
+      --bind "enter:execute-silent(echo A:G_ENTER:{1} > $control_command)+abort" \
+      --bind "left:execute-silent(echo A:G_LEFT:{1} > $control_command)+abort" \
+      --bind "right:execute-silent(echo A:G_RIGHT:{1} > $control_command)+abort" \
+      < "$SRC" >/dev/null || true
     rm -f "$SRC"
 
-  else
-    "$FZF_BIN" --prompt "global:${FZD_GLOBAL_ROOT%/}/ > " --disabled \
-      --bind "esc:abort" >/dev/null || true
-    return
   fi
 
   # read the overlay action
@@ -518,39 +528,41 @@ _run_global_overlay() {
   action_line="$(grep -m1 '^A:' "$CTRL" || true)"
   raw_b64="$(printf '%s' "$action_line" | cut -d: -f3-)"
   action="$(printf '%s' "$action_line" | cut -d: -f2)"
-  sel_path="$(normalize_path "$(deb64 "$raw_b64")")"
+  _decode_path "$raw_b64"; sel_path=$REPLY
   rm -f "$CTRL"
 
   [[ -z "${action:-}" ]] && { dbg "GLOBAL overlay cancelled"; return; }
 
   case "$action" in
     G_RIGHT)
-      [[ -d "$sel_path" ]] && { RAW="$sel_path"; enter_dir_from_raw; }
+      if [[ -d "$sel_path" ]]; then RAW="$sel_path"; enter_dir_from_raw; fi
+      ;;
+    G_LEFT)
+      # Preserve the existing Left behavior: dismiss the global overlay.
       ;;
     G_ENTER)
       if [[ -d "$sel_path" ]]; then
         RAW="$sel_path"; print_cd_target; exit 0
       elif [[ -f "$sel_path" ]]; then
         _open_in_editor "$sel_path"
-        CUR="$(normalize_path "$(dirname -- "$sel_path")")"
-        remember_child "$(dirname -- "$CUR")" "$(basename -- "$CUR")"
+        _parent_path "$sel_path"; CUR=$REPLY
+        _parent_path "$CUR"
+        remember_child "$REPLY" "${CUR##*/}"
       fi
       ;;
   esac
+  return 0
 }
 
-case "${1:-}" in
-  --_global_index) _global_index; exit $? ;;
-  --_global_list)
-    shift
-    if [[ "${1:-}" == --q ]]; then shift; fi
-    _global_list "$@"; exit $?
-    ;;
-esac
+_shell_quote() {
+  local value=${1//\'/\'\\\'\'}
+  printf "'%s'" "$value"
+}
 
 # ----------------- MAIN LOOP -----------------
 main() {
-  CUR="$(normalize_path "$(get_cwd)")"
+  CUR="$(get_cwd "$PWD"; printf '.')"; CUR=${CUR%.}
+  [[ "$CUR" == / ]] || CUR=${CUR%/}
   dbg "cwd=$CUR"
 
   local HIST_FILE="$FZD_STATE_DIR/query-history"
@@ -569,7 +581,9 @@ main() {
     fi
     START_POS=""
 
-    local CTRL; CTRL="$(mktemp)"
+    local CTRL self_command control_command; CTRL="$(mktemp)"
+    self_command=$(_shell_quote "$FZD_SELF")
+    control_command=$(_shell_quote "$CTRL")
     mapfile -t FZF_OUT < <(
       printf '%s\n' "${LINES[@]}" | "$FZF_BIN" \
         --ansi --height=100% --layout=reverse --border --no-mouse \
@@ -577,14 +591,14 @@ main() {
         --prompt "$(ppath "$CUR")/ > " \
         --print-query --history="$HIST_FILE" --history-size=4000 \
         "${START_OPT[@]}" \
-        --preview "$0 --_preview {1}" \
+        --preview "$self_command --_preview {1}" \
         --preview-window=right,60%:wrap \
         --expect=ctrl-f \
         --bind "esc:abort" \
         --bind "ctrl-f:abort" \
-        --bind "enter:execute-silent(echo A:ENTER:{1} > $CTRL)+abort" \
-        --bind "left:execute-silent(echo A:LEFT:{1} > $CTRL)+abort" \
-        --bind "right:execute-silent(echo A:RIGHT:{1} > $CTRL)+abort" \
+        --bind "enter:execute-silent(echo A:ENTER:{1} > $control_command)+abort" \
+        --bind "left:execute-silent(echo A:LEFT:{1} > $control_command)+abort" \
+        --bind "right:execute-silent(echo A:RIGHT:{1} > $control_command)+abort" \
         || true
     )
 
@@ -608,7 +622,7 @@ main() {
     action_line="$(grep -m1 '^A:' "$CTRL" || true)"
     raw_b64="$(printf '%s' "$action_line" | cut -d: -f3-)"
     action="$(printf '%s' "$action_line" | cut -d: -f2)"
-    RAW="$(normalize_path "$(deb64 "$raw_b64")")"
+    _decode_path "$raw_b64"; RAW=$REPLY
     rm -f "$CTRL"
 
     [[ -z "${action:-}" ]] && { dbg "fzf aborted (Esc/close)"; exit 130; }
@@ -622,7 +636,7 @@ main() {
         ;;
       ENTER)
         if [[ -n "$RAW" && -d "$RAW" ]]; then
-          local parent; parent="$(normalize_path "$(dirname "$CUR")")"
+          local parent; _parent_path "$CUR"; parent=$REPLY
           local target="$RAW"
           if [[ "$RAW" == "$parent" ]]; then
             target="$CUR"
@@ -646,4 +660,32 @@ main() {
   done
 }
 
-main "$@"
+_fzd_entry() {
+  set -euo pipefail
+  shopt -s lastpipe 2>/dev/null || true
+  export LC_ALL=C
+  _fzd_init
+  FZD_SELF=${BASH_SOURCE[0]}
+  [[ "$FZD_SELF" == /* ]] || FZD_SELF="$PWD/$FZD_SELF"
+  case "${1:-}" in
+    --_global_index) _global_index; return ;;
+    --_global_list)
+      shift
+      if [[ "${1:-}" == --q ]]; then shift; fi
+      _global_list "$@"; return
+      ;;
+    --_preview) _preview "${2:-}"; return ;;
+  esac
+  FZF_BIN="$(type -P fzf 2>/dev/null || command -v fzf || true)"
+  [[ -x "$FZF_BIN" ]] || { echo "fzd: ERROR: fzf not found" >&2; return 1; }
+  unset FZF_CTRL_T_COMMAND FZF_ALT_C_COMMAND FZF_DEFAULT_COMMAND 2>/dev/null || true
+  HAS_POS=0
+  if printf 'x\n' | "$FZF_BIN" --bind='start:pos(1)' --select-1 --exit-0 >/dev/null 2>&1; then HAS_POS=1; fi
+  dbg "start:pos supported: $HAS_POS"
+  EDITOR_CMD="${EDITOR:-${VISUAL:-micro}}"
+  command -v "$EDITOR_CMD" >/dev/null 2>&1 || EDITOR_CMD=micro
+  main "$@"
+}
+
+# Sourcing exposes functions for unit tests without running initialization or UI.
+if [[ ${BASH_SOURCE[0]} == "$0" ]]; then _fzd_entry "$@"; fi

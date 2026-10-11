@@ -3,6 +3,21 @@ set -euo pipefail
 for arg; do
   [[ "$arg" == --select-1 ]] && exit 0
 done
+if [[ -n ${FZD_STUB_FZF_LOG:-} ]]; then printf '%s\n' "$@" >>"$FZD_STUB_FZF_LOG"; fi
+if [[ -n ${FZD_STUB_PLAN:-} ]]; then
+  IFS=$'\t' read -r FZD_STUB_ACTION encoded <"$FZD_STUB_PLAN" || exit 130
+  tail -n +2 "$FZD_STUB_PLAN" >"$FZD_STUB_PLAN.next"
+  cat "$FZD_STUB_PLAN.next" >"$FZD_STUB_PLAN"
+  FZD_STUB_SELECTION=$(
+    printf '%s' "$encoded" | base64 -d
+    printf '.'
+  )
+  FZD_STUB_SELECTION=${FZD_STUB_SELECTION%.}
+  if [[ "$FZD_STUB_ACTION" == ctrl-f ]]; then
+    printf '\nctrl-f\n'
+    exit 0
+  fi
+fi
 [[ -n ${FZD_STUB_ACTION:-} ]] || exit 130
 for arg; do
   if [[ "$arg" == *"echo A:${FZD_STUB_ACTION}:"* ]]; then
