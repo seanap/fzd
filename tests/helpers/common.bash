@@ -52,6 +52,24 @@ use_locate_stub() {
   ln -s "$FZD_REPO/tests/helpers/backend-stub" "$TEST_BIN/plocate"
 }
 
+private_locate() {
+  local tools="$FZD_REPO/.test-work/tools/root" library
+  if [[ -z "$FZD_REAL_LOCATE" && -x "$tools/usr/bin/plocate" ]]; then
+    FZD_REAL_LOCATE="$tools/usr/bin/plocate"
+    FZD_REAL_UPDATEDB="$tools/usr/sbin/updatedb.plocate"
+    for library in "$tools"/usr/lib/*-linux-gnu*; do
+      [[ -d "$library" ]] || continue
+      export LD_LIBRARY_PATH="$library${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
+    done
+  fi
+  [[ -x "$FZD_REAL_LOCATE" && -x "$FZD_REAL_UPDATEDB" ]] || skip 'private locate tools unavailable; see tests/README.md'
+  "$FZD_REAL_LOCATE" --version >/dev/null
+  ln -s "$FZD_REAL_LOCATE" "$TEST_BIN/plocate"
+  export FZD_LOCATE_DBS="$BATS_TEST_TMPDIR/locate.db" FZD_GLOBAL_BACKEND=locate
+  "$FZD_REAL_UPDATEDB" --database-root "$FIXTURE_ROOT" --output "$FZD_LOCATE_DBS" \
+    --require-visibility no --prunepaths '' --prunenames '' --prunefs '' --prune-bind-mounts no
+}
+
 set_results() {
   printf '%s\0' "$@" >"$FZD_STUB_RESULTS"
 }

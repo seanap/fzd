@@ -2,20 +2,6 @@
 load helpers/common
 setup() { setup_fixture; }
 
-private_locate() {
-  local tools="$FZD_REPO/.test-work/tools/root"
-  if [[ -z "$FZD_REAL_LOCATE" && -x "$tools/usr/bin/plocate" ]]; then
-    FZD_REAL_LOCATE="$tools/usr/bin/plocate"
-    FZD_REAL_UPDATEDB="$tools/usr/sbin/updatedb.plocate"
-    export LD_LIBRARY_PATH="$tools/usr/lib/$(/usr/bin/dpkg-architecture -qDEB_HOST_MULTIARCH)${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
-  fi
-  [[ -x "$FZD_REAL_LOCATE" && -x "$FZD_REAL_UPDATEDB" ]] || skip 'private locate tools unavailable; see tests/README.md'
-  ln -s "$FZD_REAL_LOCATE" "$TEST_BIN/plocate"
-  export FZD_LOCATE_DBS="$BATS_TEST_TMPDIR/locate.db" FZD_GLOBAL_BACKEND=locate
-  "$FZD_REAL_UPDATEDB" --database-root "$FIXTURE_ROOT" --output "$FZD_LOCATE_DBS" \
-    --require-visibility no --prunepaths '' --prunenames '' --prunefs '' --prune-bind-mounts no
-}
-
 @test "real fd indexes configured roots and labels directories" {
   [ -n "$FZD_REAL_FD" ] || skip 'fd/fdfind is not installed'
   ln -s "$FZD_REAL_FD" "$TEST_BIN/fdfind"
@@ -56,6 +42,7 @@ private_locate() {
   assert_record_path "$FIXTURE_ROOT/needle-dir"
   assert_no_record_path "$FIXTURE_ROOT/.git/needle-excluded"
   [[ "$output" == *$'\tneedle-dir/'* ]]
+  [ -z "$stderr" ]
 }
 
 @test "real plocate treats wildcard query characters literally" {
@@ -66,6 +53,7 @@ private_locate() {
   [ "$status" -eq 0 ]
   assert_record_path "$FIXTURE_ROOT/needle[1]*?.txt"
   assert_no_record_path "$FIXTURE_ROOT/needle-other.txt"
+  [ -z "$stderr" ]
 }
 
 @test "real plocate missing database falls back to the filesystem" {
@@ -76,6 +64,14 @@ private_locate() {
   [ "$status" -eq 0 ]
   assert_record_path "$FIXTURE_ROOT/needle-file"
   [[ "$stderr" == *'falling back'* ]]
+}
+
+@test "real plocate no matches succeeds without a fallback scan" {
+  private_locate
+  run --separate-stderr bash "$FZD_SCRIPT" --_global_list --q no-matching-path
+  [ "$status" -eq 0 ]
+  [ -z "$output" ]
+  [ -z "$stderr" ]
 }
 
 @test "real fd honors relative roots containing dot components" {

@@ -123,7 +123,13 @@ _cleanup() {
   if ((${#FZD_TEMP_FILES[@]})); then rm -f -- "${FZD_TEMP_FILES[@]}"; fi
 }
 
-remember_child() { local parent="$1" child="$2"; [[ -n "$parent" && -n "$child" ]] && LAST_CHILD["$parent"]="$child" && dbg "remember_child: [$parent]='$child'"; }
+remember_child() {
+  local parent="$1" child="$2"
+  if [[ -n "$parent" && -n "$child" ]]; then
+    LAST_CHILD["$parent"]="$child"
+    dbg "remember_child: [$parent]='$child'"
+  fi
+}
 go_up() {
   local parent child
   _parent_path "$CUR"; parent=$REPLY
@@ -461,7 +467,7 @@ _global_index() {
 }
 
 _global_list() {
-  local query=$* locate_bin source_file pattern rc=0
+  local query=$* locate_bin source_file error_file pattern rc=0
   _global_prepare || return
   ((${#query} >= FZD_GLOBAL_MINLEN)) || return 0
   locate_bin=$(command -v plocate 2>/dev/null || command -v locate 2>/dev/null || true)
@@ -473,16 +479,21 @@ _global_list() {
     pattern=${query//\\/\\\\}; pattern=${pattern//\*/\\*}; pattern=${pattern//\?/\\?}
     pattern=${pattern//\[/\\[}; pattern=${pattern//\]/\\]}
     _make_temp || return 1; source_file=$REPLY
-    if env -u LOCATE_PATH "$locate_bin" "${arguments[@]}" -0 -i -e -- "*$pattern*" | _global_format "$query" > "$source_file"; then
+    _make_temp || return 1; error_file=$REPLY
+    if env -u LOCATE_PATH "$locate_bin" "${arguments[@]}" -0 -i -e -- "*$pattern*" 2> "$error_file" | _global_format "$query" > "$source_file"; then
       rc=0
     else
       statuses=("${PIPESTATUS[@]}")
-      if ((statuses[1] == 0 && (statuses[0] == 1 || statuses[0] == 141))); then
+      # plocate uses 1 for both no matches and database errors. Diagnostics
+      # distinguish an empty search from a failed producer requiring fallback.
+      if ((statuses[1] == 0)) && { ((statuses[0] == 141)) || { ((statuses[0] == 1)) && [[ ! -s "$error_file" ]]; }; }; then
         rc=0
       else
         rc=1
       fi
     fi
+    cat -- "$error_file" >&2
+    _remove_temp "$error_file"
     if ((rc == 0)); then
       cat -- "$source_file"
       _remove_temp "$source_file"

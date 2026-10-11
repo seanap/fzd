@@ -42,6 +42,11 @@ setup() { setup_fixture; }
   [ "$status" -eq 0 ]
 }
 
+@test "Left at the filesystem root is a safe no-op under errexit" {
+  run bash -ec 'source "$1"; CUR=/; go_up; [[ "$CUR" == / ]]' _ "$FZD_SCRIPT"
+  [ "$status" -eq 0 ]
+}
+
 @test "inaccessible directories are safe no-op transitions" {
   mkdir -p "$FIXTURE_ROOT/locked"
   chmod 000 "$FIXTURE_ROOT/locked"
