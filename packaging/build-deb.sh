@@ -10,7 +10,7 @@ IFS= read -r version <"$source_root/VERSION"
 [[ $version =~ ^[0-9]+\.[0-9]+\.[0-9]+(-rc\.[1-9][0-9]*)?$ ]] || exit 2
 revision=${FZD_DEB_REVISION:-1}
 [[ $revision =~ ^[1-9][0-9]*$ ]] || exit 2
-deb_version=${version/-/~}-$revision
+deb_version=${version/-/'~'}-$revision
 mkdir -p -- "$output"
 work=$(mktemp -d)
 trap 'rm -rf -- "$work"' EXIT
