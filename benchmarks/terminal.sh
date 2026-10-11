@@ -5,6 +5,8 @@ repo=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)
 script=${1:-$repo/fzd.sh}
 count=${2:-1000}
 runs=${3:-3}
+backend=${FZD_BENCH_BACKEND:-live}
+[[ "$backend" == live || "$backend" == cache ]] || exit 2
 [[ "$script" == /* && -f "$script" && "$count" =~ ^[1-9][0-9]*$ && "$runs" =~ ^[1-9][0-9]*$ ]] || exit 2
 ((count >= 3)) || exit 2
 if [[ ${FZD_BENCH_PREVIEW_MOVE:-0} == 1 ]]; then ((count >= 10)) || exit 2; fi
@@ -19,7 +21,7 @@ done
 printf 'FZD_GLOBAL_ROOTS=(%q)\nFZD_GLOBAL_MAXRESULTS=30000\n' "$root" >"$work/config/fzd.conf"
 export XDG_CONFIG_HOME="$work/config" XDG_STATE_HOME="$work/state" XDG_CACHE_HOME="$work/cache" XDG_RUNTIME_DIR="$work/runtime"
 export FZD_CONF_FILE="$work/config/fzd.conf" FZD_TMP_DIR="$work/runtime/fzd" FZD_STATE_DIR="$work/state/fzd" FZD_CACHE_DIR="$work/cache/fzd"
-export FZD_GLOBAL_BACKEND=live FZD_PREVIEW_DEPTH=2 FZD_PREVIEW_TIMEOUT=2 FZD_PREVIEW_MAX_LINES=200
+export FZD_GLOBAL_BACKEND="$backend" FZD_PREVIEW_DEPTH=2 FZD_PREVIEW_TIMEOUT=2 FZD_PREVIEW_MAX_LINES=200
 export FZD_GLOBAL_MINLEN=2 FZD_GLOBAL_MAXDEPTH=6 FZD_GLOBAL_FULLPATH=0 FZD_EXCLUDES=.git,node_modules FZD_GLOBAL_XEXCLUDES=proc,sys,dev,run
 export BASH_ENV=/dev/null FZD_BENCH_SCRIPT="$script"
 unset FZF_DEFAULT_OPTS FZF_DEFAULT_OPTS_FILE FZD_GLOBAL_ROOTS FZD_LOCATE_DBS FZD_COLOR_DIR FZD_COLOR_FILE
@@ -137,7 +139,9 @@ for ((iteration = 1; iteration <= runs; iteration++)); do
   now
   start=$REPLY
   tmux -S "$socket" send-keys -l file-00001.txt
-  wait_screen '2/2'
+  if [[ "$backend" == cache ]]; then
+    wait_screen "2/$((count * 2 + 1))"
+  else wait_screen '2/2'; fi
   record global-query
   now
   start=$REPLY

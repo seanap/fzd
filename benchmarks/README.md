@@ -42,7 +42,7 @@ navigation is slow. The final version uses three. Smaller sizes use three for
 each revision. Do not treat these small samples as distributions or percentiles.
 These are warm cache observations in
 WSL, with the same inherited PATH for both revisions; native Linux timings are
-not implied. All recorded samples, including outliers, are retained.
+not implied. All published samples, including outliers, are retained.
 
 The harness starts its private 120×32 tmux server before releasing an input gate,
 then timestamps with Linux `/proc/uptime`, a monotonic boot clock with **10 ms
@@ -56,6 +56,8 @@ Set `FZD_BENCH_PREVIEW_MOVE=1` to add a separate Down-arrow-to-preview measureme
 after filtering to ten files. The recorded `*-preview-terminal.csv` files use
 this extended sequence at 1,000 entries; the main matrix uses the default.
 Global queries use the live backend and find two matches in root/child.
+Set `FZD_BENCH_BACKEND=cache` for the separate cache-overlay comparison. Its
+snapshot contains `2 * size + 1` entries, and filtering retains that total count.
 
 The root contains the requested file count plus one child directory and the
 parent row; the child has the same file count plus its parent row. Screen-gap rows
