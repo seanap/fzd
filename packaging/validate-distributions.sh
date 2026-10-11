@@ -1,0 +1,36 @@
+#!/usr/bin/env bash
+# Rootless Podman or Docker; invoke with sudo only when your runtime needs it.
+set -euo pipefail
+repo=$(cd -- "${BASH_SOURCE[0]%/*}/.." && pwd)
+artifacts=$(realpath -e -- "${1:?artifact directory required}")
+target=${2:?ubuntu, debian, arch or fedora required}
+case $target in
+ubuntu) image=docker.io/library/ubuntu:24.04 ;;
+debian) image=docker.io/library/debian:trixie-slim ;;
+arch) image=docker.io/library/archlinux:base ;;
+fedora) image=registry.fedoraproject.org/fedora:44 ;;
+*) exit 2 ;;
+esac
+runtime=${FZD_CONTAINER_RUNTIME:-podman}
+runtime_options=()
+run_options=()
+[[ $runtime != podman ]] || run_options=(--cgroups=disabled)
+if [[ $runtime == podman && ${FZD_CONTAINER_LOCAL_STORAGE:-0} == 1 ]]; then
+  runtime_options=(--root "$repo/.test-work/containers/storage" --runroot /tmp/fzd-containers-run --storage-driver vfs)
+fi
+result="$repo/.test-work/phase-four-a/$target"
+mkdir -p "$result"
+fixture="$repo/.test-work/phase-three/fzf-0.65.2-linux_amd64.tar.gz"
+[[ -f $fixture && $(uname -m) == x86_64 ]] || {
+  printf 'Prepare the x86_64 fixture first: bash dev/prepare-fzf-test.sh\n' >&2
+  exit 2
+}
+"$runtime" "${runtime_options[@]}" pull "$image"
+"$runtime" "${runtime_options[@]}" image inspect "$image" >"$result/image.json"
+# Nested bubblewrap is used by safety tests. The container gets no host home,
+# Docker socket, devices, or privileged mode. Network permits distro downloads.
+"$runtime" "${runtime_options[@]}" run --rm "${run_options[@]}" --network=host \
+  --security-opt seccomp=unconfined --security-opt apparmor=unconfined \
+  -v "$artifacts:/artifacts:ro" -v "$repo/packaging:/validation:ro" \
+  -v "$fixture:/fixtures/fzf-0.65.2-linux_amd64.tar.gz:ro" -v "$result:/results" \
+  "$image" bash /validation/validate-container.sh "$target" 2>&1 | tee "$result/validation.log"
