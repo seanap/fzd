@@ -53,10 +53,13 @@ setup_file() {
 @test "Debian revision supports ordered package upgrades" {
   SOURCE_DATE_EPOCH=1700000000 FZD_DEB_REVISION=2 run bash "$PACKAGE_REPO/packaging/build-deb.sh" "$PACKAGE_REPO" "$PACKAGE_FIXTURE/upgrade"
   [ "$status" -eq 0 ]
-  local next
+  local next upstream
   next=$(printf '%s\n' "$PACKAGE_FIXTURE/upgrade/"*.deb)
   dpkg --compare-versions "$(dpkg-deb -f "$next" Version)" gt "$(dpkg-deb -f "$PACKAGE_DEB" Version)"
-  dpkg --compare-versions "$(dpkg-deb -f "$PACKAGE_DEB" Version)" lt 0.1.0-1
+  IFS= read -r upstream <"$PACKAGE_REPO/VERSION"
+  if [[ $upstream == *-rc.* ]]; then
+    dpkg --compare-versions "$(dpkg-deb -f "$PACKAGE_DEB" Version)" lt "${upstream%-rc.*}-1"
+  fi
 }
 
 @test "Build rejects invalid source epoch and package revisions" {
