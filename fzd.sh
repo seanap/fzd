@@ -139,9 +139,22 @@ _decode_path() {
   [[ "$REPLY" == / ]] || REPLY=${REPLY%/}
 }
 _display_name() {
-  REPLY=${1//\\/\\\\}
+  local LC_ALL=C
+  REPLY=$1
+  # Ordinary names need no rewriting. Match bytes, retaining UTF-8 unchanged.
+  [[ "$REPLY" == *[$'\001'-$'\037'$'\177\\']* ]] || return 0
+  REPLY=${REPLY//\\/\\\\}
   REPLY=${REPLY//$'\n'/\\n}; REPLY=${REPLY//$'\r'/\\r}; REPLY=${REPLY//$'\t'/\\t}
   REPLY=${REPLY//$'\033'/\\e}
+  if [[ "$REPLY" == *[$'\001'-$'\037'$'\177']* ]]; then
+    local code byte escaped
+    for ((code=1; code<32; code++)); do
+      printf -v escaped '\\x%02x' "$code"
+      printf -v byte '%b' "$escaped"
+      REPLY=${REPLY//"$byte"/"$escaped"}
+    done
+    REPLY=${REPLY//$'\177'/\\x7f}
+  fi
 }
 _make_temp() {
   REPLY=$(mktemp) || { printf 'fzd: cannot create temporary file\n' >&2; return 1; }
