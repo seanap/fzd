@@ -26,6 +26,15 @@ setup() { setup_fixture; }
   assert_record_path "$FIXTURE_ROOT/needle"
 }
 
+@test "legacy leading tilde roots expand without evaluating shell code" {
+  printf text >"$FIXTURE_ROOT/needle"
+  [[ "$FIXTURE_ROOT" == "$HOME/"* ]] || skip 'fixture is outside HOME'
+  export FZD_GLOBAL_PATHS="~${FIXTURE_ROOT#"$HOME"}"
+  run bash "$FZD_SCRIPT" --_global_list --q needle
+  [ "$status" -eq 0 ]
+  assert_record_path "$FIXTURE_ROOT/needle"
+}
+
 @test "shipped configuration defines one backend and one root list" {
   run grep -c '^FZD_GLOBAL_BACKEND=' "$FZD_REPO/fzd.conf.example"
   [ "$output" = 1 ]

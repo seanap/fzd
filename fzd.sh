@@ -346,6 +346,14 @@ _global_prepare() {
   fi
   local valid=()
   for root in "${GLOBAL_ROOTS[@]}"; do
+    # Retain the common legacy ~/ form without eval or pathname expansion.
+    if [[ "$declaration" != 'declare -a '* ]]; then
+      # shellcheck disable=SC2088 # Match literal tilde syntax before expanding it.
+      case "$root" in
+        '~') root=$HOME ;;
+        '~/'*) root="$HOME/${root:2}" ;;
+      esac
+    fi
     [[ "$root" == /* ]] || root="$PWD/$root"
     [[ "$root" == / ]] || root=${root%/}
     [[ -d "$root" && -r "$root" && -x "$root" ]] || continue
