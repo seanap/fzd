@@ -2,6 +2,31 @@
 load helpers/common
 setup() { setup_fixture; }
 
+@test "invalid color overrides are ignored without terminating startup" {
+  local color
+  for color in zzzzzz '#12345g' '#12345' '##123456' '1234567' '12;345' ' 123456'; do
+    printf 'FZD_COLOR_DIR=%q\nFZD_COLOR_FILE=%q\n' "$color" "$color" >"$FZD_CONF_FILE"
+    run --separate-stderr bash "$FZD_SCRIPT" --_global_list --q ''
+    [ "$status" -eq 0 ]
+    [ -z "$output" ]
+    [ -z "$stderr" ]
+  done
+}
+
+@test "hex colors accept optional hash and mixed case while rejecting invalid digits" {
+  run bash -euo pipefail -c '
+    source "$1"
+    expected=$'"'"'\033[38;2;171;205;239m'"'"'
+    [[ $(hex_to_ansi aBcDeF) == "$expected" ]]
+    [[ $(hex_to_ansi "#aBcDeF") == "$expected" ]]
+    value=$(hex_to_ansi zzzzzz)
+    [[ -z "$value" ]]
+    value=$(hex_to_ansi "#12345g")
+    [[ -z "$value" ]]
+  ' _ "$FZD_SCRIPT"
+  [ "$status" -eq 0 ]
+}
+
 @test "explicit configuration path is loaded" {
   printf 'FZD_GLOBAL_MINLEN=8\n' >"$FZD_CONF_FILE"
   run bash "$FZD_SCRIPT" --_global_list --q needle

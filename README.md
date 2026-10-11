@@ -120,11 +120,13 @@ current configuration does not exist, leaving the original intact.
 The [example configuration](fzd.conf.example) documents exclusions, result
 limits, preview depth/time/line limits, colors, and an optional locate database.
 FZD retains its existing colors and inherits fzf options. To request different
-label colors, set `FZD_COLOR_DIR` / `FZD_COLOR_FILE` in your FZD configuration.
+label colors, set `FZD_COLOR_DIR` / `FZD_COLOR_FILE` in your FZD configuration
+to six hexadecimal digits, optionally prefixed with `#`. Invalid overrides are
+ignored. Eza previews inherit `LS_COLORS`, replacing only explicitly requested
+directory or file colors.
 Third-party bat, micro, eza, or terminal themes are personal choices: configure
 those tools yourself if desired. Installation never downloads themes or changes
-their configuration. With eza/vivid already installed, the existing preview
-renderer still applies its established palette locally to the preview process.
+their configuration. To use a vivid palette, configure `LS_COLORS` in your shell.
 
 ## Manual installation and automation
 

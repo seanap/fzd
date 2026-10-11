@@ -63,7 +63,7 @@ _fzd_init() {
 c_reset=$'\033[0m'
 hex_to_ansi() {
   local h="${1#\#}"
-  [[ ${#h} -eq 6 ]] || return 0
+  [[ $h =~ ^[0-9A-Fa-f]{6}$ ]] || return 0
   printf '\033[38;2;%d;%d;%dm' $((16#${h:0:2})) $((16#${h:2:2})) $((16#${h:4:2}))
 }
 # ----------------- DEBUG -----------------
@@ -267,19 +267,14 @@ _preview_dir() {
 
   # Prefer eza for previews.
   # We want the preview to follow the same dir/file colors as the left pane when possible.
-  # eza uses LS_COLORS. We'll generate Catppuccin Mocha LS_COLORS via vivid when available,
-  # then override just di/fi using the user's FZD_COLOR_DIR/FZD_COLOR_FILE.
+  # eza inherits LS_COLORS; only explicit, valid FZD overrides change di/fi.
   if command -v eza >/dev/null 2>&1; then
     local IFS=','; read -ra _ex <<<"$FZD_EXCLUDES"
     local ig=(); for g in "${_ex[@]}"; do [[ -n "$g" ]] && ig+=( --ignore-glob "$g" ); done
 
     _lscolors_override() {
       # Output LS_COLORS string to stdout.
-      # If vivid exists, start from its catppuccin-mocha preset; else start from current LS_COLORS.
       local base="${LS_COLORS:-}"
-      if command -v vivid >/dev/null 2>&1; then
-        base="$(vivid generate catppuccin-mocha 2>/dev/null || true)"
-      fi
 
       # If user provided hex colors, translate to SGR for LS_COLORS.
       # LS_COLORS expects codes like: di=38;2;R;G;B; fi=38;2;R;G;B
@@ -296,14 +291,30 @@ _preview_dir() {
         fi="fi=38;2;${r};${g};${b}"
       fi
 
-      # Strip existing di/fi and append overrides.
-      # This is intentionally simple: keep whatever vivid/system provides for other file types.
-      local out="$base"
-      out="$(printf '%s' "$out" | sed -E 's/(^|:)di=[^:]*:?//g; s/(^|:)fi=[^:]*:?//g; s/^:+|:+$//g')"
-      [[ -n "$out" && ( -n "$di" || -n "$fi" ) ]] && out+="${out:+:}"
-      [[ -n "$di" ]] && out+="$di"
-      [[ -n "$di" && -n "$fi" ]] && out+=':'
-      [[ -n "$fi" ]] && out+="$fi"
+      if [[ -z "$di" && -z "$fi" ]]; then printf '%s' "$base"; return; fi
+
+      # Replace whole entries, retaining separators and all unrelated bytes.
+      # An odd trailing backslash escapes a colon inside a filename pattern.
+      local palette_tail="$base" entry suffix out="" separator="" seen_di=0 seen_fi=0
+      while :; do
+        entry=${palette_tail%%:*}
+        while [[ "$palette_tail" == *:* ]]; do
+          suffix=${entry##*[^\\]}
+          (( ${#suffix} % 2 )) || break
+          palette_tail=${palette_tail#*:}
+          entry+=":${palette_tail%%:*}"
+        done
+        case "$entry" in
+          di=*) if [[ -n "$di" ]]; then entry=$di; seen_di=1; fi ;;
+          fi=*) if [[ -n "$fi" ]]; then entry=$fi; seen_fi=1; fi ;;
+        esac
+        out+="$separator$entry"
+        [[ "$palette_tail" == *:* ]] || break
+        palette_tail=${palette_tail#*:}
+        separator=:
+      done
+      [[ -n "$di" && $seen_di == 0 ]] && out+="${out:+:}$di"
+      [[ -n "$fi" && $seen_fi == 0 ]] && out+="${out:+:}$fi"
       printf '%s' "$out"
     }
 
