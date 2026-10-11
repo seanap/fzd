@@ -27,7 +27,10 @@ _fzd_init() {
   : "${FZD_STATE_DIR:=$XDG_STATE_HOME/fzd}"
   : "${FZD_CACHE_DIR:=$XDG_CACHE_HOME/fzd}"
 
-  mkdir -p "$FZD_STATE_DIR" "$FZD_CACHE_DIR" "$FZD_TMP_DIR" 2>/dev/null || true
+  if ! mkdir -p "$FZD_STATE_DIR" "$FZD_CACHE_DIR" "$FZD_TMP_DIR"; then
+    printf 'fzd: cannot create state, cache or temporary directories\n' >&2
+    return 1
+  fi
   export TMPDIR="$FZD_TMP_DIR"
 
   # ----------------- CONFIG DEFAULTS -----------------
@@ -100,6 +103,24 @@ _display_name() {
   REPLY=${1//\\/\\\\}
   REPLY=${REPLY//$'\n'/\\n}; REPLY=${REPLY//$'\r'/\\r}; REPLY=${REPLY//$'\t'/\\t}
   REPLY=${REPLY//$'\033'/\\e}
+}
+_make_temp() {
+  REPLY=$(mktemp) || { printf 'fzd: cannot create temporary file\n' >&2; return 1; }
+  FZD_TEMP_FILES+=("$REPLY")
+}
+_remove_temp() {
+  local tracked path remaining=()
+  rm -f -- "$@" || return
+  for tracked in "${FZD_TEMP_FILES[@]}"; do
+    for path in "$@"; do
+      [[ "$tracked" == "$path" ]] && continue 2
+    done
+    remaining+=("$tracked")
+  done
+  FZD_TEMP_FILES=("${remaining[@]}")
+}
+_cleanup() {
+  if ((${#FZD_TEMP_FILES[@]})); then rm -f -- "${FZD_TEMP_FILES[@]}"; fi
 }
 
 remember_child() { local parent="$1" child="$2"; [[ -n "$parent" && -n "$child" ]] && LAST_CHILD["$parent"]="$child" && dbg "remember_child: [$parent]='$child'"; }
@@ -321,7 +342,10 @@ _global_prepare() {
   for root in "${GLOBAL_ROOTS[@]}"; do
     [[ "$root" == /* ]] || root="$PWD/$root"
     [[ "$root" == / ]] || root=${root%/}
-    [[ -d "$root" && -r "$root" && -x "$root" ]] && valid+=("$root")
+    [[ -d "$root" && -r "$root" && -x "$root" ]] || continue
+    # fd canonicalizes roots; use the same scope for fd, find and locate.
+    root=$( (CDPATH='' cd -P -- "$root" && printf '%s.' "$PWD") 2>/dev/null) || continue
+    valid+=("${root%.}")
   done
   GLOBAL_ROOTS=("${valid[@]}")
   if ((${#GLOBAL_ROOTS[@]} == 0)); then
@@ -448,7 +472,7 @@ _global_list() {
     # Locate glob syntax is escaped so every backend searches a literal substring.
     pattern=${query//\\/\\\\}; pattern=${pattern//\*/\\*}; pattern=${pattern//\?/\\?}
     pattern=${pattern//\[/\\[}; pattern=${pattern//\]/\\]}
-    source_file=$(mktemp) || return 1
+    _make_temp || return 1; source_file=$REPLY
     if env -u LOCATE_PATH "$locate_bin" "${arguments[@]}" -0 -i -e -- "*$pattern*" | _global_format "$query" > "$source_file"; then
       rc=0
     else
@@ -461,10 +485,10 @@ _global_list() {
     fi
     if ((rc == 0)); then
       cat -- "$source_file"
-      rm -f -- "$source_file"
+      _remove_temp "$source_file"
       return 0
     fi
-    rm -f -- "$source_file"
+    _remove_temp "$source_file"
     printf 'fzd: locate unavailable; falling back to filesystem search\n' >&2
   fi
   _global_live_list "$query"
@@ -483,7 +507,7 @@ _run_global_overlay() {
   local CTRL SRC self_command control_command
   self_command=$(_shell_quote "$FZD_SELF")
   if [[ "$backend" == "locate" || "$backend" == "live" ]]; then
-    CTRL="$(mktemp)"
+    _make_temp || return 0; CTRL=$REPLY
     control_command=$(_shell_quote "$CTRL")
     "$FZF_BIN" \
       --ansi --height=100% --layout=reverse --border --no-mouse \
@@ -500,11 +524,11 @@ _run_global_overlay() {
       </dev/null >/dev/null || true
 
   elif [[ "$backend" == "cache" ]]; then
-    CTRL="$(mktemp)"
-    SRC="$(mktemp)"
+    _make_temp || return 0; CTRL=$REPLY
+    _make_temp || return 0; SRC=$REPLY
     control_command=$(_shell_quote "$CTRL")
     if ! "$FZD_SELF" --_global_index > "$SRC"; then
-      rm -f -- "$SRC" "$CTRL"
+      _remove_temp "$SRC" "$CTRL"
       return 0
     fi
     "$FZF_BIN" \
@@ -518,7 +542,7 @@ _run_global_overlay() {
       --bind "left:execute-silent(echo A:G_LEFT:{1} > $control_command)+abort" \
       --bind "right:execute-silent(echo A:G_RIGHT:{1} > $control_command)+abort" \
       < "$SRC" >/dev/null || true
-    rm -f "$SRC"
+    _remove_temp "$SRC"
 
   fi
 
@@ -529,7 +553,7 @@ _run_global_overlay() {
   raw_b64="$(printf '%s' "$action_line" | cut -d: -f3-)"
   action="$(printf '%s' "$action_line" | cut -d: -f2)"
   _decode_path "$raw_b64"; sel_path=$REPLY
-  rm -f "$CTRL"
+  _remove_temp "$CTRL"
 
   [[ -z "${action:-}" ]] && { dbg "GLOBAL overlay cancelled"; return; }
 
@@ -581,7 +605,8 @@ main() {
     fi
     START_POS=""
 
-    local CTRL self_command control_command; CTRL="$(mktemp)"
+    local CTRL self_command control_command
+    _make_temp || return 1; CTRL=$REPLY
     self_command=$(_shell_quote "$FZD_SELF")
     control_command=$(_shell_quote "$CTRL")
     mapfile -t FZF_OUT < <(
@@ -608,7 +633,7 @@ main() {
     if [[ "${FZF_OUT[0]:-}" == "ctrl-f" || "${FZF_OUT[1]:-}" == "ctrl-f" ]]; then
       (( FZD_DEBUG == 1 )) && printf 'fzd: ctrl-f detected via expect\n' > /dev/tty
       _run_global_overlay
-      rm -f "$CTRL"
+      _remove_temp "$CTRL"
       continue
     fi
 
@@ -623,7 +648,7 @@ main() {
     raw_b64="$(printf '%s' "$action_line" | cut -d: -f3-)"
     action="$(printf '%s' "$action_line" | cut -d: -f2)"
     _decode_path "$raw_b64"; RAW=$REPLY
-    rm -f "$CTRL"
+    _remove_temp "$CTRL"
 
     [[ -z "${action:-}" ]] && { dbg "fzf aborted (Esc/close)"; exit 130; }
 
@@ -664,6 +689,11 @@ _fzd_entry() {
   set -euo pipefail
   shopt -s lastpipe 2>/dev/null || true
   export LC_ALL=C
+  FZD_TEMP_FILES=()
+  trap _cleanup EXIT
+  trap 'exit 130' INT
+  trap 'exit 143' TERM
+  trap 'exit 129' HUP
   _fzd_init
   FZD_SELF=${BASH_SOURCE[0]}
   [[ "$FZD_SELF" == /* ]] || FZD_SELF="$PWD/$FZD_SELF"
