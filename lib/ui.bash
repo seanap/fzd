@@ -82,7 +82,7 @@ _ui_name() {
   capture=$REPLY
   printf 'Enter confirms · Esc cancels\n' | "$FZF_BIN" "${FZD_SCREEN_OPTS[@]}" \
     --height=100% --layout=reverse --border --no-mouse --no-multi --no-expect \
-    --disabled --no-sort --print-query --query="$query" --prompt "$purpose > " \
+    --disabled --no-sort --print-query --no-preview --query="$query" --prompt "$purpose > " \
     --header 'Name escapes: \n newline · \t tab · \xHH byte · \\ backslash' \
     --bind 'enter:accept,esc:abort' >"$capture" || rc=$?
   if ((rc == 0)); then IFS= read -r query <"$capture" || rc=1; fi
@@ -103,8 +103,8 @@ _ui_confirm_trash() {
   capture=$REPLY
   printf 'Cancel\nMove to Trash\n' | "$FZF_BIN" "${FZD_SCREEN_OPTS[@]}" \
     --height=100% --layout=reverse --border --no-mouse --no-multi --no-expect \
-    --no-sort --prompt 'Confirm > ' --header "$label" \
-    --bind 'enter:accept,esc:abort' >"$capture" || rc=$?
+    --no-sort --no-tac --no-print-query --no-preview --query='' --prompt 'Confirm > ' --header "$label" \
+    --bind 'start:pos(1),load:pos(1),enter:accept,esc:abort' >"$capture" || rc=$?
   IFS= read -r choice <"$capture" || true
   _remove_temp "$capture"
   [[ $rc == 0 && $choice == 'Move to Trash' ]] || {
@@ -128,7 +128,7 @@ _ui_recents() {
   capture=$REPLY
   printf '%s\n' "${records[@]}" | "$FZF_BIN" "${FZD_SCREEN_OPTS[@]}" \
     --height=100% --layout=reverse --border --no-mouse --no-multi --no-expect \
-    --delimiter "$DELIM" --with-nth=2.. --prompt 'Recent > ' \
+    --delimiter "$DELIM" --with-nth=2.. --no-tac --no-print-query --no-preview --query='' --prompt 'Recent > ' \
     --header 'Enter visits · Esc returns' --bind 'enter:accept,esc:abort' >"$capture" || rc=$?
   IFS= read -r selected <"$capture" || true
   _remove_temp "$capture"
@@ -167,8 +167,10 @@ _ui_help() {
       help+=('  F8               Move to Trash (confirmation required)')
     fi
   fi
-  help+=('Other' '  F1 / Esc         Close help' '  Esc / Ctrl+G     Exit FZD' '  Up / Down        Select; scroll this help')
+  help+=('Other' '  F1 / Esc         Close help')
+  [[ $scope == global ]] || help+=('  Esc / Ctrl+G     Exit FZD')
+  help+=('  Up / Down        Select; scroll this help')
   printf '%s\n' "${help[@]}" | "$FZF_BIN" "${FZD_SCREEN_OPTS[@]}" \
     --height=100% --layout=reverse --border --no-mouse --no-multi --no-expect \
-    --disabled --no-sort --prompt 'Help > ' --bind 'f1:abort,esc:abort,enter:ignore' >/dev/null || true
+    --disabled --no-sort --no-tac --no-print-query --no-preview --query='' --prompt 'Help > ' --bind 'f1:abort,esc:abort,enter:ignore' >/dev/null || true
 }

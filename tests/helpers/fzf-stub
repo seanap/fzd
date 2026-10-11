@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 for arg; do
-  [[ "$arg" == --select-1 ]] && exit 0
+  case "$arg" in --select-1 | --filter=*) exit 0 ;; esac
 done
 if [[ -n ${FZD_STUB_FZF_LOG:-} ]]; then printf '%s\n' "$@" >>"$FZD_STUB_FZF_LOG"; fi
 if [[ -n ${FZD_STUB_PLAN:-} ]]; then

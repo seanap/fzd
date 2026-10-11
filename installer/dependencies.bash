@@ -10,12 +10,12 @@ version_ge() {
 
 check_fzf() {
   local bin=$1 version
-  version=$("$bin" --version 2>/dev/null) || return 1
+  version=$(FZF_DEFAULT_OPTS='' FZF_DEFAULT_OPTS_FILE=/dev/null "$bin" --version 2>/dev/null) || return 1
   version_ge "$version" 0.44.0 || return 1
   # Clear inherited defaults for a deterministic, non-TTY capability probe.
   printf 'x\n' | FZF_DEFAULT_OPTS='' FZF_DEFAULT_OPTS_FILE=/dev/null "$bin" \
     --bind='start:pos(1),load:pos(1),change:reload(printf x)' \
-    --no-clear --select-1 --exit-0 >/dev/null 2>&1
+    --no-clear --filter=x >/dev/null 2>&1
 }
 
 detect_pm() {

@@ -53,9 +53,13 @@ _state_unlock() {
 _state_write() {
   local target=$1 temporary
   shift
-  temporary=$(mktemp "$FZD_EXPLORER_STATE/.pending.XXXXXXXX") || return 1
+  temporary=$(mktemp "$FZD_EXPLORER_STATE/.pending.XXXXXXXX") || {
+    FZD_STATUS='Cannot create an atomic Explorer state update'
+    return 1
+  }
   FZD_TEMP_FILES+=("$temporary")
   if ! printf '%s\0' "$@" >"$temporary" || ! mv -fT -- "$temporary" "$FZD_EXPLORER_STATE/$target"; then
+    FZD_STATUS='Cannot publish Explorer state; previous state retained'
     _remove_temp "$temporary"
     return 1
   fi

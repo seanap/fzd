@@ -5,6 +5,43 @@ load helpers/trash
 setup() { setup_terminal_fixture; }
 teardown() { stop_terminal; }
 
+@test "real terminal preserves inherited initial query and colors while reserving operation keys" {
+  export FZF_DEFAULT_OPTS='--query=needle --multi --expect=ctrl-c --color=fg:7'
+  printf payload >"$FIXTURE_ROOT/needle-file"
+  printf payload >"$FIXTURE_ROOT/other"
+  start_terminal '1/3'
+  wait_screen '1/3'
+  tmux -S "$SOCKET" send-keys C-c
+  wait_screen 'COPY: needle-file'
+  wait_screen '1/3'
+  tmux -S "$SOCKET" send-keys Escape
+  wait_file "$FZD_PTY_STATUS"
+  [ "$(cat "$FZD_PTY_STATUS")" -eq 130 ]
+  [ ! -s "$FZD_PTY_RESULT" ]
+}
+
+@test "real terminal pickers ignore inherited queries and print-query without losing the local query" {
+  stub_trash_backend
+  rm "$TEST_BIN/fzf"
+  export PATH="$TEST_BIN:$PATH"
+  export FZF_DEFAULT_OPTS='--query=needle --print-query --tac'
+  printf payload >"$FIXTURE_ROOT/needle-item"
+  start_terminal '1/2'
+  tmux -S "$SOCKET" send-keys M-h
+  wait_screen 'Recent > '
+  wait_screen '1/1'
+  tmux -S "$SOCKET" send-keys Escape
+  wait_screen '1/2'
+  tmux -S "$SOCKET" send-keys F8
+  wait_screen '2/2'
+  tmux -S "$SOCKET" send-keys Enter
+  wait_screen 'Trash cancelled'
+  [ -f "$FIXTURE_ROOT/needle-item" ]
+  tmux -S "$SOCKET" send-keys Escape
+  wait_file "$FZD_PTY_STATUS"
+  [ ! -s "$FZD_PTY_RESULT" ]
+}
+
 @test "real terminal F8 requires explicit confirmation and keeps the application usable" {
   stub_trash_backend
   rm "$TEST_BIN/fzf"
@@ -196,8 +233,10 @@ clipboard_terminal_cycle() {
   tmux -S "$SOCKET" send-keys -l needle-target
   wait_screen '1/'
   tmux -S "$SOCKET" send-keys Right
+  wait_screen '2/2'
   wait_screen inside-global
   tmux -S "$SOCKET" send-keys M-Left
+  wait_screen Back
   wait_screen inside-local
   tmux -S "$SOCKET" send-keys Up
   wait_screen '> ../' '▌ ../'

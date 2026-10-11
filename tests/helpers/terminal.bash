@@ -20,7 +20,7 @@ start_terminal() {
   local command
   printf -v command 'exec bash --noprofile --norc %q' "$FZD_REPO/tests/helpers/pty-session"
   tmux -S "$SOCKET" -f /dev/null new-session -d -x 120 -y 32 -s fzd -c "$FIXTURE_ROOT" "$command"
-  wait_screen '../'
+  wait_screen "${1:-../}"
 }
 wait_screen() {
   local attempt screen pattern

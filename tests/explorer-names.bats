@@ -3,6 +3,22 @@ load helpers/common
 load helpers/explorer
 setup() { setup_explorer_fixture; }
 
+@test "a competing destination created during rename is not replaced" {
+  printf original >"$FIXTURE_ROOT/old"
+  cat >"$TEST_BIN/mv" <<'SH'
+#!/bin/bash
+if [[ $1 == -nT ]]; then printf competitor >"${@: -1}"; fi
+exec /usr/bin/mv "$@"
+SH
+  chmod +x "$TEST_BIN/mv"
+  run bash -euo pipefail -c '
+    source "$FZD_TEST_HELPER"; init_operations
+    if _rename_item "$CUR/old" new; then exit 1; fi
+    [[ $(cat "$CUR/old") == original && $(cat "$CUR/new") == competitor ]]
+  '
+  [ "$status" -eq 0 ]
+}
+
 @test "name prompt codec roundtrips every non-NUL byte and keeps valid Unicode readable" {
   run bash -euo pipefail -c '
     source "$FZD_TEST_HELPER"; init_operations; bytes=""

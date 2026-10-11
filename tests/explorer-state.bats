@@ -3,6 +3,43 @@ load helpers/common
 load helpers/explorer
 setup() { setup_explorer_fixture; }
 
+@test "failed atomic publication retains the previous state and permits retry" {
+  mkdir -p "$FIXTURE_ROOT/other"
+  cat >"$TEST_BIN/mv" <<'SH'
+#!/bin/bash
+[[ ${FZD_TEST_FAIL_STATE:-0} != 1 ]] || exit 42
+exec /usr/bin/mv "$@"
+SH
+  chmod +x "$TEST_BIN/mv"
+  run bash -euo pipefail -c '
+    source "$FZD_TEST_HELPER"; init_explorer
+    _recents_flush; _recent_queue "$CUR/other"
+    export FZD_TEST_FAIL_STATE=1
+    if _recents_flush; then exit 1; fi
+    [[ $FZD_STATUS == *"previous state retained"* ]]
+    _state_lock; _recents_read; _state_unlock
+    [[ ${RAW_RECENTS[0]} == "$CUR" && ${RECENT_PENDING[0]} == "$CUR/other" ]]
+    [[ ${#FZD_TEMP_FILES[@]} == 0 ]]
+    export FZD_TEST_FAIL_STATE=0
+    _recents_flush; [[ ${RECENTS[0]} == "$CUR/other" ]]
+  '
+  [ "$status" -eq 0 ]
+}
+
+@test "invalid clipboard versions truncated records and extra fields are rejected" {
+  run bash -euo pipefail -c '
+    source "$FZD_TEST_HELPER"; init_explorer; _state_lock
+    printf "%s\0" FZD-CLIPBOARD-2 copy "$CUR/item" >"$FZD_EXPLORER_STATE/clipboard"
+    if _clipboard_read; then exit 1; fi
+    printf "%s\0%s" FZD-CLIPBOARD-1 copy >"$FZD_EXPLORER_STATE/clipboard"
+    if _clipboard_read; then exit 1; fi
+    printf "%s\0" FZD-CLIPBOARD-1 copy "$CUR/item" "" >"$FZD_EXPLORER_STATE/clipboard"
+    if _clipboard_read; then exit 1; fi
+    _state_unlock
+  '
+  [ "$status" -eq 0 ]
+}
+
 @test "local Enter and global Enter persist the returned directory as most recent" {
   local mode
   mkdir -p "$FIXTURE_ROOT/child"

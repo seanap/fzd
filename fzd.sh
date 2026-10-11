@@ -635,7 +635,7 @@ _run_global_overlay() {
     FZD_SCREEN_ACTIVE=${#FZD_SCREEN_OPTS[@]}
     "$FZF_BIN" \
       "${FZD_SCREEN_OPTS[@]}" \
-      --ansi --height=100% --layout=reverse --border --no-mouse \
+      --ansi --height=100% --layout=reverse --border --no-mouse --no-multi --no-expect \
       --delimiter "$DELIM" --with-nth=2.. \
       --prompt "global:${FZD_GLOBAL_ROOT%/}/ > " \
       --disabled \
@@ -662,7 +662,7 @@ _run_global_overlay() {
     FZD_SCREEN_ACTIVE=${#FZD_SCREEN_OPTS[@]}
     "$FZF_BIN" \
       "${FZD_SCREEN_OPTS[@]}" \
-      --ansi --height=100% --layout=reverse --border --no-mouse \
+      --ansi --height=100% --layout=reverse --border --no-mouse --no-multi --no-expect \
       --delimiter "$DELIM" --with-nth=2.. \
       --prompt "global:${FZD_GLOBAL_ROOT%/}/ > " \
       --preview "$self_command --_preview {1}" \
@@ -824,6 +824,8 @@ main() {
       dbg "no caret this frame"
     fi
     START_POS=""
+    local QUERY_OPT=()
+    [[ ! ${FZD_QUERY+x} ]] || QUERY_OPT=(--query="$FZD_QUERY")
 
     local CTRL self_command control_command prompt
     _make_temp || return 1; CTRL=$REPLY
@@ -835,11 +837,11 @@ main() {
     mapfile -t FZF_OUT < <(
       printf '%s\n' "${LINES[@]}" | "$FZF_BIN" \
         "${FZD_SCREEN_OPTS[@]}" \
-        --ansi --height=100% --layout=reverse --border --no-mouse \
+        --ansi --height=100% --layout=reverse --border --no-mouse --no-multi --no-expect \
         --delimiter "$DELIM" --with-nth=2.. \
         --prompt "$prompt/ > " --border-label " F1 help ${FZD_STATUS:+· $FZD_STATUS }" \
         --print-query --history="$HIST_FILE" --history-size=4000 \
-        --query="${FZD_QUERY:-}" \
+        "${QUERY_OPT[@]}" \
         "${START_OPT[@]}" \
         --preview "$self_command --_preview {1}" \
         --preview-window=right,60%:wrap \
@@ -951,7 +953,7 @@ _fzd_entry() {
   fi
   unset FZF_CTRL_T_COMMAND FZF_ALT_C_COMMAND FZF_DEFAULT_COMMAND 2>/dev/null || true
   HAS_POS=0
-  if printf 'x\n' | "$FZF_BIN" --bind='start:pos(1)' --select-1 --exit-0 >/dev/null 2>&1; then HAS_POS=1; fi
+  if printf 'x\n' | FZF_DEFAULT_OPTS='' FZF_DEFAULT_OPTS_FILE=/dev/null "$FZF_BIN" --bind='start:pos(1)' --filter=x >/dev/null 2>&1; then HAS_POS=1; fi
   # Keep the previous frame during navigation; restore before editors and exit.
   # A usable terminfo restore capability is required, so tput stays optional.
   if [[ -t 2 ]] && command -v tput >/dev/null 2>&1; then
