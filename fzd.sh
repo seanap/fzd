@@ -173,6 +173,8 @@ _remove_temp() {
 }
 _cleanup() {
   _restore_screen
+  if [[ ${FZD_STATE_HELD:-0} == 1 ]]; then _state_unlock; fi
+  if declare -F _operations_cleanup >/dev/null; then _operations_cleanup; fi
   if ((${#RECENT_PENDING[@]})); then
     if ! _explorer_load state || ! _recents_flush; then
       printf 'fzd: %s\n' "${FZD_STATUS:-Could not save recent directories}" >&2
@@ -231,7 +233,7 @@ list_entries() {
   for path in "$CUR"/* "$CUR"/.[!.]* "$CUR"/..?*; do
     base="${path##*/}"
     if [[ -d "$path" ]]; then DIRS+=("$base/")
-    elif [[ -f "$path" ]]; then FILES+=("$base"); fi
+    elif [[ -f "$path" || -L "$path" ]]; then FILES+=("$base"); fi
   done
 
   if (( ${#DIRS[@]} > 1 )); then
@@ -512,7 +514,7 @@ _global_format() {
     [[ "${candidate,,}" == *"$query"* ]] || continue
     if [[ -d "$path" ]]; then
       color=$c_dir; suffix=/
-    elif [[ -f "$path" ]]; then
+    elif [[ -f "$path" || -L "$path" ]]; then
       color=$c_file; suffix=""
     else
       continue
@@ -629,6 +631,7 @@ _run_global_overlay() {
   if [[ "$backend" == "locate" || "$backend" == "live" ]]; then
     _make_temp || return 0; CTRL=$REPLY
     control_command=$(_shell_quote "$CTRL")
+    _explorer_bindings "$control_command" global
     FZD_SCREEN_ACTIVE=${#FZD_SCREEN_OPTS[@]}
     "$FZF_BIN" \
       "${FZD_SCREEN_OPTS[@]}" \
@@ -640,6 +643,7 @@ _run_global_overlay() {
       --preview-window=right,60%:wrap \
       --bind "change:reload:$self_command --_global_list --q {q} || true" \
       --bind "esc:abort" \
+      "${EXPLORER_BINDS[@]}" \
       --bind "enter:execute-silent(echo A:G_ENTER:{1} > $control_command)+abort" \
       --bind "left:execute-silent(echo A:G_LEFT:{1} > $control_command)+abort" \
       --bind "right:execute-silent(echo A:G_RIGHT:{1} > $control_command)+abort" \
@@ -649,6 +653,7 @@ _run_global_overlay() {
     _make_temp || return 0; CTRL=$REPLY
     _make_temp || return 0; SRC=$REPLY
     control_command=$(_shell_quote "$CTRL")
+    _explorer_bindings "$control_command" global
     if ! "$FZD_SELF" --_global_index > "$SRC"; then
       _remove_temp "$SRC" "$CTRL"
       return 0
@@ -662,6 +667,7 @@ _run_global_overlay() {
       --preview "$self_command --_preview {1}" \
       --preview-window=right,60%:wrap \
       --bind "esc:abort" \
+      "${EXPLORER_BINDS[@]}" \
       --bind "enter:execute-silent(echo A:G_ENTER:{1} > $control_command)+abort" \
       --bind "left:execute-silent(echo A:G_LEFT:{1} > $control_command)+abort" \
       --bind "right:execute-silent(echo A:G_RIGHT:{1} > $control_command)+abort" \
@@ -680,6 +686,11 @@ _run_global_overlay() {
   _decode_path "$raw_b64"; sel_path=$REPLY
 
   case "$action" in
+    COPY|CUT)
+      if _explorer_load state && _explorer_load operations; then
+        _explorer_action "$action" "$sel_path" global || true
+      fi
+      ;;
     G_RIGHT)
       if [[ -d "$sel_path" ]]; then RAW="$sel_path"; enter_dir_from_raw; fi
       ;;
@@ -778,9 +789,9 @@ _explorer_load() {
 _explorer_bindings() {
   local control=$1 scope=${2:-local} pair key action
   EXPLORER_BINDS=()
-  local pairs=()
+  local pairs=('ctrl-c:COPY' 'alt-c:COPY' 'ctrl-x:CUT' 'alt-x:CUT')
   if [[ $scope == local ]]; then
-    pairs+=('alt-left:BACK' 'alt-right:FORWARD' 'alt-h:RECENTS' 'f1:HELP')
+    pairs+=('alt-left:BACK' 'alt-right:FORWARD' 'alt-h:RECENTS' 'f1:HELP' 'ctrl-v:PASTE' 'alt-v:PASTE')
   fi
   for pair in "${pairs[@]}"; do
     key=${pair%%:*}; action=${pair#*:}
@@ -856,7 +867,7 @@ main() {
     _history_remember
     FZD_STATUS=''
     FZD_QUERY=''
-    case "$action" in HELP|RECENTS) FZD_QUERY=${FZF_OUT[0]:-} ;; esac
+    case "$action" in HELP|RECENTS|COPY|CUT|PASTE) FZD_QUERY=${FZF_OUT[0]:-} ;; esac
 
     case "$action" in
       BACK) _history_step -1 ;;
@@ -864,6 +875,11 @@ main() {
       GLOBAL) _run_global_overlay ;;
       RECENTS) if _explorer_load ui; then _ui_recents || true; fi ;;
       HELP) if _explorer_load ui; then _ui_help; fi ;;
+      COPY|CUT|PASTE)
+        if _explorer_load state && _explorer_load operations; then
+          _explorer_action "$action" "$RAW" local || true
+        fi
+        ;;
       LEFT)
         go_up
         ;;

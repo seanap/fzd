@@ -108,9 +108,11 @@ SH
   [ "$(cat "$FZD_PTY_RESULT")" = "$FIXTURE_ROOT" ]
 }
 
-@test "real terminal Ctrl-C leaves no control files" {
+@test "real terminal Ctrl-C refuses the navigation row and Esc leaves no control files" {
   start_terminal
   tmux -S "$SOCKET" send-keys C-c
+  wait_screen 'Select an existing file or directory'
+  tmux -S "$SOCKET" send-keys Escape
   wait_file "$FZD_PTY_STATUS"
   [ "$(cat "$FZD_PTY_STATUS")" -eq 130 ]
   run find "$XDG_RUNTIME_DIR" -type f

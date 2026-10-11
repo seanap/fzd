@@ -102,6 +102,10 @@ _ui_help() {
     'Search'
     '  Type             Fuzzy search in this directory'
     '  Ctrl+F           Global search (Left / Esc returns)'
+    'File Operations'
+    '  Ctrl+C / Alt+C   Copy selected item'
+    '  Ctrl+X / Alt+X   Cut selected item (move on Paste)'
+    '  Ctrl+V / Alt+V   Paste into current directory'
   )
   help+=('Other' '  F1 / Esc         Close help' '  Esc / Ctrl+G     Exit FZD' '  Up / Down        Select; scroll this help')
   printf '%s\n' "${help[@]}" | "$FZF_BIN" "${FZD_SCREEN_OPTS[@]}" \

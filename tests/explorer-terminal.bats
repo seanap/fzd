@@ -4,6 +4,69 @@ load helpers/terminal
 setup() { setup_terminal_fixture; }
 teardown() { stop_terminal; }
 
+clipboard_terminal_cycle() {
+  local copy_key=$1 cut_key=$2 paste_key=$3
+  printf payload >"$FIXTURE_ROOT/needle-item"
+  mkdir -p "$FIXTURE_ROOT/dest-one" "$FIXTURE_ROOT/dest-two"
+  start_terminal
+  tmux -S "$SOCKET" send-keys -l needle
+  wait_screen '1/4'
+  tmux -S "$SOCKET" send-keys "$copy_key"
+  wait_screen 'COPY: needle-item'
+  tmux -S "$SOCKET" send-keys C-u
+  tmux -S "$SOCKET" send-keys -l dest-one
+  wait_screen '1/4'
+  tmux -S "$SOCKET" send-keys Right
+  wait_screen '1/1'
+  tmux -S "$SOCKET" send-keys "$paste_key"
+  wait_screen 'Copied: needle-item'
+  tmux -S "$SOCKET" send-keys "$cut_key"
+  wait_screen 'CUT: needle-item'
+  tmux -S "$SOCKET" send-keys Left
+  wait_screen '> dest-one/' '▌ dest-one/'
+  tmux -S "$SOCKET" send-keys -l dest-two
+  wait_screen '1/4'
+  tmux -S "$SOCKET" send-keys Right
+  wait_screen '1/1'
+  tmux -S "$SOCKET" send-keys "$paste_key"
+  wait_screen 'Moved: needle-item'
+  tmux -S "$SOCKET" send-keys Escape
+  wait_file "$FZD_PTY_STATUS"
+  [ "$(cat "$FIXTURE_ROOT/dest-two/needle-item")" = payload ]
+  [ ! -e "$FIXTURE_ROOT/dest-one/needle-item" ]
+  [ "$(cat "$FIXTURE_ROOT/needle-item")" = payload ]
+  [ ! -s "$FZD_PTY_RESULT" ]
+}
+
+@test "real terminal Ctrl-C Ctrl-X Ctrl-V copy cut and paste without aborting" {
+  clipboard_terminal_cycle C-c C-x C-v
+}
+
+@test "real terminal Alt-C Alt-X Alt-V provide the same clipboard operations" {
+  clipboard_terminal_cycle M-c M-x M-v
+}
+
+@test "real terminal can copy a selected global result and paste into the browsed directory" {
+  printf payload >"$FIXTURE_ROOT/needle-global"
+  mkdir -p "$FIXTURE_ROOT/dest"
+  start_terminal
+  tmux -S "$SOCKET" send-keys C-f
+  wait_screen 'global:/ >'
+  tmux -S "$SOCKET" send-keys -l needle-global
+  wait_screen '1/'
+  tmux -S "$SOCKET" send-keys C-c
+  wait_screen 'COPY: needle-global'
+  tmux -S "$SOCKET" send-keys -l dest
+  wait_screen '1/3'
+  tmux -S "$SOCKET" send-keys Right
+  wait_screen '1/1'
+  tmux -S "$SOCKET" send-keys C-v
+  wait_screen 'Copied: needle-global'
+  tmux -S "$SOCKET" send-keys Escape
+  wait_file "$FZD_PTY_STATUS"
+  [ "$(cat "$FIXTURE_ROOT/dest/needle-global")" = payload ]
+}
+
 @test "real terminal Alt arrows traverse local and global visits without replacing parent navigation" {
   mkdir -p "$FIXTURE_ROOT/child" "$FIXTURE_ROOT/needle-target"
   printf text >"$FIXTURE_ROOT/child/inside-local"

@@ -31,8 +31,12 @@ _state_lock() {
     FZD_STATUS='Explorer state is busy; try again'
     return 1
   fi
+  FZD_STATE_HELD=1
 }
-_state_unlock() { exec {FZD_LOCK_FD}>&-; }
+_state_unlock() {
+  exec {FZD_LOCK_FD}>&-
+  FZD_STATE_HELD=0
+}
 _state_write() {
   local target=$1 temporary
   shift
