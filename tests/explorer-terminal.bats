@@ -1,8 +1,53 @@
 #!/usr/bin/env bats
 load helpers/common
 load helpers/terminal
+load helpers/trash
 setup() { setup_terminal_fixture; }
 teardown() { stop_terminal; }
+
+@test "real terminal F8 requires explicit confirmation and keeps the application usable" {
+  stub_trash_backend
+  rm "$TEST_BIN/fzf"
+  export PATH="$TEST_BIN:$PATH"
+  printf payload >"$FIXTURE_ROOT/needle-trash"
+  start_terminal
+  tmux -S "$SOCKET" send-keys -l needle-trash
+  wait_screen '1/2'
+  tmux -S "$SOCKET" send-keys F8
+  wait_screen 'Move to Trash: needle-trash'
+  tmux -S "$SOCKET" send-keys Enter
+  wait_screen 'Trash cancelled'
+  [ -f "$FIXTURE_ROOT/needle-trash" ]
+  tmux -S "$SOCKET" send-keys F8
+  wait_screen 'Confirm >'
+  tmux -S "$SOCKET" send-keys Down Enter
+  wait_screen 'Moved to Trash: needle-trash'
+  [ ! -e "$FIXTURE_ROOT/needle-trash" ]
+  [ -f "$FZD_TEST_TRASH/needle-trash" ]
+  tmux -S "$SOCKET" send-keys Escape
+  wait_file "$FZD_PTY_STATUS"
+  [ ! -s "$FZD_PTY_RESULT" ]
+}
+
+@test "real terminal Delete still edits the query and F1 help works at 60 by 16" {
+  printf payload >"$FIXTURE_ROOT/needle"
+  printf payload >"$FIXTURE_ROOT/eedle-other"
+  start_terminal
+  tmux -S "$SOCKET" send-keys -l needle
+  wait_screen '1/3'
+  tmux -S "$SOCKET" send-keys C-a DC
+  wait_screen '2/3'
+  [ -f "$FIXTURE_ROOT/needle" ]
+  tmux -S "$SOCKET" resize-window -t fzd:0 -x 60 -y 16
+  tmux -S "$SOCKET" send-keys F1
+  wait_screen 'Help >'
+  tmux -S "$SOCKET" send-keys -N 20 Down
+  wait_screen Other
+  tmux -S "$SOCKET" send-keys Escape
+  wait_screen '2/3'
+  tmux -S "$SOCKET" send-keys Escape
+  wait_file "$FZD_PTY_STATUS"
+}
 
 @test "real terminal F2 preserves an unusual name unchanged and Ctrl-R renames and restores highlighting" {
   local old=$'needle é\t\n\377' new=$'renamed 雪\n'

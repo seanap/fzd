@@ -24,7 +24,7 @@ setup() {
   unset FZD_FAULT FZD_FAULT_TARGET FZD_FAULT_MARKER
   # No real package manager or sudo is reachable in this fixture.
   local tool
-  for tool in bash sh env cat base64 sort mktemp install sha256sum readlink truncate find file tree micro cp mv rm rmdir mkdir chmod cmp tail uname tar gzip curl sleep kill wc grep head ln touch date tr awk sed cut ls timeout basename dirname realpath flock; do
+  for tool in bash sh env cat base64 sort mktemp install sha256sum readlink truncate find file tree micro cp mv rm rmdir mkdir chmod cmp tail uname tar gzip curl sleep kill wc grep head ln touch date tr awk sed cut ls timeout basename dirname realpath flock stat; do
     ln -s "$(command -v "$tool")" "$TEST_BIN/$tool"
   done
   ln -s "$REAL_FZF" "$TEST_BIN/fzf"

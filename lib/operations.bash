@@ -39,7 +39,7 @@ _operation_descendant() {
   local source destination
   IFS= read -r -d '' source < <(realpath -ze -- "$1") || return 1
   IFS= read -r -d '' destination < <(realpath -ze -- "$2") || return 1
-  if [[ $destination == "$source" || $destination == "$source/"* ]]; then
+  if [[ $source == / || $destination == "$source" || $destination == "$source/"* ]]; then
     FZD_STATUS='Cannot paste a directory into itself or its descendants'
     return 1
   fi
@@ -115,7 +115,8 @@ _clipboard_paste() {
         fi
       else rc=1; fi
       _stage_cleanup "$stage" || {
-        FZD_STATUS="Copy staging retained: $stage"
+        _display_name "$stage"
+        FZD_STATUS="Copy staging retained: $REPLY"
         rc=1
       }
     else
@@ -183,6 +184,57 @@ _mkdir_item() {
   FZD_QUERY=''
   _status_item Created "${CUR%/}/$name"
 }
+_trash_backend() {
+  TRASH_COMMAND=()
+  if command -v gio >/dev/null 2>&1; then
+    TRASH_COMMAND=(gio trash --)
+  elif command -v trash-put >/dev/null 2>&1; then
+    TRASH_COMMAND=(trash-put --)
+  else
+    FZD_STATUS='Trash unavailable: install gio (glib) or trash-cli; nothing deleted'
+    return 1
+  fi
+}
+_trash_item() {
+  local source=$1 expected=${2:-} fingerprint rc=0
+  _operation_item "$source" || return 1
+  _trash_backend || return 1
+  if [[ -d $source && ! -L $source ]] && ! _operation_descendant "$source" "$CUR"; then
+    FZD_STATUS='Cannot trash the directory being browsed or its ancestors'
+    return 1
+  fi
+  _state_lock || return 1
+  if ! _recents_read || ! _clipboard_read; then
+    _state_unlock
+    return 1
+  fi
+  if [[ -n $expected ]]; then
+    fingerprint=$(stat -c '%d:%i:%f:%s:%Z' -- "$source" 2>/dev/null) || {
+      FZD_STATUS='Selected item is unavailable; nothing trashed'
+      _state_unlock
+      return 1
+    }
+    if [[ $fingerprint != "$expected" ]]; then
+      FZD_STATUS='Item changed during confirmation; nothing trashed'
+      _state_unlock
+      return 1
+    fi
+  fi
+  if _operation_run "${TRASH_COMMAND[@]}" "$source"; then
+    if [[ -e $source || -L $source ]]; then
+      FZD_STATUS='Trash did not remove the selected item'
+      rc=1
+    elif ! _references_update "$source" ''; then
+      FZD_STATUS='Item trashed; persistent references could not be saved'
+      rc=1
+    fi
+  else rc=1; fi
+  _state_unlock
+  ((rc == 0)) || return "$rc"
+  FZD_SELECT_NAME=''
+  FZD_QUERY=''
+  _status_item 'Moved to Trash' "$source"
+}
 _explorer_action() {
   case "$1" in
   COPY) _clipboard_set copy "$2" "${3:-local}" ;;
@@ -193,6 +245,15 @@ _explorer_action() {
     if _ui_name Rename "${2##*/}"; then _rename_item "$2" "$REPLY"; else return 1; fi
     ;;
   MKDIR) if _ui_name 'New directory' ''; then _mkdir_item "$REPLY"; else return 1; fi ;;
+  TRASH)
+    local fingerprint
+    _operation_item "$2" && _trash_backend || return 1
+    fingerprint=$(stat -c '%d:%i:%f:%s:%Z' -- "$2" 2>/dev/null) || {
+      FZD_STATUS='Selected item is unavailable; nothing trashed'
+      return 1
+    }
+    if _ui_confirm_trash "$2"; then _trash_item "$2" "$fingerprint"; else return 1; fi
+    ;;
   *) return 1 ;;
   esac
 }

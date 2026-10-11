@@ -10,9 +10,18 @@ _state_lock() {
   FZD_EXPLORER_STATE=$FZD_STATE_DIR/explorer
   # Parent XDG state directories are initialized separately by the application.
   # shellcheck disable=SC2174
-  [[ ! -L $FZD_EXPLORER_STATE ]] && mkdir -p -m 700 -- "$FZD_EXPLORER_STATE" || return 1
-  [[ -O $FZD_EXPLORER_STATE && -d $FZD_EXPLORER_STATE ]] || return 1
-  chmod 700 -- "$FZD_EXPLORER_STATE" || return 1
+  if [[ -L $FZD_EXPLORER_STATE ]] || ! mkdir -p -m 700 -- "$FZD_EXPLORER_STATE"; then
+    FZD_STATUS='Cannot create private Explorer state'
+    return 1
+  fi
+  [[ -O $FZD_EXPLORER_STATE && -d $FZD_EXPLORER_STATE ]] || {
+    FZD_STATUS='Explorer state directory is not owned by this user'
+    return 1
+  }
+  chmod 700 -- "$FZD_EXPLORER_STATE" || {
+    FZD_STATUS='Cannot protect Explorer state permissions'
+    return 1
+  }
   for path in lock recents clipboard; do
     path=$FZD_EXPLORER_STATE/$path
     [[ ! -L $path && (! -e $path || (-f $path && -O $path)) ]] || {
@@ -24,7 +33,11 @@ _state_lock() {
   local old_umask
   old_umask=$(umask)
   umask 077
-  exec {FZD_LOCK_FD}>"$FZD_EXPLORER_STATE/lock"
+  if ! exec {FZD_LOCK_FD}>"$FZD_EXPLORER_STATE/lock"; then
+    umask "$old_umask"
+    FZD_STATUS='Cannot open Explorer state lock'
+    return 1
+  fi
   umask "$old_umask"
   if ! flock -w 2 "$FZD_LOCK_FD"; then
     exec {FZD_LOCK_FD}>&-

@@ -45,7 +45,7 @@ package_for() {
   case "$executable" in
   fd) [[ $PM == pacman ]] && REPLY=fd || REPLY=fd-find ;;
   bat) REPLY=bat ;;
-  base64 | sort | mktemp | install | sha256sum | readlink | truncate | cp | mv | realpath | chmod | rm | mkdir) REPLY=coreutils ;;
+  base64 | sort | mktemp | install | sha256sum | readlink | truncate | cp | mv | realpath | chmod | rm | mkdir | stat) REPLY=coreutils ;;
   flock) [[ $PM == dnf ]] && REPLY=util-linux-core || REPLY=util-linux ;;
   find) REPLY=findutils ;;
   *) REPLY=$executable ;;
@@ -85,7 +85,7 @@ install_packages() {
 collect_missing() {
   local tool
   MISSING=()
-  for tool in base64 sort mktemp install sha256sum readlink truncate find cp mv realpath chmod rm mkdir flock; do
+  for tool in base64 sort mktemp install sha256sum readlink truncate find cp mv realpath chmod rm mkdir flock stat; do
     have "$tool" || MISSING+=("$tool")
   done
   have fzf || [[ -n $FZF_VERSION ]] || MISSING+=(fzf)

@@ -3,6 +3,26 @@ load helpers/common
 load helpers/explorer
 setup() { setup_explorer_fixture; }
 
+@test "local Enter and global Enter persist the returned directory as most recent" {
+  local mode
+  mkdir -p "$FIXTURE_ROOT/child"
+  export FZD_STUB_PLAN="$BATS_TEST_TMPDIR/actions"
+  for mode in local global; do
+    : >"$FZD_STUB_PLAN"
+    if [[ $mode == global ]]; then
+      plan_action ctrl-f "$FIXTURE_ROOT"
+      plan_action G_ENTER "$FIXTURE_ROOT/child"
+    else plan_action ENTER "$FIXTURE_ROOT/child"; fi
+    run_planned_session
+    [ "$status" -eq 0 ]
+    [ "$output" = "$FIXTURE_ROOT/child" ]
+    local records=()
+    mapfile -d '' -t records <"$XDG_STATE_HOME/fzd/explorer/recents"
+    [ "${records[0]}" = FZD-RECENT-1 ]
+    [ "${records[1]}" = "$FIXTURE_ROOT/child" ]
+  done
+}
+
 @test "browser history traverses without duplicates and discards the forward branch" {
   mkdir -p "$FIXTURE_ROOT/a" "$FIXTURE_ROOT/b" "$FIXTURE_ROOT/c"
   run bash -euo pipefail -c '

@@ -1,6 +1,28 @@
 #!/usr/bin/env bats
 load helpers/installer
 
+@test "installed Explorer modules load from share and uninstall removes only owned helpers" {
+  install_fzd --shell none
+  assert_installed
+  local module
+  for module in state operations ui; do cmp "$REPO/lib/$module.bash" "$DATA/lib/$module.bash"; done
+  mkdir -p "$HOME/files"
+  run bash -euo pipefail -c '
+    source "$1/bin/fzd"; FZD_SELF=$1/bin/fzd
+    _fzd_paths; _fzd_init; CUR=$HOME/files; _history_init
+    _explorer_load state; _explorer_load operations; _explorer_load ui
+    _mkdir_item "created through installed helpers"
+  ' _ "$PREFIX"
+  [ "$status" -eq 0 ]
+  [ -d "$HOME/files/created through installed helpers" ]
+  install_fzd --verify
+  [ "$status" -eq 0 ]
+  install_fzd --uninstall
+  [ "$status" -eq 0 ]
+  for module in state operations ui; do [ ! -e "$DATA/lib/$module.bash" ]; done
+  [ -d "$HOME/files/created through installed helpers" ]
+}
+
 @test "fresh noninteractive install verifies without root and matches the runtime exactly" {
   install_fzd
   assert_installed

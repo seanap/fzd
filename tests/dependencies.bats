@@ -1,6 +1,20 @@
 #!/usr/bin/env bats
 load helpers/installer
 
+@test "Explorer dependency detection reports missing flock and maps distribution providers" {
+  rm "$TEST_BIN/flock"
+  install_fzd --deps none
+  [ "$status" -ne 0 ]
+  [[ "$output" == *'Missing prerequisites: flock'* ]]
+  [ ! -e "$PREFIX/bin/fzd" ]
+  run bash -euo pipefail -c '
+    source "$1/installer/dependencies.bash"
+    for PM in apt dnf pacman; do package_for flock; printf "%s:%s\n" "$PM" "$REPLY"; done
+  ' _ "$REPO"
+  [ "$status" -eq 0 ]
+  [ "$output" = $'apt:util-linux\ndnf:util-linux-core\npacman:util-linux' ]
+}
+
 @test "Ubuntu and Debian apt transaction authenticates once and refreshes metadata once" {
   stub_managers
   dependency_shell apt

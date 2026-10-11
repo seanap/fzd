@@ -795,7 +795,7 @@ _explorer_bindings() {
   local pairs=('ctrl-c:COPY' 'alt-c:COPY' 'ctrl-x:CUT' 'alt-x:CUT')
   if [[ $scope == local ]]; then
     pairs+=('alt-left:BACK' 'alt-right:FORWARD' 'alt-h:RECENTS' 'f1:HELP' 'ctrl-v:PASTE' 'alt-v:PASTE'
-      'ctrl-r:RENAME' 'f2:RENAME' 'f7:MKDIR' 'ctrl-n:MKDIR')
+      'ctrl-r:RENAME' 'f2:RENAME' 'f7:MKDIR' 'ctrl-n:MKDIR' 'f8:TRASH')
   fi
   for pair in "${pairs[@]}"; do
     key=${pair%%:*}; action=${pair#*:}
@@ -871,7 +871,7 @@ main() {
     _history_remember
     FZD_STATUS=''
     FZD_QUERY=''
-    case "$action" in HELP|RECENTS|COPY|CUT|PASTE|RENAME|MKDIR) FZD_QUERY=${FZF_OUT[0]:-} ;; esac
+    case "$action" in HELP|RECENTS|COPY|CUT|PASTE|RENAME|MKDIR|TRASH) FZD_QUERY=${FZF_OUT[0]:-} ;; esac
 
     case "$action" in
       BACK) _history_step -1 ;;
@@ -879,7 +879,7 @@ main() {
       GLOBAL) _run_global_overlay ;;
       RECENTS) if _explorer_load ui; then _ui_recents || true; fi ;;
       HELP) if _explorer_load ui; then _ui_help; fi ;;
-      COPY|CUT|PASTE|RENAME|MKDIR)
+      COPY|CUT|PASTE|RENAME|MKDIR|TRASH)
         if _explorer_load state && _explorer_load operations; then
           if [[ $action == COPY || $action == CUT || $action == PASTE ]] || _explorer_load ui; then
             _explorer_action "$action" "$RAW" local || true

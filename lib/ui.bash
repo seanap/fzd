@@ -95,8 +95,10 @@ _ui_name() {
 }
 _ui_confirm_trash() {
   local path=$1 capture choice rc=0
-  _display_name "$path"
-  local label="Trash: $REPLY"
+  _ui_encode_name "${path##*/}"
+  local label="Move to Trash: $REPLY"
+  _display_name "${path%/*}"
+  label+=$'\n'"In: $REPLY"
   _make_temp || return 1
   capture=$REPLY
   printf 'Cancel\nMove to Trash\n' | "$FZF_BIN" "${FZD_SCREEN_OPTS[@]}" \
@@ -161,6 +163,9 @@ _ui_help() {
       '  Ctrl+X / Alt+X   Cut result and return')
   else
     help+=('  Ctrl+R / F2      Rename selected item' '  Ctrl+N / F7      Create directory')
+    if command -v gio >/dev/null 2>&1 || command -v trash-put >/dev/null 2>&1; then
+      help+=('  F8               Move to Trash (confirmation required)')
+    fi
   fi
   help+=('Other' '  F1 / Esc         Close help' '  Esc / Ctrl+G     Exit FZD' '  Up / Down        Select; scroll this help')
   printf '%s\n' "${help[@]}" | "$FZF_BIN" "${FZD_SCREEN_OPTS[@]}" \
