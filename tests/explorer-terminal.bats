@@ -222,10 +222,13 @@ clipboard_terminal_cycle() {
   tmux -S "$SOCKET" send-keys -l child
   wait_screen '1/3'
   tmux -S "$SOCKET" send-keys Right
+  wait_screen 'child/ >'
   wait_screen inside-local
   tmux -S "$SOCKET" send-keys M-Left
+  wait_screen 'files/ >'
   wait_screen '> child/' '▌ child/'
   tmux -S "$SOCKET" send-keys M-Right
+  wait_screen 'child/ >'
   wait_screen Forward
   wait_screen inside-local
   tmux -S "$SOCKET" send-keys C-f
@@ -234,8 +237,10 @@ clipboard_terminal_cycle() {
   wait_screen '1/'
   tmux -S "$SOCKET" send-keys Right
   wait_screen '2/2'
+  wait_screen 'needle-target/ >'
   wait_screen inside-global
   tmux -S "$SOCKET" send-keys M-Left
+  wait_screen 'child/ >'
   wait_screen Back
   wait_screen inside-local
   tmux -S "$SOCKET" send-keys Up
@@ -273,16 +278,20 @@ clipboard_terminal_cycle() {
   tmux -S "$SOCKET" send-keys -l child
   wait_screen '1/2'
   tmux -S "$SOCKET" send-keys Right
+  wait_screen 'child/ >'
   wait_screen inside
   tmux -S "$SOCKET" send-keys Left
+  wait_screen 'files/ >'
   wait_screen '> child/' '▌ child/'
   tmux -S "$SOCKET" send-keys M-h
   wait_screen 'Recent >'
   tmux -S "$SOCKET" send-keys -l child
   wait_screen '1/2'
   tmux -S "$SOCKET" send-keys Enter
+  wait_screen 'child/ >'
   wait_screen inside
   tmux -S "$SOCKET" send-keys M-Left
+  wait_screen 'files/ >'
   wait_screen '> child/' '▌ child/'
   tmux -S "$SOCKET" send-keys Enter
   wait_file "$FZD_PTY_STATUS"

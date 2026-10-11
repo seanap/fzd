@@ -2,7 +2,7 @@
 setup_fixture() {
   bats_require_minimum_version 1.5.0
   FZD_REPO=$(cd -- "$BATS_TEST_DIRNAME/.." && pwd)
-  FZD_SCRIPT="$FZD_REPO/fzd.sh"
+  FZD_SCRIPT=${FZD_TEST_SCRIPT:-$FZD_REPO/fzd.sh}
   FZD_REAL_FD=$(command -v fd 2>/dev/null || command -v fdfind 2>/dev/null || true)
   FZD_REAL_LOCATE=$(command -v plocate 2>/dev/null || true)
   FZD_REAL_UPDATEDB=$(command -v updatedb.plocate 2>/dev/null || command -v updatedb 2>/dev/null || true)

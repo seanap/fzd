@@ -34,6 +34,8 @@ ubuntu | debian)
   dpkg -V fzd
   ;;
 arch)
+  # Official minimal image excludes docs/manpages. Validate our full payload.
+  sed -i '/^NoExtract[[:space:]]*=/d' /etc/pacman.conf
   pacman -Syu --noconfirm --needed base-devel
   useradd -m builder
   printf 'builder ALL=(ALL) NOPASSWD: /usr/bin/pacman\n' >/etc/sudoers.d/fzd-builder
@@ -112,7 +114,11 @@ for test_file in tests/*.bats; do
 done
 useradd -m validator
 chown -R validator:validator "$source_root" /results
-runuser -u validator -- env HOME=/work bash tests/run.sh "${test_files[@]}" --print-output-on-failure >/results/tests.tap
+if ! runuser -u validator -- env HOME=/work FZD_TEST_SCRIPT=/usr/bin/fzd \
+  bash tests/run.sh "${test_files[@]}" --print-output-on-failure --no-tempdir-cleanup >/results/tests.tap; then
+  tar -czf /results/failed-fixtures.tar.gz -C "$source_root/.test-work/tmp" .
+  exit 1
+fi
 if grep -Eq '^(not ok|ok .*# skip)' /results/tests.tap; then exit 1; fi
 tail -n5 /results/tests.tap
 

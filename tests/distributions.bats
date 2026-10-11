@@ -3,7 +3,8 @@ load helpers/installer
 
 profile_install() {
   [[ -n $REAL_BWRAP ]] || skip 'distribution profile isolation needs bubblewrap/user namespaces'
-  local id=$1 expected=$2 tool
+  local id=$1 expected=$2 tool os_release
+  os_release=$(readlink -f /etc/os-release)
   printf 'ID=%s\n' "$id" >"$BATS_TEST_TMPDIR/os-release"
   export FZD_TEST_FIND=$(readlink -f "$TEST_BIN/find")
   rm "$TEST_BIN/find"
@@ -25,7 +26,7 @@ STUB
   # can be written. Network/PID isolation prevents accidental external effects.
   run "$REAL_BWRAP" --unshare-user --unshare-pid --unshare-net --die-with-parent \
     --ro-bind / / --bind "$BATS_TEST_TMPDIR" "$BATS_TEST_TMPDIR" \
-    --ro-bind "$BATS_TEST_TMPDIR/os-release" /etc/os-release --proc /proc --dev /dev \
+    --ro-bind "$BATS_TEST_TMPDIR/os-release" "$os_release" --proc /proc --dev /dev \
     -- bash "$REPO/install.sh" --noninteractive --deps required --shell none --no-config
   assert_installed
   grep -q "$expected" "$CALLS"
