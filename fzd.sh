@@ -491,8 +491,9 @@ _global_format() {
     _display_name "$base"; base=$REPLY
     paths+=("$path"); labels+=("$color$base$suffix$c_reset")
     ((count += 1))
-    # Bound memory and allow large streams to emit before enumeration completes.
-    if ((${#paths[@]} == 128)); then
+    # Show the first hit immediately even if a rare query keeps scanning.
+    # Batch subsequent records to bound memory without per-path encoders.
+    if ((count == 1 || ${#paths[@]} == 128)); then
       _global_print_batch paths labels || return 1
       paths=(); labels=()
     fi

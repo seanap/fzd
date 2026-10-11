@@ -134,3 +134,25 @@ SH
   ' _ "$FZD_SCRIPT"
   [ "$status" -eq 0 ]
 }
+
+@test "global search emits the first match while its producer is still scanning" {
+  local path="$FIXTURE_ROOT/needle-first"
+  printf text >"$path"
+  run bash -euo pipefail -c '
+    source "$1"; c_dir=; c_file=; c_reset=
+    _global_prepare
+    coproc FORMAT {
+      { printf "%s\0" "$2"; IFS= read -r gate; } | _global_format needle
+    }
+    pid=$FORMAT_PID; read_fd=${FORMAT[0]}; write_fd=${FORMAT[1]}
+    rc=0
+    IFS= read -r -t 3 first <&"$read_fd" || rc=$?
+    printf "done\n" >&"$write_fd"
+    while IFS= read -r rest <&"$read_fd"; do :; done
+    wait "$pid"
+    ((rc == 0))
+    _decode_path "${first%%$'"'"'\t'"'"'*}"
+    [[ "$REPLY" == "$2" ]]
+  ' _ "$FZD_SCRIPT" "$path"
+  [ "$status" -eq 0 ]
+}
