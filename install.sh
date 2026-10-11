@@ -111,6 +111,10 @@ source "$SCRIPT_DIR/installer/lifecycle.bash"
 
 if [[ -n $STAGE ]]; then
   [[ $STAGE == /* && $STAGE != / && $STAGE != *'/../'* && $STAGE != */.. ]] || die '--stage requires an absolute disposable staging directory'
+  if ! STAGE=$(readlink -m -- "$STAGE" && printf '.'); then die 'Could not resolve staging root; GNU readlink -m is required'; fi
+  STAGE=${STAGE%.}
+  STAGE=${STAGE%$'\n'}
+  [[ -n $STAGE && $STAGE != / ]] || die 'Resolved staging root cannot be empty or /'
   [[ $PREFIX_SET == 1 && $MODE == install && $DEPS == none && -z $FZF_VERSION && -z $FZF_SHA256 ]] || die 'Package staging requires --prefix and forbids dependency downloads and lifecycle operations'
   [[ -f $SCRIPT_DIR/fzd.sh ]] || die 'Package staging requires the source checkout'
   install -Dm755 "$SCRIPT_DIR/fzd.sh" "$STAGE$PREFIX/bin/fzd"

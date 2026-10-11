@@ -46,4 +46,14 @@ STUB
 
 @test "isolated Arch profile detects pacman installs missing findutils and completes" {
   profile_install arch 'pacman <-S> <--needed> <--noconfirm> <findutils>'
+  # Exercise dangerous staging aliases with the real host mounted read-only.
+  local stage
+  ln -s / "$BATS_TEST_TMPDIR/stage-root-alias"
+  for stage in /. "$BATS_TEST_TMPDIR/stage-root-alias"; do
+    run "$REAL_BWRAP" --unshare-user --unshare-pid --unshare-net --die-with-parent \
+      --ro-bind / / --bind "$BATS_TEST_TMPDIR" "$BATS_TEST_TMPDIR" --proc /proc --dev /dev \
+      -- bash "$REPO/install.sh" --stage "$stage" --prefix /usr
+    [ "$status" -ne 0 ]
+    [[ "$output" == *'Resolved staging root'* ]]
+  done
 }
