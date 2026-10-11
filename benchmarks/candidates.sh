@@ -38,9 +38,23 @@ FILES=()
 for ((i = 0; i < count; i++)); do
   FILES+=("entry-$i.txt")
 done
-if [[ ${3:-records} == format-only ]]; then
-  # Profiling control: isolate formatting from per-path process creation.
+case ${3:-records} in
+display-only | display-noop)
+  declare -F _display_name >/dev/null || exit 2
+  if [[ "$3" == display-noop ]]; then _display_name() { REPLY=$1; }; fi
+  for f in "${FILES[@]}"; do _display_name "$f"; done
+  exit 0
+  ;;
+format-only)
+  # Historical control: remove external encoders but retain command substitutions.
+  if declare -F _b64_paths >/dev/null; then
+    echo 'format-only is a historical per-record encoder control' >&2
+    exit 2
+  fi
   b64() { printf x; }
-fi
+  ;;
+records) ;;
+*) exit 2 ;;
+esac
 build_lines
 [[ ${#LINES[@]} == $((count + 1)) ]]

@@ -20,13 +20,15 @@ plocate, and assert that successful locate checks did not silently fall back.
 | Suite | Coverage |
 | --- | --- |
 | configuration.bats | Explicit/XDG configuration, environment expansion, root arrays, validation |
+| encoding.bats | Byte-exact batch encoding, process budgets, failures, stream-first output, descriptor/child cleanup |
 | filesystem.bats | NUL-safe local listing, byte-exact paths, previews, permissions, root navigation |
 | global-search.bats | Injection, scope, excludes, labels, limits, fallback, symlinks, unusual names |
 | native-backends.bats | Real fd and private plocate databases, literal queries, depth, failures |
 | navigation.bats | Deterministic action sequences, stale results, selection restoration, exit codes |
+| preview.bats | MIME policy, renderer options, exact paths, binary fallback and missing optional tools |
 | recovery.bats | Failed runtime creation, failed mktemp, normal cleanup, interrupted search |
 | shell-integration.bats | Literal Bash/zsh init blocks extracted as data from install.sh |
-| terminal.bats | Real fzf keyboard input, all global backend modes, editor arguments, resize, signals |
+| terminal.bats | Real fzf controls/backends, editor arguments, resize, signals, delayed actions and screen restoration |
 
 The terminal harness creates its own tmux server and socket, observes rendered
 text or output files, and uses bounded polling. It never connects to existing
@@ -105,3 +107,8 @@ but arbitrary historical revisions include per-run extraction overhead.
 Fresh distribution installation, system updatedb services, package lifecycle,
 native terminal emulators and wider fzf-version coverage require the next
 disposable/native Linux validation phase. They were not tested here.
+
+Phase Two adds reproducible component and real-terminal matrices at 10, 100,
+1,000 and 10,000 entries. See [../benchmarks/README.md](../benchmarks/README.md).
+The terminal harness uses a monotonic Linux uptime clock with 10 ms resolution;
+discarded wall-clock trials are explicitly separated from valid results.

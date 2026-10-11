@@ -78,7 +78,7 @@ preview)
   exec bash "$app" --_preview "$encoded"
   ;;
 preview-dir | preview-binary)
-  path="$work/files"
+  path=${FZD_BENCH_PREVIEW_PATH:-$work/files}
   [[ "$mode" == preview-binary ]] && path="$work/binary.bin"
   encoded=$(printf '%s' "$path" | base64 -w 0)
   exec bash "$app" --_preview "$encoded"

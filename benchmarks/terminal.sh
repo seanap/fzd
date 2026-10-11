@@ -6,6 +6,8 @@ script=${1:-$repo/fzd.sh}
 count=${2:-1000}
 runs=${3:-3}
 [[ "$script" == /* && -f "$script" && "$count" =~ ^[1-9][0-9]*$ && "$runs" =~ ^[1-9][0-9]*$ ]] || exit 2
+((count >= 3)) || exit 2
+if [[ ${FZD_BENCH_PREVIEW_MOVE:-0} == 1 ]]; then ((count >= 10)) || exit 2; fi
 work="$repo/.test-work/phase-two/terminal-$count"
 root="$work/root"
 mkdir -p "$root/zz-nav-child" "$work/config" "$work/runtime"
@@ -26,7 +28,14 @@ cleanup() { if [[ -n "$socket" ]]; then tmux -S "$socket" kill-server 2>/dev/nul
 trap cleanup EXIT
 trap 'exit 130' INT
 trap 'exit 143' TERM
-now() { REPLY=${EPOCHREALTIME/./}; }
+# /proc/uptime uses the kernel boot clock, independent of WSL wall-clock steps.
+# Its 10 ms resolution is coarser than the screen polling interval.
+now() {
+  local uptime rest
+  read -r uptime rest </proc/uptime
+  REPLY=${uptime/./}
+  REPLY=$((10#$REPLY * 10000))
+}
 wait_screen() {
   local deadline=$((SECONDS + 90))
   gap_start=''
@@ -46,7 +55,13 @@ wait_screen() {
   printf 'Timeout waiting for %s\n%s\n' "$1" "$screen" >&2
   return 1
 }
-record() { awk -v script="$script" -v count="$count" -v run="$iteration" -v event="$1" -v elapsed="$((observed - start))" 'BEGIN { printf "%s,%d,%d,%s,%.3f\n", script,count,run,event,elapsed/1000 }'; }
+record() {
+  if ((observed < start)); then
+    printf 'Clock moved backwards; measurement rejected\n' >&2
+    exit 1
+  fi
+  awk -v script="$script" -v count="$count" -v run="$iteration" -v event="$1" -v elapsed="$((observed - start))" 'BEGIN { printf "%s,%d,%d,%s,%.3f\n", script,count,run,event,elapsed/1000 }'
+}
 record_gap() {
   if [[ -n "$gap_start" ]]; then
     start=$gap_start
@@ -103,6 +118,17 @@ for ((iteration = 1; iteration <= runs; iteration++)); do
   tmux -S "$socket" send-keys -l file-00002.txt
   wait_screen FZD_PREVIEW_00002
   record preview-change
+  if [[ ${FZD_BENCH_PREVIEW_MOVE:-0} == 1 ]]; then
+    tmux -S "$socket" send-keys C-u
+    tmux -S "$socket" send-keys -l '^file-0000'
+    wait_screen "10/$((count + 2))"
+    wait_screen FZD_PREVIEW_00000
+    now
+    start=$REPLY
+    tmux -S "$socket" send-keys Down
+    wait_screen FZD_PREVIEW_00001
+    record preview-move
+  fi
   now
   start=$REPLY
   tmux -S "$socket" send-keys C-f
