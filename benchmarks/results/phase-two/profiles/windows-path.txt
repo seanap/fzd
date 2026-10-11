@@ -1,0 +1,5 @@
+Query trace at the 46441ea checkpoint, strace -f -tt -T.
+Windows PATH metadata calls: 60
+Instrumented syscall time: 62.747 ms
+Slowest such call: 3.118 ms
+Traced timings are diagnostic, not uninstrumented latency.

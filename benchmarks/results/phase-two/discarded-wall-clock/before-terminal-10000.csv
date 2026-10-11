@@ -1,0 +1,14 @@
+script,entries,run,event,milliseconds
+/home/htpc/projects/fzd/.test-work/phase-two/phase-one.sh,10000,1,startup,17000.088
+/home/htpc/projects/fzd/.test-work/phase-two/phase-one.sh,10000,1,local-query,4.133
+/home/htpc/projects/fzd/.test-work/phase-two/phase-one.sh,10000,1,right,15276.664
+/home/htpc/projects/fzd/.test-work/phase-two/phase-one.sh,10000,1,right-primary-screen-gap,15273.073
+/home/htpc/projects/fzd/.test-work/phase-two/phase-one.sh,10000,1,left,15389.662
+/home/htpc/projects/fzd/.test-work/phase-two/phase-one.sh,10000,1,left-primary-screen-gap,15386.501
+/home/htpc/projects/fzd/.test-work/phase-two/phase-one.sh,10000,1,file-query,11.201
+/home/htpc/projects/fzd/.test-work/phase-two/phase-one.sh,10000,1,preview-first,107.663
+/home/htpc/projects/fzd/.test-work/phase-two/phase-one.sh,10000,1,preview-change,138.543
+/home/htpc/projects/fzd/.test-work/phase-two/phase-one.sh,10000,1,global-open,2935.805
+/home/htpc/projects/fzd/.test-work/phase-two/phase-one.sh,10000,1,global-query,275.333
+/home/htpc/projects/fzd/.test-work/phase-two/phase-one.sh,10000,1,global-close,16394.392
+/home/htpc/projects/fzd/.test-work/phase-two/phase-one.sh,10000,1,exit,338.883
