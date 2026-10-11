@@ -83,8 +83,49 @@ normalize_path() {
 }
 get_cwd() { ( CDPATH='' cd -L -- "${1:-$PWD}" 2>/dev/null && printf '%s' "$PWD" ) || printf '%s' "$PWD"; }
 join_path() { local base="$1" child="${2#/}"; [[ "$base" == "/" ]] && printf '/%s' "$child" || printf '%s/%s' "$base" "$child"; }
-b64()   { printf '%s' "$1" | base64 | tr -d '\n'; }
+b64()   { printf '%s' "$1" | base64 -w 0; }
 deb64() { printf '%s' "$1" | base64 -d 2>/dev/null || true; }
+
+# Encode a batch with one encoder, retaining exactly the existing base64 IDs.
+# NUL padding aligns each input to three bytes; it travels only through the pipe.
+# Read fixed-size encoded records incrementally to avoid quadratic string slicing.
+_b64_paths() {
+  local LC_ALL=C path width encoded fd producer rc=0
+  B64_PATHS=()
+  (($#)) || return 0
+  exec {fd}< <(
+    set -o pipefail
+    for path; do
+      case $((${#path} % 3)) in
+        0) printf '%s' "$path" ;;
+        1) printf '%s\0\0' "$path" ;;
+        2) printf '%s\0' "$path" ;;
+      esac
+    done | base64 -w 0
+  )
+  producer=$!
+  for path; do
+    # shellcheck disable=SC2017 # Round up to whole base64 quanta before multiplying.
+    width=$(( (${#path} + 2) / 3 * 4 ))
+    encoded=''
+    if ((width)) && ! IFS= read -r -N "$width" encoded <&"$fd"; then
+      rc=1
+      break
+    fi
+    case $((${#path} % 3)) in
+      1) encoded=${encoded:0:width-2}'==' ;;
+      2) encoded=${encoded:0:width-1}'=' ;;
+    esac
+    B64_PATHS+=("$encoded")
+  done
+  exec {fd}<&-
+  wait "$producer" || rc=1
+  if ((rc)); then
+    B64_PATHS=()
+    printf 'fzd: pathname encoding failed\n' >&2
+    return 1
+  fi
+}
 
 # Return paths through REPLY: command substitution strips trailing newlines.
 _parent_path() {
@@ -184,7 +225,7 @@ list_entries() {
 build_lines() {
   LINES=(); START_POS=""
   local parent; _parent_path "$CUR"; parent=$REPLY
-  LINES+=("$(b64 "$parent")${DELIM}${c_dir}../${c_reset}")
+  local paths=("$parent") labels=("${c_dir}../${c_reset}")
 
   local want_child="${LAST_CHILD[$CUR]:-}"
   local idx=0
@@ -192,7 +233,7 @@ build_lines() {
     local name="${d%/}"
     local p="${CUR%/}/$name"
     _display_name "$d"
-    LINES+=("$(b64 "$p")${DELIM}${c_dir}${REPLY}${c_reset}")
+    paths+=("$p"); labels+=("${c_dir}${REPLY}${c_reset}")
     if [[ -n "$want_child" && "$name" == "$want_child" ]]; then
       START_POS=$(( 2 + idx ))   # 1=../, dirs start at 2; idx is 0-based
     fi
@@ -201,7 +242,11 @@ build_lines() {
   for f in "${FILES[@]}"; do
     local p="${CUR%/}/$f"
     _display_name "$f"
-    LINES+=("$(b64 "$p")${DELIM}${c_file}${REPLY}${c_reset}")
+    paths+=("$p"); labels+=("${c_file}${REPLY}${c_reset}")
+  done
+  _b64_paths "${paths[@]}" || return 1
+  for ((idx=0; idx<${#paths[@]}; idx++)); do
+    LINES+=("${B64_PATHS[idx]}${DELIM}${labels[idx]}")
   done
 }
 
