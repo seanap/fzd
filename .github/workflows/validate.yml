@@ -18,7 +18,7 @@ jobs:
       matrix:
         fzf: ['0.44.1', '0.65.2']
     steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1, Node 24
         with:
           persist-credentials: false
       - name: Install development dependencies on disposable runner
@@ -51,7 +51,7 @@ jobs:
           lintian --tag-display-limit 0 .test-work/candidate/*.deb
       - name: Retain local-style candidates and evidence (no publication)
         if: always()
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2, Node 24
         with:
           name: candidate-${{ github.sha }}-fzf-${{ matrix.fzf }}
           path: |
@@ -68,7 +68,7 @@ jobs:
       matrix:
         distro: [ubuntu, debian, arch, fedora]
     steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1, Node 24
         with:
           persist-credentials: false
       - name: Build candidate and prepare container tooling
@@ -83,7 +83,7 @@ jobs:
         run: sudo env FZD_CONTAINER_LOCAL_STORAGE=1 bash packaging/validate-distributions.sh .test-work/candidate "$FZD_TARGET"
       - name: Retain distribution evidence
         if: always()
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2, Node 24
         with:
           name: distribution-${{ matrix.distro }}-${{ github.sha }}
           path: .test-work/phase-four-a/${{ matrix.distro }}/
