@@ -452,8 +452,19 @@ _global_allowed() {
   return 0
 }
 
+_global_print_batch() {
+  local -n batch_paths=$1 batch_labels=$2
+  local idx records=()
+  _b64_paths "${batch_paths[@]}" || return 1
+  for ((idx=0; idx<${#batch_paths[@]}; idx++)); do
+    records+=("${B64_PATHS[idx]}${DELIM}${batch_labels[idx]}")
+  done
+  printf '%s\n' "${records[@]}"
+}
+
 _global_format() {
-  local query=$1 path base candidate encoded color suffix count=0
+  local query=${1,,} path base candidate color suffix count=0
+  local paths=() labels=()
   while IFS= read -r -d '' path; do
     [[ "$path" == / ]] || path=${path%/}
     _global_allowed "$path" || continue
@@ -461,7 +472,7 @@ _global_format() {
     [[ -n "$base" ]] || base=/
     candidate=$base
     [[ "$FZD_GLOBAL_FULLPATH" == 1 ]] && candidate=$path
-    [[ "${candidate,,}" == *"${query,,}"* ]] || continue
+    [[ "${candidate,,}" == *"$query"* ]] || continue
     if [[ -d "$path" ]]; then
       color=$c_dir; suffix=/
     elif [[ -f "$path" ]]; then
@@ -469,13 +480,18 @@ _global_format() {
     else
       continue
     fi
-    encoded=$(b64 "$path") || return 1
     # Encode identity independently; control characters must not create records.
     _display_name "$base"; base=$REPLY
-    printf '%s\t%s%s%s%s\n' "$encoded" "$color" "$base" "$suffix" "$c_reset" || return 1
+    paths+=("$path"); labels+=("$color$base$suffix$c_reset")
     ((count += 1))
+    # Bound memory and allow large streams to emit before enumeration completes.
+    if ((${#paths[@]} == 128)); then
+      _global_print_batch paths labels || return 1
+      paths=(); labels=()
+    fi
     if ((count >= FZD_GLOBAL_MAXRESULTS)); then break; fi
   done
+  if ((${#paths[@]})); then _global_print_batch paths labels || return 1; fi
   return 0
 }
 
