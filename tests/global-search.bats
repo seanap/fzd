@@ -202,7 +202,7 @@ setup() { setup_fixture; }
   done
 }
 
-@test "missing and dangling results are omitted while live symlinks are preserved" {
+@test "missing results are omitted while live and dangling symlinks remain operable" {
   use_fd_stub
   printf text >"$FIXTURE_ROOT/needle-target"
   ln -s "$FIXTURE_ROOT/needle-target" "$FIXTURE_ROOT/needle-link"
@@ -210,8 +210,10 @@ setup() { setup_fixture; }
   set_results "$FIXTURE_ROOT/needle-link" "$FIXTURE_ROOT/needle-dangling" "$FIXTURE_ROOT/needle-missing"
   run bash "$FZD_SCRIPT" --_global_list --q needle
   [ "$status" -eq 0 ]
-  [ "${#lines[@]}" -eq 1 ]
+  [ "${#lines[@]}" -eq 2 ]
   assert_record_path "$FIXTURE_ROOT/needle-link"
+  assert_record_path "$FIXTURE_ROOT/needle-dangling"
+  assert_no_record_path "$FIXTURE_ROOT/needle-missing"
 }
 
 @test "a failed locate producer cannot leak partial results before fallback" {
