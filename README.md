@@ -299,7 +299,8 @@ Open a new terminal afterward to clear previously loaded functions.
 ## Troubleshooting
 
 - **Command missing after install:** open a new terminal. If `lf` was already
-  present, run `fzd_cd`. Confirm that your chosen shell reads the configured rc
+  present, run `fzd_cd`. Packages require the opt-in source line above; verify
+  installation with `dpkg -V fzd` or `pacman -Qkk fzd`. Confirm that your shell reads the configured rc
   file; pass exported `ZDOTDIR` when using a custom zsh setup.
 - **Missing tools / sudo authentication:** install the reported packages, then
   retry. Interactive dependency installation uses normal sudo authentication;

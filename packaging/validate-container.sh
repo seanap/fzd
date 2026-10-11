@@ -49,15 +49,16 @@ arch)
   # makepkg -s resolves the actual recipe dependencies through pacman.
   (cd /work/arch && runuser -u builder -- makepkg -s --noconfirm)
   (cd /work/arch && runuser -u builder -- makepkg --printsrcinfo) >/results/.SRCINFO
-  pacman -U --noconfirm /work/arch/fzd-*-any.pkg.tar.zst
-  pacman -Q bash fzf coreutils findutils util-linux micro fzd
-  pacman -Qkk fzd
   cp /work/arch/fzd-*-any.pkg.tar.zst /results/
   (cd /work/arch && runuser -u builder -- makepkg --force --noconfirm)
   package_files=(/work/arch/fzd-*-any.pkg.tar.zst)
   cmp "${package_files[0]}" "/results/${package_files[0]##*/}"
   (cd /results && sha256sum ./*.pkg.tar.zst >package.sha256)
   printf 'PASS: Arch package byte reproducibility with pinned source epoch\n'
+  # Installing FZD before comparison would change .BUILDINFO's installed set.
+  pacman -U --noconfirm /work/arch/fzd-*-any.pkg.tar.zst
+  pacman -Q bash fzf coreutils findutils util-linux micro fzd
+  pacman -Qkk fzd
   ;;
 fedora)
   dnf install -y bash fzf coreutils findutils util-linux-core grep sed gawk micro
