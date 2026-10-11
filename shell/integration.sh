@@ -6,7 +6,8 @@ function _fzd_run_and_cd {
   # A sentinel preserves every trailing newline. Remove only FZD's one protocol
   # newline, and propagate failures without attempting to change directory.
   if fzd_result=$(
-    command "${FZD_BIN:-${_FZD_INSTALL_BIN:-fzd}}" "$@"
+    EDITOR="${EDITOR:-}" VISUAL="${VISUAL:-}" LS_COLORS="${LS_COLORS:-}" \
+      command "${FZD_BIN:-${_FZD_INSTALL_BIN:-fzd}}" "$@"
     fzd_status=$?
     printf '.'
     exit "$fzd_status"

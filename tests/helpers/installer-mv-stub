@@ -1,0 +1,18 @@
+#!/usr/bin/env bash
+set -euo pipefail
+target=${!#}
+if [[ $target == "$FZD_FAULT_TARGET" && ! -e $FZD_FAULT_MARKER ]]; then
+  : >"$FZD_FAULT_MARKER"
+  case "$FZD_FAULT" in
+  fail) exit 73 ;;
+  term)
+    kill -TERM "$PPID"
+    exit 143
+    ;;
+  kill)
+    kill -KILL "$PPID"
+    exit 137
+    ;;
+  esac
+fi
+exec "$FZD_REAL_MV" "$@"

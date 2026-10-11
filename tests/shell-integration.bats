@@ -113,3 +113,12 @@ check_shell_cancel() {
     [ "$status" -eq 1 ]
   done
 }
+
+@test "shell wrappers forward existing unexported editor and colors without changing the parent environment" {
+  extract_init bash
+  printf '#!/bin/bash\n[[ $EDITOR == custom && $VISUAL == other && $LS_COLORS == original ]]\n' >"$TEST_BIN/fzd"
+  for shell in bash "$FZD_REAL_ZSH"; do
+    run "$shell" -ec 'source "$1"; EDITOR=custom; VISUAL=other; LS_COLORS=original; lf; [[ $EDITOR == custom && $LS_COLORS == original ]]' _ "$BATS_TEST_TMPDIR/init"
+    [ "$status" -eq 0 ]
+  done
+}

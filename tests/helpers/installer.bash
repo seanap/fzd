@@ -5,10 +5,12 @@ setup() {
   export HOME="$BATS_TEST_TMPDIR/home"
   export XDG_CONFIG_HOME="$HOME/config" XDG_STATE_HOME="$HOME/state" XDG_CACHE_HOME="$HOME/cache"
   export XDG_RUNTIME_DIR="$HOME/runtime"
+  export BASH_ENV=/dev/null ENV=/dev/null
   export TEST_BIN="$BATS_TEST_TMPDIR/bin" CALLS="$BATS_TEST_TMPDIR/calls"
   HOST_PATH=$PATH
   REAL_BASH=$(command -v bash)
   REAL_ZSH=$(command -v zsh || true)
+  REAL_TMUX=$(command -v tmux || true)
   REAL_FZF=$(command -v fzf)
   FZD_REAL_MV=$(command -v mv)
   export FZD_REAL_MV
@@ -17,6 +19,7 @@ setup() {
   mkdir -p "$HOME" "$TEST_BIN"
   unset FZD_CONF_FILE FZD_BIN FZD_GLOBAL_ROOTS ZDOTDIR EDITOR VISUAL
   unset FZD_STATE_DIR FZD_CACHE_DIR FZD_TMP_DIR
+  unset FZF_DEFAULT_OPTS FZF_DEFAULT_OPTS_FILE
   unset FZD_FAULT FZD_FAULT_TARGET FZD_FAULT_MARKER
   # No real package manager or sudo is reachable in this fixture.
   local tool
@@ -25,6 +28,10 @@ setup() {
   done
   ln -s "$REAL_FZF" "$TEST_BIN/fzf"
   export PATH="$TEST_BIN"
+}
+
+teardown() {
+  if [[ -n ${INSTALL_SOCKET:-} ]]; then "$REAL_TMUX" -S "$INSTALL_SOCKET" kill-server 2>/dev/null || true; fi
 }
 
 install_fzd() { run bash "$REPO/install.sh" --noninteractive "$@"; }
@@ -36,6 +43,12 @@ assert_installed() {
 dependency_shell() {
   # Function-level package-manager tests use real installer logic and stubs.
   run bash -c 'set -euo pipefail; die() { printf "%s\n" "$*"; exit 1; }; log() { :; }; source "$1/installer/dependencies.bash"; PM=$2; NONINTERACTIVE=$3; install_packages fzf fzf tree' _ "$REPO" "$1" "${2:-1}"
+}
+
+inject_fault() {
+  rm "$TEST_BIN/mv"
+  ln -s "$REPO/tests/helpers/installer-mv-stub" "$TEST_BIN/mv"
+  export FZD_FAULT=$1 FZD_FAULT_TARGET="$HOME/.zshrc" FZD_FAULT_MARKER="$HOME/fault-fired"
 }
 stub_managers() {
   local tool
