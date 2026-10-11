@@ -9,7 +9,7 @@ keyboard. Selecting a directory returns to your shell in that directory.
 
 **Release candidate:** `.deb` and Arch build artifacts are generated locally or
 by the validation workflow. Nothing has been published to APT, AUR, or GitHub
-Releases yet. Use the source command below until approved artifacts are available.
+Releases yet. Use an approved local checkout or source archive for source installs.
 
 For a downloaded Debian/Ubuntu candidate, check its checksum and install it with
 APT so dependencies are resolved:
@@ -37,17 +37,17 @@ are in [Packaging](docs/packaging.md).
 
 ### From source
 
-Use Linux with Bash 4.4+, GNU utilities, and Git. Bash and zsh are supported as
+Use Linux with Bash 4.4+ and GNU utilities. Bash and zsh are supported as
 interactive shells. Ubuntu/Debian, Fedora, and Arch dependency managers are
 supported. The source installer is separate from package installation; it owns
 only its user-local files. Other Linux systems can use the manual installation
 below. See the [release validation report](docs/phase-four-a.md) for tested
 platforms and remaining release gates.
 
-Run as your normal user:
+From an approved checkout or extracted source archive, run as your normal user:
 
 ```bash
-git clone https://github.com/seanap/fzd.git && cd fzd && bash install.sh --deps recommended
+bash install.sh --deps recommended
 ```
 
 The installer prints the missing packages before installing them. It requests
@@ -268,7 +268,8 @@ uninstaller to remove `/usr` package files.
 
 **Source installations:**
 
-From your original checkout, update and repeat the same installation options:
+For an archive installation, extract the newer approved source archive and repeat
+the same installation options. From a Git checkout, update and reinstall:
 
 ```bash
 git pull --ff-only
