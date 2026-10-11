@@ -57,13 +57,15 @@ wait_file() {
   tmux -S "$SOCKET" send-keys -l child
   wait_screen '1/2'
   tmux -S "$SOCKET" send-keys Right
+  wait_screen '2/2'
   wait_screen inside-only.txt
   tmux -S "$SOCKET" send-keys Left
-  wait_screen child/
+  wait_screen '> child/'
   tmux -S "$SOCKET" send-keys Enter
   wait_file "$FZD_PTY_STATUS"
   [ "$(cat "$FZD_PTY_STATUS")" -eq 0 ]
   [ "$(cat "$FZD_PTY_RESULT")" = "$FIXTURE_ROOT/child" ]
+  [ "$(tmux -S "$SOCKET" display-message -p -t fzd:0.0 '#{alternate_on}')" -eq 0 ]
 }
 
 check_global_navigation() {
@@ -84,6 +86,7 @@ check_global_navigation() {
   wait_screen '1/'
   wait_screen 'needle-target/'
   tmux -S "$SOCKET" send-keys Right
+  wait_screen '2/2'
   wait_screen global-inside.txt
   tmux -S "$SOCKET" send-keys Enter
   wait_file "$FZD_PTY_STATUS"
@@ -117,7 +120,11 @@ check_global_navigation() {
   export FZD_SCRIPT="$TEST_BIN/fzd 'quoted.sh"
   printf 'preview-unique-text\n' >"$path"
   export EDITOR="$TEST_BIN/editor"
-  printf '#!/bin/sh\nprintf "%%s\\0" "$@" > "$FZD_PTY_EDITOR"\n' >"$EDITOR"
+  cat >"$EDITOR" <<'SH'
+#!/bin/sh
+tmux display-message -p -t "$TMUX_PANE" '#{alternate_on}' >"$FZD_PTY_EDITOR.screen"
+printf '%s\0' "$@" >"$FZD_PTY_EDITOR"
+SH
   chmod +x "$EDITOR"
   start_terminal
   tmux -S "$SOCKET" send-keys -l needle
@@ -128,11 +135,13 @@ check_global_navigation() {
   expected=$(printf '%s\0' -- "$path" | base64 | tr -d '\n')
   actual=$(base64 <"$FZD_PTY_EDITOR" | tr -d '\n')
   [ "$actual" = "$expected" ]
-  wait_screen '../'
+  [ "$(cat "$FZD_PTY_EDITOR.screen")" -eq 0 ]
+  wait_screen '2/2'
   tmux -S "$SOCKET" send-keys Escape
   wait_file "$FZD_PTY_STATUS"
   [ "$(cat "$FZD_PTY_STATUS")" -eq 130 ]
   [ ! -s "$FZD_PTY_RESULT" ]
+  [ "$(tmux -S "$SOCKET" display-message -p -t fzd:0.0 '#{alternate_on}')" -eq 0 ]
 }
 
 @test "real terminal remains usable after resizing to 60 columns and 16 rows" {
@@ -151,6 +160,7 @@ check_global_navigation() {
   [ "$(cat "$FZD_PTY_STATUS")" -eq 130 ]
   run find "$XDG_RUNTIME_DIR" -type f
   [ -z "$output" ]
+  [ "$(tmux -S "$SOCKET" display-message -p -t fzd:0.0 '#{alternate_on}')" -eq 0 ]
 }
 
 @test "real fzf completes a delayed action write before navigation resumes" {
@@ -173,4 +183,17 @@ SH
   wait_file "$FZD_PTY_STATUS"
   [ "$(cat "$FZD_PTY_RESULT")" = "$FIXTURE_ROOT/child" ]
   [ "$(cat "$FZD_PTY_STATUS")" -eq 0 ]
+}
+
+@test "real terminal works without an alternate-screen restore capability" {
+  printf '#!/bin/sh\nexit 1\n' >"$TEST_BIN/tput"
+  chmod +x "$TEST_BIN/tput"
+  rm -f -- "$TEST_BIN/fzf"
+  export PATH="$TEST_BIN:$PATH"
+  start_terminal
+  tmux -S "$SOCKET" send-keys Enter
+  wait_file "$FZD_PTY_STATUS"
+  [ "$(cat "$FZD_PTY_STATUS")" -eq 0 ]
+  [ "$(cat "$FZD_PTY_RESULT")" = "$FIXTURE_ROOT" ]
+  [ "$(tmux -S "$SOCKET" display-message -p -t fzd:0.0 '#{alternate_on}')" -eq 0 ]
 }

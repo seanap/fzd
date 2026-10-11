@@ -122,3 +122,15 @@ SH
   [ "${#lines[@]}" -eq 257 ]
   [ "$(wc -l <"$FZD_CODEC_LOG")" -eq 3 ]
 }
+
+@test "repeated encoding closes descriptors and reaps its producers" {
+  run bash -euo pipefail -c '
+    source "$1"
+    before=(/proc/$$/fd/*)
+    for ((i=0; i<20; i++)); do _b64_paths /first /second; done
+    after=(/proc/$$/fd/*)
+    [[ ${#before[@]} == ${#after[@]} ]]
+    [[ -z $(jobs -pr) ]]
+  ' _ "$FZD_SCRIPT"
+  [ "$status" -eq 0 ]
+}

@@ -108,7 +108,7 @@ _b64_paths() {
     # shellcheck disable=SC2017 # Round up to whole base64 quanta before multiplying.
     width=$(( (${#path} + 2) / 3 * 4 ))
     encoded=''
-    if ((width)) && ! IFS= read -r -N "$width" encoded <&"$fd"; then
+    if ((width)) && ! IFS= read -r -u "$fd" -N "$width" encoded; then
       rc=1
       break
     fi
@@ -159,7 +159,14 @@ _remove_temp() {
   FZD_TEMP_FILES=("${remaining[@]}")
 }
 _cleanup() {
+  _restore_screen
   if ((${#FZD_TEMP_FILES[@]})); then rm -f -- "${FZD_TEMP_FILES[@]}"; fi
+}
+_restore_screen() {
+  if [[ ${FZD_SCREEN_ACTIVE:-0} == 1 ]]; then
+    printf '%s' "$FZD_SCREEN_RESTORE" >&2 || true
+    FZD_SCREEN_ACTIVE=0
+  fi
 }
 
 remember_child() {
@@ -355,6 +362,7 @@ _preview() {
 _open_in_editor() {
   local file="$1"
   [[ -f "$file" ]] || return 0
+  _restore_screen
   "$EDITOR_CMD" -- "$file" </dev/tty >/dev/tty 2>&1 || true
 }
 
@@ -577,8 +585,10 @@ _run_global_overlay() {
   dbg "GLOBAL overlay start (backend=${FZD_GLOBAL_BACKEND:-auto})"
   local backend="${FZD_GLOBAL_BACKEND:-auto}"
   _global_prepare || return 0
-  local have_loc
-  have_loc="$(command -v plocate 2>/dev/null || command -v locate 2>/dev/null || true)"
+  local have_loc=''
+  if [[ "$backend" == auto ]]; then
+    have_loc="$(command -v plocate 2>/dev/null || command -v locate 2>/dev/null || true)"
+  fi
 
   # auto-pick: prefer locate, else cache
   [[ "$backend" == "auto" ]] && { if [[ -n "$have_loc" ]]; then backend="locate"; else backend="cache"; fi; }
@@ -588,7 +598,9 @@ _run_global_overlay() {
   if [[ "$backend" == "locate" || "$backend" == "live" ]]; then
     _make_temp || return 0; CTRL=$REPLY
     control_command=$(_shell_quote "$CTRL")
+    FZD_SCREEN_ACTIVE=${#FZD_SCREEN_OPTS[@]}
     "$FZF_BIN" \
+      "${FZD_SCREEN_OPTS[@]}" \
       --ansi --height=100% --layout=reverse --border --no-mouse \
       --delimiter "$DELIM" --with-nth=2.. \
       --prompt "global:${FZD_GLOBAL_ROOT%/}/ > " \
@@ -610,7 +622,9 @@ _run_global_overlay() {
       _remove_temp "$SRC" "$CTRL"
       return 0
     fi
+    FZD_SCREEN_ACTIVE=${#FZD_SCREEN_OPTS[@]}
     "$FZF_BIN" \
+      "${FZD_SCREEN_OPTS[@]}" \
       --ansi --height=100% --layout=reverse --border --no-mouse \
       --delimiter "$DELIM" --with-nth=2.. \
       --prompt "global:${FZD_GLOBAL_ROOT%/}/ > " \
@@ -685,8 +699,10 @@ main() {
     _make_temp || return 1; CTRL=$REPLY
     self_command=$(_shell_quote "$FZD_SELF")
     control_command=$(_shell_quote "$CTRL")
+    FZD_SCREEN_ACTIVE=${#FZD_SCREEN_OPTS[@]}
     mapfile -t FZF_OUT < <(
       printf '%s\n' "${LINES[@]}" | "$FZF_BIN" \
+        "${FZD_SCREEN_OPTS[@]}" \
         --ansi --height=100% --layout=reverse --border --no-mouse \
         --delimiter "$DELIM" --with-nth=2.. \
         --prompt "$(ppath "$CUR")/ > " \
@@ -757,6 +773,7 @@ _fzd_entry() {
   shopt -s lastpipe 2>/dev/null || true
   export LC_ALL=C
   FZD_TEMP_FILES=()
+  FZD_SCREEN_OPTS=(); FZD_SCREEN_ACTIVE=0; FZD_SCREEN_RESTORE=''
   trap _cleanup EXIT
   trap 'exit 130' INT
   trap 'exit 143' TERM
@@ -778,6 +795,12 @@ _fzd_entry() {
   unset FZF_CTRL_T_COMMAND FZF_ALT_C_COMMAND FZF_DEFAULT_COMMAND 2>/dev/null || true
   HAS_POS=0
   if printf 'x\n' | "$FZF_BIN" --bind='start:pos(1)' --select-1 --exit-0 >/dev/null 2>&1; then HAS_POS=1; fi
+  # Keep the previous frame during navigation; restore before editors and exit.
+  # A usable terminfo restore capability is required, so tput stays optional.
+  if [[ -t 2 ]] && command -v tput >/dev/null 2>&1; then
+    FZD_SCREEN_RESTORE=$(tput rmcup 2>/dev/null) || FZD_SCREEN_RESTORE=''
+    [[ -z "$FZD_SCREEN_RESTORE" ]] || FZD_SCREEN_OPTS=(--no-clear)
+  fi
   dbg "start:pos supported: $HAS_POS"
   EDITOR_CMD="${EDITOR:-${VISUAL:-micro}}"
   command -v "$EDITOR_CMD" >/dev/null 2>&1 || EDITOR_CMD=micro
