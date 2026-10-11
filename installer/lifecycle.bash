@@ -160,7 +160,7 @@ delete_file() {
 
 owned_file() {
   case "$1" in
-  "$PREFIX/bin/fzd" | "$PREFIX/bin/fzf" | "$DATA/integration.sh" | "$DATA/fzd.conf.example" | "$DATA/LICENSE.txt" | "$DATA/install.sh" | "$DATA/installer/dependencies.bash" | "$DATA/installer/lifecycle.bash") return 0 ;;
+  "$PREFIX/bin/fzd" | "$PREFIX/bin/fzf" | "$DATA/integration.sh" | "$DATA/fzd.conf.example" | "$DATA/LICENSE.txt" | "$DATA/install.sh" | "$DATA/installer/dependencies.bash" | "$DATA/installer/lifecycle.bash" | "$DATA/lib/state.bash" | "$DATA/lib/operations.bash" | "$DATA/lib/ui.bash") return 0 ;;
   *) return 1 ;;
   esac
 }

@@ -173,6 +173,11 @@ _remove_temp() {
 }
 _cleanup() {
   _restore_screen
+  if ((${#RECENT_PENDING[@]})); then
+    if ! _explorer_load state || ! _recents_flush; then
+      printf 'fzd: %s\n' "${FZD_STATUS:-Could not save recent directories}" >&2
+    fi
+  fi
   if ((${#FZD_TEMP_FILES[@]})); then rm -f -- "${FZD_TEMP_FILES[@]}"; fi
 }
 _restore_screen() {
@@ -245,7 +250,7 @@ build_lines() {
   local parent; _parent_path "$CUR"; parent=$REPLY
   local paths=("$parent") labels=("${c_dir}../${c_reset}")
 
-  local want_child="${LAST_CHILD[$CUR]:-}"
+  local want_child="${FZD_SELECT_NAME:-${LAST_CHILD[$CUR]:-}}"
   local idx=0
   for d in "${DIRS[@]}"; do
     local name="${d%/}"
@@ -261,6 +266,7 @@ build_lines() {
     local p="${CUR%/}/$f"
     _display_name "$f"
     paths+=("$p"); labels+=("${c_file}${REPLY}${c_reset}")
+    if [[ -n "$want_child" && "$f" == "$want_child" ]]; then START_POS=${#paths[@]}; fi
   done
   _b64_paths "${paths[@]}" || return 1
   for ((idx=0; idx<${#paths[@]}; idx++)); do
@@ -682,6 +688,7 @@ _run_global_overlay() {
       ;;
     G_ENTER)
       if [[ -d "$sel_path" ]]; then
+        _recent_queue "$sel_path"
         RAW="$sel_path"; print_cd_target; exit 0
       elif [[ -f "$sel_path" ]]; then
         _open_in_editor "$sel_path"
@@ -699,10 +706,80 @@ _shell_quote() {
   printf "'%s'" "$value"
 }
 
+# ----------------- SESSION HISTORY (no disk I/O during navigation) -----------------
+_recent_queue() {
+  local path=$1 previous queued=("$1")
+  for previous in "${RECENT_PENDING[@]}"; do
+    [[ "$previous" == "$path" ]] || queued+=("$previous")
+    ((${#queued[@]} < 25)) || break
+  done
+  RECENT_PENDING=("${queued[@]}")
+}
+_history_init() {
+  H_PATHS=("$CUR"); H_SELECTIONS=(""); H_INDEX=0
+  RECENT_PENDING=("$CUR"); FZD_SELECT_NAME=''; FZD_STATUS=''
+}
+_history_remember() {
+  local parent
+  _parent_path "$CUR"; parent=$REPLY
+  if [[ -n ${RAW:-} && $RAW != "$parent" && ${RAW%/*} == "${CUR%/}" ]]; then
+    H_SELECTIONS[H_INDEX]=${RAW##*/}
+    FZD_SELECT_NAME=${RAW##*/}
+  fi
+}
+_history_visit() {
+  [[ $CUR != "${H_PATHS[H_INDEX]}" ]] || return 0
+  H_PATHS=("${H_PATHS[@]:0:H_INDEX+1}" "$CUR")
+  H_SELECTIONS=("${H_SELECTIONS[@]:0:H_INDEX+1}" "")
+  if ((${#H_PATHS[@]} > 100)); then
+    H_PATHS=("${H_PATHS[@]:1}"); H_SELECTIONS=("${H_SELECTIONS[@]:1}")
+  fi
+  H_INDEX=$((${#H_PATHS[@]} - 1)); FZD_SELECT_NAME=''
+  _recent_queue "$CUR"
+}
+_history_step() {
+  local step=$1 next=$((H_INDEX + $1)) path
+  while ((next >= 0 && next < ${#H_PATHS[@]})); do
+    path=${H_PATHS[next]}
+    if [[ -d $path && -r $path && -x $path ]]; then
+      H_INDEX=$next; CUR=$path; FZD_SELECT_NAME=${H_SELECTIONS[next]}
+      _recent_queue "$CUR"
+      return 0
+    fi
+    next=$((next + step))
+  done
+  FZD_STATUS='No accessible directory in that direction'
+}
+_explorer_load() {
+  local module=${1:-state} flag script=${FZD_SELF:-${BASH_SOURCE[0]}} directory candidate
+  case "$module" in state|operations|ui) ;; *) return 1 ;; esac
+  flag=FZD_MODULE_$module
+  [[ ${!flag:-0} == 1 ]] && return 0
+  # Resolve only on first feature use, including launches through symlinks.
+  if [[ -z ${FZD_EXPLORER_LIB:-} ]]; then
+    if ! IFS= read -r -d '' script < <(realpath -ze -- "$script"); then
+      FZD_STATUS='Cannot locate Explorer helpers'; return 1
+    fi
+    directory=${script%/*}
+    for candidate in "$directory/lib" "$directory/../share/fzd/lib"; do
+      [[ ! -r $candidate/state.bash ]] || { FZD_EXPLORER_LIB=$candidate; break; }
+    done
+  fi
+  if [[ -r ${FZD_EXPLORER_LIB:-}/$module.bash ]]; then
+    # shellcheck source=/dev/null
+    source "$FZD_EXPLORER_LIB/$module.bash"
+    printf -v "$flag" 1
+    return 0
+  fi
+  FZD_STATUS='Explorer helpers missing; reinstall FZD'
+  return 1
+}
+
 # ----------------- MAIN LOOP -----------------
 main() {
   CUR="$(get_cwd "$PWD"; printf '.')"; CUR=${CUR%.}
   [[ "$CUR" == / ]] || CUR=${CUR%/}
+  _history_init
   dbg "cwd=$CUR"
 
   local HIST_FILE="$FZD_STATE_DIR/query-history"
@@ -748,6 +825,7 @@ main() {
     if [[ "${FZF_OUT[0]:-}" == "ctrl-f" || "${FZF_OUT[1]:-}" == "ctrl-f" ]]; then
       (( FZD_DEBUG == 1 )) && printf 'fzd: ctrl-f detected via expect\n' > /dev/tty
       _run_global_overlay
+      _history_visit
       _remove_temp "$CTRL"
       continue
     fi
@@ -759,6 +837,7 @@ main() {
 
     [[ -z "${action:-}" ]] && { dbg "fzf aborted (Esc/close)"; exit 130; }
     _decode_path "$raw_b64"; RAW=$REPLY
+    _history_remember
 
     case "$action" in
       LEFT)
@@ -778,6 +857,7 @@ main() {
             dbg "ENTER dir -> $target"
           fi
           RAW="$target"
+          _recent_queue "$target"
           print_cd_target; exit 0
 
         elif [[ -n "$RAW" && -f "$RAW" ]]; then
@@ -790,6 +870,7 @@ main() {
         dbg "unknown action '$action' (ignored)"
         ;;
     esac
+    _history_visit
   done
 }
 
@@ -798,6 +879,7 @@ _fzd_entry() {
   shopt -s lastpipe 2>/dev/null || true
   export LC_ALL=C
   FZD_TEMP_FILES=()
+  RECENT_PENDING=()
   FZD_SCREEN_OPTS=(); FZD_SCREEN_ACTIVE=0; FZD_SCREEN_RESTORE=''
   trap _cleanup EXIT
   trap 'exit 130' INT

@@ -119,6 +119,9 @@ if [[ -n $STAGE ]]; then
   [[ -f $SCRIPT_DIR/fzd.sh ]] || die 'Package staging requires the source checkout'
   install -Dm755 "$SCRIPT_DIR/fzd.sh" "$STAGE$PREFIX/bin/fzd"
   install -Dm644 "$SCRIPT_DIR/shell/integration.sh" "$STAGE$PREFIX/share/fzd/integration.sh"
+  for module in "$SCRIPT_DIR/lib/"*.bash; do
+    install -Dm644 "$module" "$STAGE$PREFIX/share/fzd/lib/${module##*/}"
+  done
   install -Dm644 "$SCRIPT_DIR/fzd.conf.example" "$STAGE$PREFIX/share/fzd/fzd.conf.example"
   install -Dm644 "$SCRIPT_DIR/LICENSE.txt" "$STAGE$PREFIX/share/licenses/fzd/LICENSE.txt"
   log "Staged package payload under $STAGE$PREFIX (no user files or dependencies changed)"
@@ -169,6 +172,10 @@ begin_transaction
 [[ -z $FZF_VERSION ]] || download_fzf
 install_owned "$SCRIPT_DIR/fzd.sh" "$PREFIX/bin/fzd" 755
 install_owned "$SCRIPT_DIR/shell/integration.sh" "$DATA/integration.sh" 644
+for module in "$SCRIPT_DIR/lib/"*.bash; do
+  bash -n "$module"
+  install_owned "$module" "$DATA/lib/${module##*/}" 644
+done
 install_owned "$SCRIPT_DIR/fzd.conf.example" "$DATA/fzd.conf.example" 644
 install_owned "$SCRIPT_DIR/LICENSE.txt" "$DATA/LICENSE.txt" 644
 install_owned "$SCRIPT_DIR/install.sh" "$DATA/install.sh" 755

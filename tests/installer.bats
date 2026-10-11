@@ -337,7 +337,8 @@ STUB
   install_fzd
   assert_installed
   local source="$BATS_TEST_TMPDIR/source"
-  mkdir -p "$source/installer" "$source/shell"
+  mkdir -p "$source/installer" "$source/shell" "$source/lib"
+  cp "$REPO/lib/"*.bash "$source/lib/"
   cp "$REPO/install.sh" "$REPO/fzd.sh" "$REPO/fzd.conf.example" "$REPO/LICENSE.txt" "$source/"
   cp "$REPO/installer/"*.bash "$source/installer/"
   cp "$REPO/shell/integration.sh" "$source/shell/"

@@ -28,7 +28,7 @@ setup_fixture() {
   unset FZF_DEFAULT_OPTS FZF_DEFAULT_OPTS_FILE FZD_STUB_LOCATE_STATUS
   unset FZD_STUB_FD_STATUS FZD_STUB_ACTION FZD_STUB_SELECTION FZD_STUB_PLAN FZD_STUB_FZF_LOG
   : >"$FZD_STUB_RESULTS"
-  for utility in bash sh env base64 tr find head sort awk sed grep cut dirname basename mktemp mkdir rm sleep cat ls file timeout ln wc chmod tail; do
+  for utility in bash sh env base64 tr find head sort awk sed grep cut dirname basename mktemp mkdir rm mv realpath flock sleep cat ls file timeout ln wc chmod tail; do
     ln -s "$(command -v "$utility")" "$UTILITY_BIN/$utility"
   done
   ln -s "$FZD_REPO/tests/helpers/fzf-stub" "$TEST_BIN/fzf"
