@@ -11,6 +11,7 @@ setup() {
   REAL_BASH=$(command -v bash)
   REAL_ZSH=$(command -v zsh || true)
   REAL_TMUX=$(command -v tmux || true)
+  REAL_BWRAP=$(command -v bwrap || true)
   REAL_FZF=$(command -v fzf)
   FZD_REAL_MV=$(command -v mv)
   export FZD_REAL_MV

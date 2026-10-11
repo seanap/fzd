@@ -15,6 +15,7 @@ record() {
 
 begin_transaction() {
   RECORDED_RC=()
+  PENDING_PATHS=()
   mkdir -p -- "$DATA"
   LOCK="$DATA/.install-lock"
   mkdir -- "$LOCK" 2>/dev/null || die "Installation locked. If no installer is running, use: bash install.sh --prefix $(printf %q "$PREFIX") --recover"
@@ -86,6 +87,7 @@ finish_transaction() {
       return 1
     fi
   fi
+  for pending in "${PENDING_PATHS[@]}"; do rm -f -- "$pending"; done
   : >"$TX/finished"
   # Keep originals and the journal for manual recovery; never overwrite backups.
   mkdir -p -- "$DATA/backups"
@@ -136,6 +138,7 @@ write_file() {
   parent=${target%/*}
   mkdir -p -- "$parent"
   pending=$(mktemp "$target.fzd-XXXXXXXX")
+  PENDING_PATHS+=("$pending")
   save_target "$target" "$pending"
   if [[ -f $target ]]; then
     cp -p -- "$target" "$pending"
@@ -145,6 +148,14 @@ write_file() {
     chmod "$mode" "$pending"
   fi
   mv -f -- "$pending" "$target"
+}
+
+delete_file() {
+  local target=$1 pending
+  pending=$(mktemp "$target.fzd-XXXXXXXX")
+  PENDING_PATHS+=("$pending")
+  save_target "$target" "$pending"
+  rm -f -- "$target" "$pending"
 }
 
 owned_file() {
@@ -301,8 +312,7 @@ uninstall_files() {
     if [[ -f $path && ! -L $path ]]; then
       hash_file "$path"
       if [[ $REPLY == "${FILE_HASHES[index]}" ]]; then
-        save_target "$path" "$path.fzd-uninstall"
-        rm -f -- "$path"
+        delete_file "$path"
       else
         warn "Preserving modified file: $path"
       fi
@@ -310,8 +320,7 @@ uninstall_files() {
       warn "Preserving replaced file: $path"
     fi
   done
-  save_target "$MANIFEST" "$MANIFEST.fzd-uninstall"
-  rm -f -- "$MANIFEST"
+  delete_file "$MANIFEST"
   : >"$TX/committed"
   COMMITTED=1
   log "Uninstalled owned files and integration blocks. Configuration, cache/state, backups and dependencies were preserved. Backups: $DATA/backups"

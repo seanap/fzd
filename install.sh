@@ -97,6 +97,7 @@ for path in "$PREFIX" "${XDG_CONFIG_HOME:-$HOME/.config}" "${ZDOTDIR:-$HOME}" "$
 done
 PREFIX=${PREFIX%/}
 [[ -n $PREFIX ]] || die 'The filesystem root cannot be an installation prefix'
+[[ $PREFIX != *:* ]] || die 'The installation prefix cannot contain : because PATH uses it as a separator'
 XDG_CONFIG_HOME=${XDG_CONFIG_HOME:-$HOME/.config}
 CFG=${FZD_CONF_FILE:-$XDG_CONFIG_HOME/fzd/fzd.conf}
 DATA=$PREFIX/share/fzd
@@ -127,6 +128,7 @@ PREFIX=$(
 )
 PREFIX=${PREFIX%.}
 PREFIX=${PREFIX%$'\n'}
+[[ $PREFIX != / && $PREFIX != *:* ]] || die 'Resolved installation prefix cannot be / or contain the PATH separator :'
 DATA=$PREFIX/share/fzd
 MANIFEST=$DATA/install.manifest
 export PATH="$PREFIX/bin:$PATH"

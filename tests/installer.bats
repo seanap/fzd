@@ -217,6 +217,17 @@ load helpers/installer
   install_fzd --prefix relative
   [ "$status" -ne 0 ]
   [ ! -e "$PREFIX" ]
+  install_fzd --prefix "$HOME/colon:prefix"
+  [ "$status" -ne 0 ]
+  [[ "$output" == *'PATH uses it as a separator'* ]]
+  [ ! -e "$HOME/colon:prefix" ]
+  install_fzd --prefix /.
+  [ "$status" -ne 0 ]
+  [[ "$output" == *'Resolved installation prefix'* ]]
+  ln -s "$HOME/colon:prefix" "$HOME/prefix-alias"
+  install_fzd --prefix "$HOME/prefix-alias"
+  [ "$status" -ne 0 ]
+  [[ "$output" == *'Resolved installation prefix'* ]]
 }
 
 @test "failed file publication and SIGTERM restore prior shell and application files" {
@@ -435,4 +446,25 @@ STUB
     "$REAL_TMUX" -S "$INSTALL_SOCKET" kill-server
     INSTALL_SOCKET=''
   done
+}
+
+@test "failed uninstall restores deleted files without replacing an unrelated temporary-looking file" {
+  install_fzd
+  assert_installed
+  printf unrelated >"$PREFIX/bin/fzd.fzd-uninstall"
+  FZD_REAL_CP=$(readlink -f "$TEST_BIN/cp")
+  export FZD_REAL_CP FZD_FAIL_SOURCE="$DATA/integration.sh"
+  rm "$TEST_BIN/cp"
+  cat >"$TEST_BIN/cp" <<'STUB'
+#!/bin/bash
+for arg; do [[ $arg != "$FZD_FAIL_SOURCE" ]] || exit 73; done
+exec "$FZD_REAL_CP" "$@"
+STUB
+  chmod +x "$TEST_BIN/cp"
+  install_fzd --uninstall
+  [ "$status" -eq 73 ]
+  [ "$(cat "$PREFIX/bin/fzd.fzd-uninstall")" = unrelated ]
+  cmp "$REPO/fzd.sh" "$PREFIX/bin/fzd"
+  install_fzd --verify
+  [ "$status" -eq 0 ]
 }

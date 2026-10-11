@@ -27,10 +27,10 @@ start_terminal() {
 }
 
 wait_screen() {
-  local attempt screen
+  local attempt screen pattern
   for ((attempt = 0; attempt < 160; attempt++)); do
     screen=$(tmux -S "$SOCKET" capture-pane -p -t fzd:0.0)
-    [[ "$screen" == *"$1"* ]] && return 0
+    for pattern; do [[ "$screen" == *"$pattern"* ]] && return 0; done
     sleep 0.05
   done
   printf 'Expected screen text: %s\n%s\n' "$1" "$screen" >&2
@@ -60,7 +60,8 @@ wait_file() {
   wait_screen '2/2'
   wait_screen inside-only.txt
   tmux -S "$SOCKET" send-keys Left
-  wait_screen '> child/'
+  # fzf changed its default pointer; selection behavior must hold with either.
+  wait_screen '> child/' '▌ child/'
   tmux -S "$SOCKET" send-keys Enter
   wait_file "$FZD_PTY_STATUS"
   [ "$(cat "$FZD_PTY_STATUS")" -eq 0 ]
