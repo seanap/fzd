@@ -1,0 +1,87 @@
+#!/usr/bin/env bats
+
+setup_file() {
+  export PACKAGE_REPO
+  PACKAGE_REPO=$(cd -- "$BATS_TEST_DIRNAME/.." && pwd)
+  export PACKAGE_FIXTURE="$BATS_FILE_TMPDIR/packages"
+  mkdir -p "$PACKAGE_FIXTURE" "$BATS_FILE_TMPDIR/home"
+  HOME="$BATS_FILE_TMPDIR/home" SOURCE_DATE_EPOCH=1700000000 \
+    bash "$PACKAGE_REPO/packaging/build-deb.sh" "$PACKAGE_REPO" "$PACKAGE_FIXTURE" >/dev/null
+  export PACKAGE_DEB
+  PACKAGE_DEB=$(printf '%s\n' "$PACKAGE_FIXTURE/"*.deb)
+  dpkg-deb -R "$PACKAGE_DEB" "$PACKAGE_FIXTURE/root"
+}
+
+@test "Debian payload includes all Explorer modules and opt-in integration" {
+  for path in bin/fzd share/fzd/integration.sh share/fzd/fzd.conf.example \
+    share/fzd/lib/state.bash share/fzd/lib/operations.bash share/fzd/lib/ui.bash \
+    share/doc/fzd/copyright share/doc/fzd/README.md.gz share/man/man1/fzd.1.gz; do
+    [ -f "$PACKAGE_FIXTURE/root/usr/$path" ]
+  done
+  [ -x "$PACKAGE_FIXTURE/root/usr/bin/fzd" ]
+  [ "$(head -n1 "$PACKAGE_FIXTURE/root/usr/bin/fzd")" = '#!/bin/bash' ]
+  diff <(tail -n +2 "$PACKAGE_REPO/fzd.sh") <(tail -n +2 "$PACKAGE_FIXTURE/root/usr/bin/fzd")
+}
+
+@test "Debian package has no maintainer scripts home files or source lifecycle" {
+  for path in preinst postinst prerm postrm conffiles triggers; do
+    [ ! -e "$PACKAGE_FIXTURE/root/DEBIAN/$path" ]
+  done
+  [ ! -e "$PACKAGE_FIXTURE/root/home" ]
+  [ ! -e "$PACKAGE_FIXTURE/root/etc" ]
+  [ ! -e "$PACKAGE_FIXTURE/root/usr/share/fzd/install.sh" ]
+  [ ! -e "$PACKAGE_FIXTURE/root/usr/share/fzd/install.manifest" ]
+}
+
+@test "Debian dependencies explicitly cover interpreter fzf flock GNU tools and default editor" {
+  run dpkg-deb -f "$PACKAGE_DEB" Depends
+  [ "$status" -eq 0 ]
+  for requirement in 'bash (>= 4.4)' 'fzf (>= 0.44.0)' coreutils findutils util-linux grep sed micro; do
+    [[ "$output" == *"$requirement"* ]]
+  done
+  [ "$(dpkg-deb -f "$PACKAGE_DEB" Architecture)" = all ]
+  run dpkg-deb -f "$PACKAGE_DEB" Recommends
+  [[ "$output" == *'libglib2.0-bin | trash-cli'* ]]
+}
+
+@test "Debian build is byte reproducible with fixed source epoch" {
+  SOURCE_DATE_EPOCH=1700000000 run bash "$PACKAGE_REPO/packaging/build-deb.sh" "$PACKAGE_REPO" "$PACKAGE_FIXTURE/repeated"
+  [ "$status" -eq 0 ]
+  cmp "$PACKAGE_DEB" "$PACKAGE_FIXTURE/repeated/${PACKAGE_DEB##*/}"
+}
+
+@test "Debian revision supports ordered package upgrades" {
+  SOURCE_DATE_EPOCH=1700000000 FZD_DEB_REVISION=2 run bash "$PACKAGE_REPO/packaging/build-deb.sh" "$PACKAGE_REPO" "$PACKAGE_FIXTURE/upgrade"
+  [ "$status" -eq 0 ]
+  local next
+  next=$(printf '%s\n' "$PACKAGE_FIXTURE/upgrade/"*.deb)
+  dpkg --compare-versions "$(dpkg-deb -f "$next" Version)" gt "$(dpkg-deb -f "$PACKAGE_DEB" Version)"
+  dpkg --compare-versions "$(dpkg-deb -f "$PACKAGE_DEB" Version)" lt 0.1.0-1
+}
+
+@test "Build rejects invalid source epoch and package revisions" {
+  SOURCE_DATE_EPOCH=invalid run bash "$PACKAGE_REPO/packaging/build-deb.sh" "$PACKAGE_REPO" "$PACKAGE_FIXTURE/invalid"
+  [ "$status" -eq 2 ]
+  SOURCE_DATE_EPOCH=1700000000 FZD_DEB_REVISION='1;touch bad' run bash "$PACKAGE_REPO/packaging/build-deb.sh" "$PACKAGE_REPO" "$PACKAGE_FIXTURE/invalid"
+  [ "$status" -eq 2 ]
+}
+
+@test "Immutable release build ignores untracked inputs and validates checksums" {
+  # Only runnable after the release builder itself has been committed.
+  git -C "$PACKAGE_REPO" cat-file -e HEAD:packaging/build-release.sh
+  run bash "$PACKAGE_REPO/packaging/build-release.sh" HEAD "$PACKAGE_FIXTURE/release"
+  [ "$status" -eq 0 ]
+  (cd "$PACKAGE_FIXTURE/release" && sha256sum -c SHA256SUMS)
+  run bash "$PACKAGE_REPO/packaging/build-release.sh" HEAD "$PACKAGE_FIXTURE/release"
+  [ "$status" -eq 2 ]
+  [[ "$output" == *'Output already exists'* ]]
+}
+
+@test "Package files have only standard root ownership and data permissions" {
+  run dpkg-deb -c "$PACKAGE_DEB"
+  [ "$status" -eq 0 ]
+  [[ "$output" != *'htpc/'* ]]
+  [[ "$output" != *'-rwxrwx'* ]]
+  [[ "$output" != *'install.manifest'* ]]
+  (cd "$PACKAGE_FIXTURE/root" && md5sum -c DEBIAN/md5sums)
+}

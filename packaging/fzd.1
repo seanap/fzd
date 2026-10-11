@@ -1,0 +1,52 @@
+.TH FZD 1 "FZD" "FZD" "User Commands"
+.SH NAME
+fzd \- fast keyboard-driven terminal file explorer
+.SH SYNOPSIS
+.B fzd_cd
+.br
+.B lf
+.br
+.B fzd
+.SH DESCRIPTION
+FZD browses the current directory with fzf, previews files and directories,
+and supports global search and safe single-item file operations.
+.SH SHELL INTEGRATION
+Add this line to your Bash or zsh startup file, then open a new shell:
+.PP
+.nf
+. /usr/share/fzd/integration.sh
+.fi
+.PP
+Run fzd_cd, or lf if that name was free when integration was sourced.
+Selecting a directory changes the calling shell's directory.
+Raw fzd prints the selected directory instead.
+Installation never changes users' startup files or configuration.
+.SH CONTROLS
+Left/Right navigate parent/child directories. Enter selects a directory or
+opens a file in the editor. Esc cancels. Type to fuzzy filter; Ctrl+F opens
+global search. Alt+Left/Right traverse history; Alt+H shows recent directories.
+.PP
+Ctrl+C/X/V copy/cut/paste; Alt+C/X/V are alternatives. Ctrl+R or F2 renames.
+Ctrl+N or F7 creates a directory. F8 requests confirmed, recoverable Trash.
+F1 shows contextual help. Ctrl+G exits. Delete edits the query.
+.SH CONFIGURATION
+Defaults work without a configuration file. Optional trusted Bash settings
+are read from $XDG_CONFIG_HOME/fzd/fzd.conf, defaulting to ~/.config/fzd/fzd.conf.
+FZD_CONF_FILE selects another path. An example is installed at
+/usr/share/fzd/fzd.conf.example.
+.PP
+EDITOR or VISUAL selects a single executable, without arguments; micro is the
+fallback. FZD_BIN selects an alternate executable for shell integration.
+.SH STATE
+Recent directories and the internal clipboard live below
+${XDG_STATE_HOME:-$HOME/.local/state}/fzd/explorer/.
+Removing the package preserves user configuration and state.
+.SH TRASH
+F8 requires gio (libglib2.0-bin on Debian/Ubuntu, glib2 on Arch/Fedora) or
+trash-put (trash-cli). Permanent deletion is never substituted.
+Restore through your desktop's Trash or the installed Trash tool.
+.SH FILES
+/usr/share/doc/fzd/README.md (possibly compressed) documents controls,
+configuration, unusual filenames and terminal shortcut limitations.
+.SH BUGS
+Report problems at https://github.com/seanap/fzd/issues.

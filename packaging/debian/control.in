@@ -1,0 +1,17 @@
+Package: fzd
+Version: @VERSION@
+Section: utils
+Priority: optional
+Architecture: all
+Maintainer: Sean Patrick <17012946+seanap@users.noreply.github.com>
+Depends: bash (>= 4.4), fzf (>= 0.44.0), coreutils (>= 8.28), findutils, util-linux, grep, sed, mawk | gawk, micro
+Recommends: fd-find, bat, file, tree, libglib2.0-bin | trash-cli
+Suggests: plocate, eza
+Homepage: https://github.com/seanap/fzd
+Description: fast keyboard-driven terminal file explorer
+ FZD combines Bash and fzf for fuzzy navigation, previews, global search,
+ directory history and safe single-item file operations. Linux Trash is
+ available with gio or trash-put; permanent deletion is never substituted.
+ .
+ Source /usr/share/fzd/integration.sh in Bash or zsh to enable directory
+ return through fzd_cd, and lf when that command name is free.
