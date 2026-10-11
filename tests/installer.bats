@@ -228,6 +228,18 @@ load helpers/installer
   install_fzd --prefix "$HOME/prefix-alias"
   [ "$status" -ne 0 ]
   [[ "$output" == *'Resolved installation prefix'* ]]
+  rm "$TEST_BIN/readlink"
+  printf '#!/bin/sh\nexit 42\n' >"$TEST_BIN/readlink"
+  chmod +x "$TEST_BIN/readlink"
+  install_fzd
+  [ "$status" -ne 0 ]
+  [[ "$output" == *'Could not resolve installation prefix'* ]]
+  [ ! -e "$PREFIX" ]
+  printf '#!/bin/sh\nexit 0\n' >"$TEST_BIN/readlink"
+  install_fzd
+  [ "$status" -ne 0 ]
+  [[ "$output" == *'Resolved installation prefix cannot be empty'* ]]
+  [ ! -e "$PREFIX" ]
 }
 
 @test "failed file publication and SIGTERM restore prior shell and application files" {

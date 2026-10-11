@@ -82,3 +82,18 @@ load helpers/installer
   *) skip 'host distribution has no automatic dependency manager mapping' ;;
   esac
 }
+
+@test "present but incompatible GNU serialization tools fail their capability checks" {
+  local tool original
+  for tool in base64 sort; do
+    original=$(readlink -f "$TEST_BIN/$tool")
+    rm "$TEST_BIN/$tool"
+    printf '#!/bin/sh\nexit 2\n' >"$TEST_BIN/$tool"
+    chmod +x "$TEST_BIN/$tool"
+    run bash -c 'set -euo pipefail; die() { printf "%s\n" "$*"; exit 1; }; source "$1/installer/dependencies.bash"; DEPS=none; FZF_VERSION=""; ensure_dependencies' _ "$REPO"
+    [ "$status" -ne 0 ]
+    [[ "$output" == *"GNU-compatible $tool"* ]]
+    rm "$TEST_BIN/$tool"
+    ln -s "$original" "$TEST_BIN/$tool"
+  done
+}

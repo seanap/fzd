@@ -122,13 +122,12 @@ if [[ -n $STAGE ]]; then
 fi
 
 command -v readlink >/dev/null 2>&1 || die 'GNU readlink is required to resolve the installation prefix; install coreutils first'
-PREFIX=$(
-  readlink -m -- "$PREFIX"
-  printf '.'
-)
+if ! PREFIX=$(readlink -m -- "$PREFIX" && printf '.'); then
+  die 'Could not resolve installation prefix; GNU readlink -m is required'
+fi
 PREFIX=${PREFIX%.}
 PREFIX=${PREFIX%$'\n'}
-[[ $PREFIX != / && $PREFIX != *:* ]] || die 'Resolved installation prefix cannot be / or contain the PATH separator :'
+[[ -n $PREFIX && $PREFIX != / && $PREFIX != *:* ]] || die 'Resolved installation prefix cannot be empty, /, or contain the PATH separator :'
 DATA=$PREFIX/share/fzd
 MANIFEST=$DATA/install.manifest
 export PATH="$PREFIX/bin:$PATH"
