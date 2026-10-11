@@ -1,7 +1,7 @@
 # shellcheck shell=bash
 # FZD shell integration: source from Bash or zsh. No configuration is executed.
 # FZD_BIN may select a different executable; installers set _FZD_INSTALL_BIN.
-_fzd_run_and_cd() {
+function _fzd_run_and_cd {
   local fzd_result fzd_status
   # A sentinel preserves every trailing newline. Remove only FZD's one protocol
   # newline, and propagate failures without attempting to change directory.
@@ -34,8 +34,8 @@ _fzd_run_and_cd() {
 
 # Preserve existing functions, aliases, builtins and executables in both shells.
 if ! command -v fzd_cd >/dev/null 2>&1; then
-  fzd_cd() { _fzd_run_and_cd "$@"; }
+  function fzd_cd { _fzd_run_and_cd "$@"; }
 fi
 if ! command -v lf >/dev/null 2>&1; then
-  lf() { _fzd_run_and_cd "$@"; }
+  function lf { _fzd_run_and_cd "$@"; }
 fi

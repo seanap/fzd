@@ -78,6 +78,8 @@ check_shell_cancel() {
     [ "$status" -eq 0 ]
     [[ "$output" == *existing* ]]
   done
+  run bash -O expand_aliases -ec 'alias lf="printf existing"; alias fzd_cd="printf alternate"; source "$1"; alias lf; alias fzd_cd' _ "$BATS_TEST_TMPDIR/init"
+  [ "$status" -eq 0 ]
   printf '#!/bin/sh\nprintf existing\n' >"$TEST_BIN/lf"
   chmod +x "$TEST_BIN/lf"
   for shell in bash "$FZD_REAL_ZSH"; do
