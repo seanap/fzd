@@ -1,0 +1,92 @@
+name: Validate and build release candidates
+
+on:
+  pull_request:
+  push:
+    branches: [main, revamp/audit]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  regression:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        fzf: ['0.44.1', '0.65.2']
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+      - name: Install development dependencies on disposable runner
+        run: |
+          sudo apt-get update
+          sudo apt-get install --no-install-recommends -y fzf fd-find bat tree micro zsh bats shellcheck shfmt tmux bubblewrap file curl ca-certificates dpkg-dev lintian plocate
+          if [[ -e /proc/sys/kernel/apparmor_restrict_unprivileged_userns ]]; then
+            sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
+          fi
+          bash dev/prepare-fzf-test.sh
+      - name: Select checksum-verified fzf fixture
+        if: matrix.fzf == '0.65.2'
+        run: |
+          mkdir -p .test-work/fzf-bin
+          tar -xzf .test-work/phase-three/fzf-0.65.2-linux_amd64.tar.gz -C .test-work/fzf-bin fzf
+          echo "$PWD/.test-work/fzf-bin" >> "$GITHUB_PATH"
+      - name: Static checks and complete regression suite
+        run: |
+          fzf --version
+          bash packaging/check.sh
+          mkdir -p .test-work/phase-four-a
+          bash tests/run.sh --print-output-on-failure > .test-work/phase-four-a/tests.tap
+          if grep -Eq '^(not ok|ok .*# skip)' .test-work/phase-four-a/tests.tap; then exit 1; fi
+      - name: Build twice and verify deterministic artifacts
+        run: |
+          bash packaging/build-release.sh HEAD .test-work/candidate
+          bash packaging/build-release.sh HEAD .test-work/repeated
+          diff -r .test-work/candidate .test-work/repeated
+          (cd .test-work/candidate && sha256sum -c SHA256SUMS)
+          lintian --tag-display-limit 0 .test-work/candidate/*.deb
+      - name: Retain local-style candidates and evidence (no publication)
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: candidate-${{ github.sha }}-fzf-${{ matrix.fzf }}
+          path: |
+            .test-work/candidate/
+            .test-work/phase-four-a/*.tap
+          if-no-files-found: error
+          retention-days: 14
+
+  distributions:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        distro: [ubuntu, debian, arch, fedora]
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+      - name: Build candidate and prepare container tooling
+        run: |
+          sudo apt-get update
+          sudo apt-get install --no-install-recommends -y podman dpkg-dev curl ca-certificates
+          bash dev/prepare-fzf-test.sh
+          bash packaging/build-release.sh HEAD .test-work/candidate
+      - name: Actual distribution lifecycle and installed regression suite
+        env:
+          FZD_TARGET: ${{ matrix.distro }}
+        run: sudo env FZD_CONTAINER_LOCAL_STORAGE=1 bash packaging/validate-distributions.sh .test-work/candidate "$FZD_TARGET"
+      - name: Retain distribution evidence
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: distribution-${{ matrix.distro }}-${{ github.sha }}
+          path: .test-work/phase-four-a/${{ matrix.distro }}/
+          include-hidden-files: true
+          if-no-files-found: error
+          retention-days: 14

@@ -9,10 +9,42 @@ keyboard. Selecting a directory returns to your shell in that directory.
 
 ## Install
 
+**Release candidate:** `.deb` and Arch build artifacts are generated locally or
+by the validation workflow. Nothing has been published to APT, AUR, or GitHub
+Releases yet. Use the source command below until approved artifacts are available.
+
+For a downloaded Debian/Ubuntu candidate, check its checksum and install it with
+APT so dependencies are resolved:
+
+```bash
+sha256sum --ignore-missing -c SHA256SUMS
+sudo apt install ./fzd_0.1.0~rc.1-1_all.deb
+```
+
+For Arch, place the generated `PKGBUILD` and matching source archive in a clean
+directory and run `makepkg -si` as your normal user. Arch's normal full system
+update must precede builds; avoid partial upgrades. The generated download URL
+will become usable only after release publication is approved.
+
+Packages leave your home untouched. Add this line to `~/.bashrc` or
+`${ZDOTDIR:-$HOME}/.zshrc`, then open a new terminal (or run the line now):
+
+```bash
+. /usr/share/fzd/integration.sh
+```
+
+Run **`lf`**, or **`fzd_cd`** if you already have an `lf` command. Defaults work
+without copying a configuration file. Package details and reproducible builds
+are in [Packaging](docs/packaging.md).
+
+### From source
+
 Use Linux with Bash 4.4+, GNU utilities, and Git. Bash and zsh are supported as
 interactive shells. Ubuntu/Debian, Fedora, and Arch dependency managers are
-supported; Ubuntu 24.04 under WSL2 is the fully tested environment. Other Linux
-systems can use the manual installation below.
+supported. The source installer is separate from package installation; it owns
+only its user-local files. Other Linux systems can use the manual installation
+below. See the [release validation report](docs/phase-four-a.md) for tested
+platforms and remaining release gates.
 
 Run as your normal user:
 
@@ -219,6 +251,24 @@ variable cannot be discovered by a child installer. Symlinked shell startup file
 retain their links; the regular target is backed up and edited.
 
 ## Update, verify, and uninstall
+
+**Packages:** install a newer `.deb` with `sudo apt install ./NEW-PACKAGE.deb`;
+remove it with `sudo apt remove fzd` (or `sudo apt purge fzd`). Arch users build
+the newer recipe with `makepkg -si` and remove with `sudo pacman -R fzd`.
+Your configuration, clipboard, recents and explicitly added shell integration
+line remain yours. Remove that one source line when uninstalling. Dependencies
+are shared; FZD never removes them itself. You can guard the source line with
+`[ ! -r /usr/share/fzd/integration.sh ] || . /usr/share/fzd/integration.sh`
+to avoid startup errors after removal.
+
+**Source to package:** first uninstall the user-local copy with its lifecycle
+command below; this preserves preferences. Install the package and add the
+package integration line. Open a new terminal so the old `_FZD_INSTALL_BIN` is
+cleared. An old `~/.local/bin/fzd`, `FZD_BIN`, or custom PATH entry can otherwise
+select the old executable; check `command -v fzd`. Never use the source
+uninstaller to remove `/usr` package files.
+
+**Source installations:**
 
 From your original checkout, update and repeat the same installation options:
 

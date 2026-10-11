@@ -7,7 +7,7 @@ set -euo pipefail
 }
 target=${1:?ubuntu, debian, arch or fedora required}
 [[ $target == ubuntu || $target == debian || $target == arch || $target == fedora ]] || exit 2
-export LC_ALL=C.UTF-8 TERM=xterm-256color
+export LC_ALL=C.UTF-8 TERM=xterm-256color USER=root
 mkdir -p /work /results
 cat /etc/os-release
 cat /artifacts/SOURCE
@@ -110,7 +110,9 @@ test_files=()
 for test_file in tests/*.bats; do
   [[ $test_file == tests/packaging.bats ]] || test_files+=("$test_file")
 done
-HOME=/work bash tests/run.sh "${test_files[@]}" >/results/tests.tap
+useradd -m validator
+chown -R validator:validator "$source_root" /results
+runuser -u validator -- env HOME=/work bash tests/run.sh "${test_files[@]}" --print-output-on-failure >/results/tests.tap
 if grep -Eq '^(not ok|ok .*# skip)' /results/tests.tap; then exit 1; fi
 tail -n5 /results/tests.tap
 

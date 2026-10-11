@@ -1,125 +1,168 @@
-# Packaging architecture and readiness
+# Packaging and release candidates
 
-Phase Three prepares a package payload; it does not create or publish packages.
-The interactive source installer is never a distribution post-install script.
+Packages use `install.sh --stage`; they never run the source installer on
+installation, upgrade or removal. No maintainer scripts, automatic home edits,
+themes, services or bundled fzf are shipped. Bash and fzf remain the architecture.
 
-## Responsibilities and paths
+## Build one immutable revision
 
-| Component | Source installation | Distribution package |
-| --- | --- | --- |
-| Application | `PREFIX/bin/fzd` | `/usr/bin/fzd`, or the package prefix's `bin/fzd` |
-| Explorer helpers | `PREFIX/share/fzd/lib/{state,operations,ui}.bash` | Same relative paths; loaded on demand |
-| Shell functions | `PREFIX/share/fzd/integration.sh` | Same relative path; opt-in sourcing |
-| Configuration example | `PREFIX/share/fzd/fzd.conf.example` | Read-only example under the package prefix |
-| User configuration | `$XDG_CONFIG_HOME/fzd/fzd.conf` or `$FZD_CONF_FILE` | User creates it; runtime defaults work without a file |
-| State/cache/runtime | FZD's existing XDG paths | Created by the running application as the user |
-| Dependencies | Explicit source-installer mode | Declared in package metadata; package manager owns installation |
-| Source lifecycle metadata | `PREFIX/share/fzd/install.manifest` and private retained transactions | Not shipped |
-| Themes | User chooses independently | Optional external packages/settings; no automatic changes |
-
-The shell integration contains no external startup commands and does not source
-the user's Bash configuration into their interactive shell. `fzd_cd` and `lf`
-are defined only when each name is free. Both delegate to the same byte-preserving
-wrapper. An explicit `FZD_BIN` or source install's `_FZD_INSTALL_BIN` selects the
-application; package integrations normally resolve `fzd` through PATH.
-
-The source installer offers dependencies, files, configuration and rc setup as
-separate operations/options. `--stage` bypasses all dependency transactions,
-configuration initialization, shell rc changes, verification probes, downloads
-and source-install metadata. It copies the application, Explorer helpers,
-integration, example and MIT license, using standard executable/data permissions.
+Build tools: Git, Bash, GNU coreutils/findutils/text utilities, tar, gzip,
+xz-utils and dpkg (including dpkg-deb). Build without root or network:
 
 ```bash
-bash install.sh --stage "$PWD/package-root" --prefix /usr
+bash packaging/build-release.sh HEAD .test-work/my-candidate
+cd .test-work/my-candidate
+sha256sum -c SHA256SUMS
 ```
 
-Use the same command with the package's own build root and prefix. Homebrew Linux
-can stage with its formula prefix. AUR, Pacstall and RPM recipes can copy these
-files directly instead. A package build does not require Git, network access,
-sudo, fzf, or an editor to be present. Bash and GNU coreutils (including install
-and readlink) are build tools. Root-directory aliases are rejected as staging
-destinations.
+The output directory must not exist. The revision is resolved once to a full
+commit; `SOURCE` records that commit and its timestamp. All application,
+documentation and builder inputs come from `git archive` of that commit, never
+uncommitted files. Archives use `fzd-VERSION/`, Git commit timestamps and gzip -n.
+Debian payload timestamps use SOURCE_DATE_EPOCH, root ownership and deterministic
+compression. Repeat builds in the same toolchain must have identical checksums.
+Cross-toolchain compressed-byte reproducibility is not promised; record tool
+versions with validation evidence.
 
-The common staging license path is `PREFIX/share/licenses/fzd/LICENSE.txt`.
-Debian recipes must place appropriate copyright information in
-`/usr/share/doc/fzd/copyright`. Recipes should set a policy-compliant Bash shebang
-and interpreter dependency; Debian's script conventions are described in
-[Debian Policy](https://www.debian.org/doc/debian-policy/ch-files.html#scripts).
-The source runtime currently uses `/usr/bin/env bash`.
+Outputs: source archive, architecture-independent `.deb`, generated `PKGBUILD`,
+`SOURCE` provenance record and `SHA256SUMS`. SHA256 detects mismatches; it is not
+a publisher signature. Signing/public provenance remains a release decision.
 
-## Shell integration without modifying homes
+## Versioning
 
-Ship `/usr/share/fzd/integration.sh` and tell users to add this one line to their
-chosen Bash/zsh startup file:
+`VERSION` is MAJOR.MINOR.PATCH, optionally `-rc.N`. The first candidate is
+`0.1.0-rc.1`; the build creates no tag.
+
+| Upstream | Debian | Arch |
+| --- | --- | --- |
+| `0.1.0-rc.1` | `0.1.0~rc.1-1` | `0.1.0rc.1-1` |
+| `0.1.0` | `0.1.0-1` | `0.1.0-1` |
+
+Prereleases sort below the final release. Packaging-only rebuilds increment the
+distribution revision; application releases increment VERSION. The Debian builder
+accepts FZD_DEB_REVISION=2 for upgrade tests. Arch uses pkgrel. Never replace a
+published archive at the same version. Checksums identify the exact source commit.
+
+## Paths and ownership
+
+| Component | Package path |
+| --- | --- |
+| Application | `/usr/bin/fzd`, the application itself, no startup wrapper |
+| Explorer helpers | `/usr/share/fzd/lib/{state,operations,ui}.bash`, loaded lazily |
+| Shell integration | `/usr/share/fzd/integration.sh`, opt-in |
+| Example | `/usr/share/fzd/fzd.conf.example`, not an active configuration |
+| Documentation | `/usr/share/doc/fzd/`, plus fzd(1) |
+| MIT license | Debian `/usr/share/doc/fzd/copyright`; Arch `/usr/share/licenses/fzd/LICENSE.txt` |
+| User configuration | `$XDG_CONFIG_HOME/fzd/fzd.conf` or `$FZD_CONF_FILE`, never package-owned |
+| State/cache | Existing XDG paths, created at runtime and retained on removal |
+
+Debian changes only the first line to `#!/bin/bash`, following
+[Debian script policy](https://www.debian.org/doc/debian-policy/ch-files.html#scripts).
+Remaining executable bytes and all modules match the frozen source. Source
+install manifests/lifecycle scripts are excluded from packages.
+
+## Dependencies
+
+| Purpose | Debian/Ubuntu | Arch | Fedora compatibility |
+| --- | --- | --- | --- |
+| Bash >=4.4, fzf >=0.44 | bash, fzf | bash, fzf | bash, fzf |
+| GNU tools | coreutils, findutils, grep, sed, mawk or gawk | coreutils, findutils, grep, sed, gawk | Same with gawk |
+| flock | util-linux | util-linux | util-linux-core |
+| Default editor | micro | micro | micro |
+| Search/previews | fd-find, bat, file, tree | fd, bat, file, tree | fd-find, bat, file, tree |
+| Optional Trash | libglib2.0-bin or trash-cli | glib2 or trash-cli | glib2 or trash-cli |
+| Optional index | plocate | plocate | plocate |
+
+Micro is explicit because the unchanged runtime uses it when EDITOR/VISUAL is
+absent/unavailable. No editor variables or locate databases are changed.
+Debian recommends preview/search tools and Trash; normal APT installs these,
+`--no-install-recommends` does not. Arch optdepends are explicit user choices.
+Without gio/trash-put, F8 reports the missing backend and leaves files untouched.
+Permanent deletion is never substituted.
+
+## Install, integrate, update and remove
+
+```bash
+sha256sum --ignore-missing -c SHA256SUMS
+sudo apt install ./fzd_0.1.0~rc.1-1_all.deb
+```
+
+On Arch, place generated PKGBUILD and matching archive together and run
+`makepkg -si` as a normal user. The HTTPS source URL names the prospective
+approved GitHub release. Until publication, the local archive satisfies makepkg's
+cache with the same mandatory checksum. No SKIP checksum or moving Git branch
+is used. Generate AUR metadata with `makepkg --printsrcinfo > .SRCINFO`.
+Real Arch validation retains .SRCINFO and its package. The recipe is ready for
+review/build; public source availability and AUR submission await approval.
+
+Add this line to your Bash/zsh startup file, respecting ZDOTDIR:
 
 ```bash
 . /usr/share/fzd/integration.sh
 ```
 
-This gives explicit consent, respects nonstandard startup files and ZDOTDIR, and
-leaves every home untouched. A future optional system-wide integration package
-could use distribution shell startup directories, guarded for interactive Bash
-or zsh only, after testing each distribution's startup rules. It should still
-preserve existing commands and never load FZD configuration or themes into the
-parent shell. Do not assume `/etc/profile.d` covers every interactive shell.
+Open a new shell and run lf; use fzd_cd if lf already exists. Sourcing integration
+runs no external commands. Existing commands, editor settings, LS_COLORS and
+themes are preserved. Raw fzd prints the chosen directory; only the wrapper
+changes its calling shell's directory. No implicit system-wide integration hook
+is installed.
 
-Packages should not create `~/.config/fzd` or run updatedb. Without a configuration
-file, FZD uses runtime defaults; users wanting the example's colors/search scope
-copy the example explicitly. Package removal leaves user configuration intact
-and relies on package-manager ownership, rather than the source uninstaller.
-Keep the source lifecycle script out of the package payload to prevent competing
-ownership mechanisms.
+Upgrade with a newer `.deb` through APT or a rebuilt Arch recipe. Remove with
+`sudo apt remove fzd` / `sudo apt purge fzd` or `sudo pacman -R fzd`. Remove your
+source line after uninstalling, or use the guarded form in the README. User
+configuration/state remain; package managers own only /usr payload files.
 
-## Dependency policy
+For source-to-package transitions, uninstall the user-local source copy first,
+then install the package and opt in to package integration. Open a new shell to
+clear old _FZD_INSTALL_BIN values; check command -v fzd and FZD_BIN if the wrong
+copy starts. Neither ownership mechanism silently removes the other.
 
-Require Bash >=4.4, compatible fzf >=0.44.0, GNU coreutils/findutils, flock
-(util-linux; util-linux-core on Fedora), and the standard
-text utilities used by the script. Test fzf behavior as well as its version.
-Ubuntu's 0.44.1 and official 0.65.2 have been exercised locally. Recommend fd,
-bat, file, tree and a usable editor; select the distribution's editor dependency
-policy explicitly. Source installation checks the configured single executable
-and otherwise ensures micro is available. Locate, eza, icons, hexdump and tput
-remain optional. Recommend an optional Trash provider: `gio` (Ubuntu/Debian
-`libglib2.0-bin`, [Arch glib2](https://archlinux.org/packages/core/x86_64/glib2/files/)
-and [Fedora glib2](https://packages.fedoraproject.org/pkgs/glib2/glib2/fedora-44.html))
-or `trash-put` (`trash-cli`). Persistent
-Explorer records are user-owned XDG state and remain after package removal.
-Do not start locate services or download a second fzf from a
-package-maintainer script.
+## Real distribution validation
 
-| Target | Next-phase recipe/build work |
-| --- | --- |
-| Debian/Ubuntu APT and downloadable `.deb` | Add `debian/` metadata, dependencies, copyright and architecture-independent build; lint and test install/upgrade/remove in clean supported releases |
-| Arch/AUR | Add pinned source/checksum PKGBUILD, optional dependencies and opt-in shell instructions; build in a clean chroot |
-| Homebrew Linux | Formula installs application/data and depends on modern Bash/fzf/GNU utilities; test the installed prefix and shell instructions; consult the [Formula Cookbook](https://docs.brew.sh/Formula-Cookbook) |
-| Pacstall | Add recipe with pinned source/checksum and distro dependency policy; stage files without user installer or theme hooks |
-| Fedora RPM/COPR | Add spec with `%{_bindir}`, `%{_datadir}`, license/docs and dependencies; test with a clean buildroot and installed RPM |
-| Other Linux | Retain the dependency-free manual/staging path; verify GNU tool availability and compatible Bash/fzf |
+Prepare the pinned x86_64 fixture and install Podman (or Docker). Tests modify
+only disposable container filesystems. No host home, package-manager database
+or container socket is mounted. Host networking permits package downloads; no
+ports are exposed. Nested bubblewrap requires relaxed seccomp/AppArmor filters,
+without privileged mode.
 
-## Evidence and release gates
+```bash
+bash dev/prepare-fzf-test.sh
+bash packaging/validate-distributions.sh .test-work/my-candidate ubuntu
+bash packaging/validate-distributions.sh .test-work/my-candidate debian
+bash packaging/validate-distributions.sh .test-work/my-candidate arch
+bash packaging/validate-distributions.sh .test-work/my-candidate fedora
+```
 
-Current evidence covers actual Ubuntu 24.04 WSL installation in disposable homes,
-Bash/zsh wrappers, official x86_64 fzf download integrity, package staging and
-controlled apt/dnf/pacman command tests. Four bubblewrap-isolated full installs
-add simulated Ubuntu/Debian/Fedora/Arch metadata and manager commands, with the
-host mounted read-only. These are not complete native Debian/Fedora/Arch
-installations. No ARM machine, native distribution VM or
-package repository was used. WSL does not prevent these installer tests; separate
-distribution userspaces and native sessions remain release validation work.
+Use rootless Podman normally. This temporary WSL setup uses
+`sudo env FZD_CONTAINER_LOCAL_STORAGE=1 bash packaging/validate-distributions.sh ...`
+for rootful Podman storage under ignored .test-work/containers/. Docker users set
+FZD_CONTAINER_RUNTIME=docker. Tests use Ubuntu 24.04, Debian 13/trixie, current
+Arch base and Fedora 44; actual image IDs/digests and dependency versions are
+recorded. Tags follow security updates; evidence identifies each tested image.
 
-Before publishing:
+Debian/Ubuntu exercise real APT/dpkg dependency resolution, revision-2 upgrades,
+verification and purge. Arch exercises makepkg/pacman. Fedora is staged-runtime
+compatibility, not RPM lifecycle validation. Installed executable/integration/
+modules are copied into the fixture source layout for the original 201 tests,
+including real tmux/fzf PTYs, isolated gio Trash, concurrency and private-tmpfs
+cross-filesystem movement. Tests run as an unprivileged container user, so Unix
+permission and sudo tests retain their meaning. Packaging tests run separately
+in the Git checkout.
 
-- Choose a version/release policy, immutable source archive and checksums.
-- Build each recipe offline from the staged payload; inspect every packaged path.
-- Declare the interpreter, runtime and recommended/optional dependencies using
-  each distribution's supported names and policies.
-- Test real clean Ubuntu, Debian, Fedora and Arch environments, including old fzf,
-  missing tools, interactive sudo, upgrade/removal, shell startup and permissions.
-- Execute ARM64 download/application tests before advertising that path as tested.
-- Run the complete regression suite and monotonic PTY/performance checks on the
-  packaged executable; compare to the protected Phase Two baseline.
-- Test source-to-package transitions explicitly. Existing user-local FZD may
-  shadow `/usr/bin/fzd`; neither installer should silently remove the other.
-- Confirm license/doc placement, shell opt-in instructions, package linting and
-  clean removal through the package manager.
-- Obtain Phase Four approval before creating/publishing releases or repositories.
+These are genuine distro userspaces sharing the WSL kernel, not native desktop,
+SELinux or ARM64 coverage. Four older distributions.bats profiles remain
+explicitly simulated checks. See [executed evidence](phase-four-a.md).
+
+## CI and future work
+
+The GitHub workflow uses read-only repository permissions, pinned action commits,
+no persisted credentials and no push/tag/release/publish steps. It runs static
+checks, regression tests with both supported fzf versions, repeated builds,
+checksums/linting and real distro validation, retaining artifacts and logs.
+GitHub execution cannot be claimed until approved push and a workflow run;
+local equivalents are tested first.
+
+Separate approval is required for public releases, signing/APT repositories,
+Debian source packages, AUR submission, Homebrew, Pacstall, Fedora RPM/COPR and
+ARM64 validation. All future recipes must stage the same payload without home
+edits or invoking the user installer.
