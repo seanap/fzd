@@ -1,0 +1,96 @@
+{
+  "results": [
+    {
+      "command": "bash benchmarks/local.sh '/home/htpc/projects/fzd/.test-work/phase-three/baseline.sh' 10 'enumerate'",
+      "mean": 0.0058989323666666675,
+      "stddev": 0.0006238984486247208,
+      "median": 0.006111631700000001,
+      "user": 0.0043269400000000005,
+      "system": 0.00015927999999999998,
+      "min": 0.005196496700000001,
+      "max": 0.006388668700000001,
+      "times": [
+        0.006111631700000001,
+        0.006388668700000001,
+        0.005196496700000001
+      ],
+      "exit_codes": [
+        0,
+        0,
+        0
+      ],
+      "parameters": {
+        "count": "10"
+      }
+    },
+    {
+      "command": "bash benchmarks/local.sh '/home/htpc/projects/fzd/.test-work/phase-three/baseline.sh' 100 'enumerate'",
+      "mean": 0.005861231033333334,
+      "stddev": 0.00019098032492990817,
+      "median": 0.005966980700000001,
+      "user": 0.0049796066666666665,
+      "system": 0.0003492266666666667,
+      "min": 0.005640766700000001,
+      "max": 0.0059759457000000005,
+      "times": [
+        0.005966980700000001,
+        0.005640766700000001,
+        0.0059759457000000005
+      ],
+      "exit_codes": [
+        0,
+        0,
+        0
+      ],
+      "parameters": {
+        "count": "100"
+      }
+    },
+    {
+      "command": "bash benchmarks/local.sh '/home/htpc/projects/fzd/.test-work/phase-three/baseline.sh' 1000 'enumerate'",
+      "mean": 0.015181325033333333,
+      "stddev": 0.0004822445055875016,
+      "median": 0.0151303417,
+      "user": 0.012890939999999998,
+      "system": 0.00226284,
+      "min": 0.0147265977,
+      "max": 0.0156870357,
+      "times": [
+        0.0156870357,
+        0.0147265977,
+        0.0151303417
+      ],
+      "exit_codes": [
+        0,
+        0,
+        0
+      ],
+      "parameters": {
+        "count": "1000"
+      }
+    },
+    {
+      "command": "bash benchmarks/local.sh '/home/htpc/projects/fzd/.test-work/phase-three/baseline.sh' 10000 'enumerate'",
+      "mean": 0.12513340836666667,
+      "stddev": 0.005943129794087662,
+      "median": 0.1274108687,
+      "user": 0.07861794,
+      "system": 0.06495517333333332,
+      "min": 0.11838837170000001,
+      "max": 0.12960098470000003,
+      "times": [
+        0.12960098470000003,
+        0.11838837170000001,
+        0.1274108687
+      ],
+      "exit_codes": [
+        0,
+        0,
+        0
+      ],
+      "parameters": {
+        "count": "10000"
+      }
+    }
+  ]
+}

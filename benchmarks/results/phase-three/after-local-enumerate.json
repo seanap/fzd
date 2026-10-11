@@ -1,0 +1,96 @@
+{
+  "results": [
+    {
+      "command": "bash benchmarks/local.sh '/home/htpc/projects/fzd/fzd.sh' 10 'enumerate'",
+      "mean": 0.004572034153333334,
+      "stddev": 3.216629032595145e-6,
+      "median": 0.00457224382,
+      "user": 0.0028713466666666666,
+      "system": 0.0008533133333333333,
+      "min": 0.00456871782,
+      "max": 0.00457514082,
+      "times": [
+        0.00456871782,
+        0.00457514082,
+        0.00457224382
+      ],
+      "exit_codes": [
+        0,
+        0,
+        0
+      ],
+      "parameters": {
+        "count": "10"
+      }
+    },
+    {
+      "command": "bash benchmarks/local.sh '/home/htpc/projects/fzd/fzd.sh' 100 'enumerate'",
+      "mean": 0.005720737153333333,
+      "stddev": 0.0003179096673291541,
+      "median": 0.00580671982,
+      "user": 0.003543013333333333,
+      "system": 0.00134994,
+      "min": 0.0053686798200000005,
+      "max": 0.005986811820000001,
+      "times": [
+        0.005986811820000001,
+        0.00580671982,
+        0.0053686798200000005
+      ],
+      "exit_codes": [
+        0,
+        0,
+        0
+      ],
+      "parameters": {
+        "count": "100"
+      }
+    },
+    {
+      "command": "bash benchmarks/local.sh '/home/htpc/projects/fzd/fzd.sh' 1000 'enumerate'",
+      "mean": 0.014698976486666668,
+      "stddev": 0.0007152677154914321,
+      "median": 0.014342418820000001,
+      "user": 0.009403013333333333,
+      "system": 0.004460606666666666,
+      "min": 0.014232074820000001,
+      "max": 0.01552243582,
+      "times": [
+        0.01552243582,
+        0.014342418820000001,
+        0.014232074820000001
+      ],
+      "exit_codes": [
+        0,
+        0,
+        0
+      ],
+      "parameters": {
+        "count": "1000"
+      }
+    },
+    {
+      "command": "bash benchmarks/local.sh '/home/htpc/projects/fzd/fzd.sh' 10000 'enumerate'",
+      "mean": 0.12372255182000001,
+      "stddev": 0.000493422335348732,
+      "median": 0.12361229082000001,
+      "user": 0.07709701333333334,
+      "system": 0.06350394,
+      "min": 0.12329358782000001,
+      "max": 0.12426177682,
+      "times": [
+        0.12361229082000001,
+        0.12426177682,
+        0.12329358782000001
+      ],
+      "exit_codes": [
+        0,
+        0,
+        0
+      ],
+      "parameters": {
+        "count": "10000"
+      }
+    }
+  ]
+}

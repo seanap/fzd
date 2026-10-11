@@ -6,12 +6,12 @@ mode=${1:-before}
 runs=${2:-3}
 [[ "$mode" == before || "$mode" == after ]] || exit 2
 [[ "$runs" =~ ^[1-9][0-9]*$ ]] || exit 2
-work="$repo/.test-work/phase-two"
+work=${FZD_BENCH_OUTPUT_DIR:-$repo/.test-work/phase-two}
 mkdir -p "$work"
 if [[ "$mode" == before ]]; then
-  git show 385868a:fzd.sh >"$work/phase-one.sh"
-  chmod +x "$work/phase-one.sh"
-  script="$work/phase-one.sh"
+  git show "${FZD_BENCH_BASELINE:-385868a}:fzd.sh" >"$work/baseline.sh"
+  chmod +x "$work/baseline.sh"
+  script="$work/baseline.sh"
 else
   script="$repo/fzd.sh"
 fi

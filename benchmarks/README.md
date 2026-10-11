@@ -90,3 +90,17 @@ The main terminal matrix and direct-preview comparison were rerun with uptime.
 Phase-one artifacts remain in `results/`. Phase-two measurements and process
 profiles are in `results/phase-two/`; the engineering report is
 [../docs/phase-two.md](../docs/phase-two.md).
+
+For Phase Three comparisons against the protected Phase Two revision, keep its
+historical results intact and choose a new output directory:
+
+```bash
+FZD_BENCH_BASELINE=d3315f8 FZD_BENCH_OUTPUT_DIR="$PWD/.test-work/phase-three" bash benchmarks/phase-two.sh before 3
+FZD_BENCH_OUTPUT_DIR="$PWD/.test-work/phase-three" bash benchmarks/phase-two.sh after 3
+```
+
+The default baseline/output directory remain Phase One/Phase Two for historical
+reproduction. `before` now materializes its chosen revision as `baseline.sh`.
+Run benchmarks sequentially on an idle host, after tests have completed. Use
+`terminal.sh` with that baseline and the installed executable to verify the
+actual package/source-install payload without changing timing methodology.
