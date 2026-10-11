@@ -268,8 +268,16 @@ build_lines() {
     local p="${CUR%/}/$f"
     _display_name "$f"
     paths+=("$p"); labels+=("${c_file}${REPLY}${c_reset}")
-    if [[ -n "$want_child" && "$f" == "$want_child" ]]; then START_POS=${#paths[@]}; fi
   done
+  # File restoration is needed only on history/operation returns. Directory
+  # highlights found above and ordinary visits need no additional file scan.
+  if [[ -n "$want_child" && -z "$START_POS" ]]; then
+    for ((idx=0; idx<${#FILES[@]}; idx++)); do
+      if [[ ${FILES[idx]} == "$want_child" ]]; then
+        START_POS=$((2 + ${#DIRS[@]} + idx)); break
+      fi
+    done
+  fi
   _b64_paths "${paths[@]}" || return 1
   for ((idx=0; idx<${#paths[@]}; idx++)); do
     LINES+=("${B64_PATHS[idx]}${DELIM}${labels[idx]}")
