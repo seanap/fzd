@@ -219,6 +219,8 @@ clipboard_terminal_cycle() {
   printf text >"$FIXTURE_ROOT/child/inside-local"
   printf text >"$FIXTURE_ROOT/needle-target/inside-global"
   start_terminal
+  # Keep the long disposable fixture path visible for directory-frame checks.
+  tmux -S "$SOCKET" resize-window -t fzd:0 -x 320 -y 32
   tmux -S "$SOCKET" send-keys -l child
   wait_screen '1/3'
   tmux -S "$SOCKET" send-keys Right
@@ -275,6 +277,7 @@ clipboard_terminal_cycle() {
   mkdir -p "$FIXTURE_ROOT/child"
   printf text >"$FIXTURE_ROOT/child/inside"
   start_terminal
+  tmux -S "$SOCKET" resize-window -t fzd:0 -x 320 -y 32
   tmux -S "$SOCKET" send-keys -l child
   wait_screen '1/2'
   tmux -S "$SOCKET" send-keys Right
