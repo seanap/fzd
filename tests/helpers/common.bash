@@ -1,6 +1,9 @@
+# shellcheck disable=SC2034,SC2154 # Globals are shared with Bats test bodies/run.
 setup_fixture() {
+  bats_require_minimum_version 1.5.0
   FZD_REPO=$(cd -- "$BATS_TEST_DIRNAME/.." && pwd)
   FZD_SCRIPT="$FZD_REPO/fzd.sh"
+  FZD_REAL_FD=$(command -v fd 2>/dev/null || command -v fdfind 2>/dev/null || true)
   FIXTURE_ROOT="$BATS_TEST_TMPDIR/files"
   TEST_BIN="$BATS_TEST_TMPDIR/bin"
   UTILITY_BIN="$BATS_TEST_TMPDIR/utilities"
@@ -16,12 +19,13 @@ setup_fixture() {
   export FZD_EXCLUDES=.git,node_modules FZD_GLOBAL_XEXCLUDES=proc,sys,dev,run
   export FZD_STUB_RESULTS="$BATS_TEST_TMPDIR/results"
   export FZD_STUB_LOG="$BATS_TEST_TMPDIR/backend-arguments"
-  unset FZD_GLOBAL_ROOTS FZD_LOCATE_DBS FZD_GLOBAL_FULLPATH FZD_TMP_DIR
+  unset FZD_GLOBAL_ROOTS FZD_LOCATE_DBS FZD_TMP_DIR
+  export FZD_GLOBAL_FULLPATH=0
   unset FZD_STATE_DIR FZD_CACHE_DIR FZD_COLOR_DIR FZD_COLOR_FILE
   unset FZF_DEFAULT_OPTS FZF_DEFAULT_OPTS_FILE FZD_STUB_LOCATE_STATUS
   unset FZD_STUB_FD_STATUS FZD_STUB_ACTION FZD_STUB_SELECTION
   : >"$FZD_STUB_RESULTS"
-  for utility in bash sh env base64 tr find head sort awk sed grep cut dirname basename mktemp mkdir rm sleep cat ls file timeout ln wc; do
+  for utility in bash sh env base64 tr find head sort awk sed grep cut dirname basename mktemp mkdir rm sleep cat ls file timeout ln wc chmod; do
     ln -s "$(command -v "$utility")" "$UTILITY_BIN/$utility"
   done
   ln -s "$FZD_REPO/tests/helpers/fzf-stub" "$TEST_BIN/fzf"

@@ -122,3 +122,105 @@ setup() { setup_fixture; }
   [ "$status" -eq 0 ]
   [ -z "$output" ]
 }
+
+@test "all search producers preserve unusual path bytes without executing names" {
+  local name path producer
+  local names=('needle space' "needle'quote" 'needle"double' 'needle`printf hit`' 'needle$(printf hit)' 'needle\\slash' 'needle-é' $'needle\ttab' $'needle\nline' $'needle-tail\n')
+  local paths=()
+  for name in "${names[@]}"; do
+    path="$FIXTURE_ROOT/$name"
+    printf text > "$path"
+    paths+=("$path")
+  done
+  set_results "${paths[@]}"
+  for producer in find fd locate; do
+    rm -f -- "$TEST_BIN/fd" "$TEST_BIN/plocate"
+    export FZD_GLOBAL_BACKEND=live
+    case "$producer" in
+      fd) use_fd_stub ;;
+      locate) use_locate_stub; export FZD_GLOBAL_BACKEND=locate ;;
+    esac
+    run --separate-stderr bash "$FZD_SCRIPT" --_global_list --q needle
+    [ "$status" -eq 0 ]
+    [ "${#lines[@]}" -eq "${#paths[@]}" ]
+    for path in "${paths[@]}"; do assert_record_path "$path"; done
+  done
+}
+
+@test "find honors depth and result limits" {
+  mkdir -p "$FIXTURE_ROOT/one/two"
+  printf text > "$FIXTURE_ROOT/needle-first"
+  printf text > "$FIXTURE_ROOT/needle-second"
+  printf text > "$FIXTURE_ROOT/one/two/needle-deep"
+  export FZD_GLOBAL_MAXDEPTH=1 FZD_GLOBAL_MAXRESULTS=1
+  run bash "$FZD_SCRIPT" --_global_list --q needle
+  [ "$status" -eq 0 ]
+  [ "${#lines[@]}" -eq 1 ]
+  assert_no_record_path "$FIXTURE_ROOT/one/two/needle-deep"
+}
+
+@test "locate applies result cap after scope and exclusion filtering" {
+  use_locate_stub
+  export FZD_GLOBAL_BACKEND=locate FZD_GLOBAL_MAXRESULTS=1
+  mkdir -p "$BATS_TEST_TMPDIR/outside" "$FIXTURE_ROOT/.git"
+  printf text > "$BATS_TEST_TMPDIR/outside/needle"
+  printf text > "$FIXTURE_ROOT/.git/needle"
+  printf text > "$FIXTURE_ROOT/needle"
+  set_results "$BATS_TEST_TMPDIR/outside/needle" "$FIXTURE_ROOT/.git/needle" "$FIXTURE_ROOT/needle"
+  run bash "$FZD_SCRIPT" --_global_list --q needle
+  [ "$status" -eq 0 ]
+  [ "${#lines[@]}" -eq 1 ]
+  assert_record_path "$FIXTURE_ROOT/needle"
+}
+
+@test "basename and full-path policies agree across backends" {
+  local producer
+  mkdir -p "$FIXTURE_ROOT/needle-parent"
+  printf text > "$FIXTURE_ROOT/needle-parent/other"
+  set_results "$FIXTURE_ROOT/needle-parent/other"
+  for producer in find fd locate; do
+    rm -f -- "$TEST_BIN/fd" "$TEST_BIN/plocate"
+    export FZD_GLOBAL_BACKEND=live
+    case "$producer" in
+      fd) use_fd_stub ;;
+      locate) use_locate_stub; export FZD_GLOBAL_BACKEND=locate ;;
+    esac
+    export FZD_GLOBAL_FULLPATH=0
+    run bash "$FZD_SCRIPT" --_global_list --q needle
+    [ "$status" -eq 0 ]
+    assert_no_record_path "$FIXTURE_ROOT/needle-parent/other"
+    export FZD_GLOBAL_FULLPATH=1
+    run bash "$FZD_SCRIPT" --_global_list --q NEEDLE
+    [ "$status" -eq 0 ]
+    assert_record_path "$FIXTURE_ROOT/needle-parent/other"
+  done
+}
+
+@test "missing and dangling results are omitted while live symlinks are preserved" {
+  use_fd_stub
+  printf text > "$FIXTURE_ROOT/needle-target"
+  ln -s "$FIXTURE_ROOT/needle-target" "$FIXTURE_ROOT/needle-link"
+  ln -s "$FIXTURE_ROOT/missing" "$FIXTURE_ROOT/needle-dangling"
+  set_results "$FIXTURE_ROOT/needle-link" "$FIXTURE_ROOT/needle-dangling" "$FIXTURE_ROOT/needle-missing"
+  run bash "$FZD_SCRIPT" --_global_list --q needle
+  [ "$status" -eq 0 ]
+  [ "${#lines[@]}" -eq 1 ]
+  assert_record_path "$FIXTURE_ROOT/needle-link"
+}
+
+@test "a failed locate producer cannot leak partial results before fallback" {
+  use_locate_stub
+  cat > "$TEST_BIN/plocate-partial" <<'STUB'
+#!/usr/bin/env bash
+printf '%s\0' "$FZD_PARTIAL_RESULT"
+exit 2
+STUB
+  chmod +x "$TEST_BIN/plocate-partial"
+  ln -sf "$TEST_BIN/plocate-partial" "$TEST_BIN/plocate"
+  export FZD_GLOBAL_BACKEND=locate FZD_PARTIAL_RESULT="$FIXTURE_ROOT/needle"
+  printf text > "$FZD_PARTIAL_RESULT"
+  run --separate-stderr bash "$FZD_SCRIPT" --_global_list --q needle
+  [ "$status" -eq 0 ]
+  [ "${#lines[@]}" -eq 1 ]
+  assert_record_path "$FZD_PARTIAL_RESULT"
+}

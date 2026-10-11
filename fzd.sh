@@ -37,7 +37,7 @@ export TMPDIR="$FZD_TMP_DIR"
 # ----------------- CONFIG DEFAULTS -----------------
 # Load user config from XDG (no legacy ~/.fzd)
 FZD_CONF_FILE="${FZD_CONF_FILE:-$XDG_CONFIG_HOME/fzd/fzd.conf}"
-[[ -f "$FZD_CONF_FILE" ]] && source "$FZD_CONF_FILE"
+  [[ -f "$FZD_CONF_FILE" ]] && source "$FZD_CONF_FILE"
 
 : "${FZD_GLOBAL_BACKEND:=auto}"           # auto|locate|cache|live (auto prefers locate if present)
 : "${FZD_GLOBAL_MINLEN:=2}"
@@ -166,33 +166,6 @@ build_lines() {
   done
 }
 
-# ---- Build a one-shot index (fd) for cache backend ----
-if [[ "${1:-}" == "--_global_index" ]]; then
-  : "${FZD_GLOBAL_MAXDEPTH:=7}"
-  mapfile -d '' roots  < <(_global_roots_array)
-  mapfile -d '' ex     < <(_global_excludes_array)
-
-  FD_BIN="$(command -v fd 2>/dev/null || command -v fdfind 2>/dev/null || true)"
-  if [[ -n "$FD_BIN" ]]; then
-    # list dirs + files up to depth, include hidden, case-insensitive, no follow
-    cmd=( "$FD_BIN" -H -i --color=never -a -d "$FZD_GLOBAL_MAXDEPTH" . )
-    for g in "${ex[@]}"; do [[ -n "$g" ]] && cmd+=( --exclude "$g" ); done
-    for r in "${roots[@]}"; do cmd+=( "$r" ); done
-
-    "${cmd[@]}" 2>/dev/null \
-    | head -n "${FZD_GLOBAL_MAXRESULTS:-12000}" \
-    | awk -v cd="$c_dir" -v cf="$c_file" -v cr="$c_reset" '
-        {
-          p=$0; n=split(p,a,"/"); base=a[n];
-          cmd = "printf %s \"" p "\" | base64 | tr -d \"\n\""; cmd | getline b64; close(cmd);
-          if (system("[ -d \"" p "\" ]")==0) printf "%s\t%s%s/%s\n", b64, cd, base, cr;
-          else if (system("[ -f \"" p "\" ]")==0) printf "%s\t%s%s%s\n", b64, cf, base, cr;
-        }'
-    exit 0
-  fi
-  exit 0
-fi
-
 # ----------------- PREVIEW (early exit; no debug) -----------------
 _have() { command -v "$1" >/dev/null 2>&1; }
 _timeout_wrap() { local s="$1"; shift; if (( s > 0 )) && _have timeout; then timeout "${s}s" "$@"; else "$@"; fi; }
@@ -293,128 +266,6 @@ if [[ "${1:-}" == "--_preview" ]]; then
   exit 0
 fi
 
-# ----------------- GLOBAL LIST SUBCOMMAND (for Ctrl+F overlay reload) -----------------
-if [[ "${1:-}" == "--_global_list" ]]; then
-  shift
-  [[ "${1:-}" == "--q" ]] && shift || true
-  q="$*"
-
-  # ---- knobs (env overridable; safe with set -u via :=) ----
-  : "${FZD_GLOBAL_MINLEN:=3}"
-  : "${FZD_GLOBAL_MAXRESULTS:=3000}"
-  : "${FZD_GLOBAL_PATHS:=/etc /opt /srv /mnt /home/$USER}"
-  : "${FZD_GLOBAL_XEXCLUDES:=proc,sys,dev,run,proc/*,sys/*,dev/*,run/*,mnt/c,mnt/d,snap,lost+found,var/lib/docker}"
-  : "${FZD_GLOBAL_FULLPATH:=0}"
-  : "${FZD_LOCATE_DBS:=}"
-
-  [[ ${#q} -lt ${FZD_GLOBAL_MINLEN} ]] && exit 0
-
-  # expand shell vars in roots (e.g. $USER)
-  # shellcheck disable=SC2016
-  read -r -a roots <<<"$(eval echo "$FZD_GLOBAL_PATHS")"
-
-  roots_re=""
-  for r in "${roots[@]}"; do
-    r="${r%/}"; [[ -z "$r" ]] && r="/"
-    esc="$(printf '%s' "$r" | sed 's/[.[\()*^$+?{}|]/\\&/g')"
-    roots_re+="${roots_re:+|}${esc}(/|$)"
-  done
-  [[ -n "$roots_re" ]] && roots_re="^(${roots_re})"
-
-  IFS=',' read -ra ex1 <<<"${FZD_EXCLUDES:-.git,node_modules,.cache,.venv,__pycache__}"
-  IFS=',' read -ra ex2 <<<"$FZD_GLOBAL_XEXCLUDES"
-  ex_re=""
-  for g in "${ex1[@]}" "${ex2[@]}"; do
-    [[ -z "$g" ]] && continue
-    g="${g%/}"
-    escg="$(printf '%s' "$g" | sed 's/[.[\()*^$+?{}|]/\\&/g')"
-    ex_re+="${ex_re:+|}/${escg}(/|$)"
-  done
-  [[ -n "$ex_re" ]] && ex_re="(${ex_re})"
-
-  # prefer plocate/locate
-  LOC="$(command -v plocate 2>/dev/null || command -v locate 2>/dev/null || true)"
-  if [[ -n "$LOC" ]]; then
-    _max="${FZD_GLOBAL_MAXRESULTS:-3000}"
-    db_args=()
-    [[ -n "$FZD_LOCATE_DBS" ]] && db_args=(-d "$FZD_LOCATE_DBS")
-
-    env -u LOCATE_PATH "$LOC" "${db_args[@]}" -i -e -l "$_max" -- "$q" 2>/dev/null \
-    | awk -v rr="$roots_re" -v xr="$ex_re" '
-        BEGIN{IGNORECASE=1}
-        { p=$0; if (rr != "" && p !~ rr) next; if (xr != "" && p ~ xr) next; print p }
-      ' 2>/dev/null \
-    | awk -v cd="$c_dir" -v cf="$c_file" -v cr="$c_reset" '
-        {
-          p=$0; n=split(p,a,"/"); base=a[n]
-          if (system("[ -d \"" p "\" ]")==0) { cmd="printf %s \"" p "\" | base64 | tr -d \"\n\""; cmd|getline b64; close(cmd); printf "%s\t%s%s/%s\n", b64, cd, base, cr }
-          else if (system("[ -f \"" p "\" ]")==0) { cmd="printf %s \"" p "\" | base64 | tr -d \"\n\""; cmd|getline b64; close(cmd); printf "%s\t%s%s%s\n", b64, cf, base, cr }
-        }
-      ' 2>/dev/null
-    exit 0
-  fi
-
-  # fd / find fallback
-  IFS=',' read -ra ex1 <<<"${FZD_EXCLUDES:-.git,node_modules,.cache,.venv,__pycache__}"
-  IFS=',' read -ra ex2 <<<"$FZD_GLOBAL_XEXCLUDES"
-  ex=("${ex1[@]}" "${ex2[@]}")
-
-  FD_BIN="$(command -v fd 2>/dev/null || command -v fdfind 2>/dev/null || true)"
-  if [[ -n "$FD_BIN" ]]; then
-    cmd=( "$FD_BIN" -H -i --color=never -a -d "${FZD_GLOBAL_MAXDEPTH:-6}" )
-    if [[ "$FZD_GLOBAL_FULLPATH" == "1" ]]; then
-      cmd+=( --full-path --fixed-strings "$q" )
-    else
-      cmd+=( --fixed-strings "$q" )
-    fi
-    for g in "${ex[@]}"; do [[ -n "$g" ]] && cmd+=( --exclude "$g" ); done
-    cmd+=( "${roots[@]}" )
-
-    "${cmd[@]}" 2>/dev/null | while IFS= read -r p; do
-      base="$(basename -- "$p")"
-      b64="$(printf '%s' "$p" | base64 | tr -d '\n')"
-      if [[ -d "$p" ]]; then
-        printf '%s\t%s%s/%s\n' "$b64" "$c_dir" "$base" "$c_reset"
-      elif [[ -f "$p" ]]; then
-        printf '%s\t%s%s%s\n' "$b64" "$c_file" "$base" "$c_reset"
-      fi
-    done
-    exit 0
-  fi
-
-  # POSIX find fallback
-  prune=()
-  for g in "${ex[@]}"; do [[ -n "$g" ]] && prune+=( -o -path "*/$g/*" ); done
-
-  if [[ "$FZD_GLOBAL_FULLPATH" == "1" ]]; then
-    # shellcheck disable=SC2046
-    find "${roots[@]}" \( -false $(printf ' %s' "${prune[@]}") \) -prune -o \
-         -type d -o -type f -print 2>/dev/null |
-    grep -F "$q" | while IFS= read -r p; do
-      base="$(basename -- "$p")"
-      b64="$(printf '%s' "$p" | base64 | tr -d '\n')"
-      if [[ -d "$p" ]]; then printf '%s\t%s%s/%s\n' "$b64" "$c_dir" "$base" "$c_reset"
-      elif [[ -f "$p" ]]; then printf '%s\t%s%s%s\n' "$b64" "$c_file" "$base" "$c_reset"
-      fi
-    done
-  else
-    # shellcheck disable=SC2046
-    find "${roots[@]}" \( -false $(printf ' %s' "${prune[@]}") \) -prune -o \
-         -type d -o -type f -print 2>/dev/null |
-    awk -v q="$q" -v cd="$c_dir" -v cf="$c_file" -v cr="$c_reset" '
-      BEGIN{IGNORECASE=1}
-      {
-        p=$0; n=split(p,a,"/"); base=a[n]
-        if (index(base,q) > 0) {
-          cmd="printf %s \"" p "\" | base64 | tr -d \"\n\""; cmd|getline b64; close(cmd)
-          if (system("[ -d \"" p "\" ]")==0) printf "%s\t%s%s/%s\n", b64, cd, base, cr;
-          else if (system("[ -f \"" p "\" ]")==0) printf "%s\t%s%s%s\n", b64, cf, base, cr;
-        }
-      }' 2>/dev/null
-  fi
-  exit 0
-fi
-
 # ----------------- caret support probe -----------------
 HAS_POS=0
 if printf 'x\n' | "$FZF_BIN" --bind='start:pos(1)' --select-1 --exit-0 >/dev/null 2>&1; then HAS_POS=1; fi
@@ -431,17 +282,185 @@ _open_in_editor() {
 }
 
 # ----------------- GLOBAL OVERLAY -----------------
-_has() { command -v "$1" >/dev/null 2>&1; }
-
-_global_roots_array() {
-  local -a roots; read -r -a roots <<<"$FZD_GLOBAL_PATHS"
-  printf '%s\0' "${roots[@]}"
+# Expand variable references in legacy root strings without evaluating shell code.
+# Config files remain trusted shell code; FZD_GLOBAL_ROOTS is the lossless array form.
+_global_expand_vars() {
+  local rest="$1" out="" prefix name token
+  while [[ "$rest" =~ ^([^\$]*)\$(\{([a-zA-Z_][a-zA-Z_0-9]*)\}|([a-zA-Z_][a-zA-Z_0-9]*)) ]]; do
+    prefix=${BASH_REMATCH[1]}
+    token=${BASH_REMATCH[0]}
+    name=${BASH_REMATCH[3]:-${BASH_REMATCH[4]}}
+    out+="$prefix${!name-}"
+    rest=${rest:${#token}}
+  done
+  REPLY="$out$rest"
 }
 
-_global_excludes_array() {
-  local IFS=','; read -ra ex1 <<<"${FZD_EXCLUDES:-.git,node_modules,.cache,.venv,__pycache__}"
-  local IFS=','; read -ra ex2 <<<"${FZD_GLOBAL_XEXCLUDES}"
-  printf '%s\0' "${ex1[@]}" "${ex2[@]}"
+_global_prepare() {
+  local declaration root expanded name
+  GLOBAL_ROOTS=(); GLOBAL_EXCLUDES=()
+  declaration=$(declare -p FZD_GLOBAL_ROOTS 2>/dev/null || true)
+  if [[ "$declaration" == 'declare -a '* ]]; then
+    # shellcheck disable=SC2153 # Optional Bash array supplied by user configuration.
+    GLOBAL_ROOTS=("${FZD_GLOBAL_ROOTS[@]}")
+  else
+    _global_expand_vars "$FZD_GLOBAL_PATHS"
+    expanded=$REPLY
+    read -r -a GLOBAL_ROOTS <<< "$expanded"
+  fi
+  local valid=()
+  for root in "${GLOBAL_ROOTS[@]}"; do
+    [[ "$root" == /* ]] || root="$PWD/$root"
+    [[ "$root" == / ]] || root=${root%/}
+    [[ -d "$root" && -r "$root" && -x "$root" ]] && valid+=("$root")
+  done
+  GLOBAL_ROOTS=("${valid[@]}")
+  if ((${#GLOBAL_ROOTS[@]} == 0)); then
+    printf 'fzd: no accessible global search roots configured\n' >&2
+    return 1
+  fi
+  local first=() second=()
+  IFS=',' read -r -a first <<< "$FZD_EXCLUDES"
+  IFS=',' read -r -a second <<< "$FZD_GLOBAL_XEXCLUDES"
+  GLOBAL_EXCLUDES=("${first[@]}" "${second[@]}")
+  for name in FZD_GLOBAL_MINLEN FZD_GLOBAL_MAXDEPTH; do
+    if [[ ! ${!name} =~ ^(0|[1-9][0-9]*)$ ]]; then
+      printf 'fzd: %s must be a nonnegative integer\n' "$name" >&2
+      return 1
+    fi
+  done
+  if [[ ! $FZD_GLOBAL_MAXRESULTS =~ ^[1-9][0-9]*$ ]]; then
+      name=FZD_GLOBAL_MAXRESULTS
+      printf 'fzd: %s must be a positive integer\n' "$name" >&2
+      return 1
+  fi
+  if [[ "$FZD_GLOBAL_FULLPATH" != 0 && "$FZD_GLOBAL_FULLPATH" != 1 ]]; then
+    printf 'fzd: FZD_GLOBAL_FULLPATH must be 0 or 1\n' >&2
+    return 1
+  fi
+  case "$FZD_GLOBAL_BACKEND" in
+    auto|locate|cache|live) ;;
+    *) printf 'fzd: unknown global backend: %s\n' "$FZD_GLOBAL_BACKEND" >&2; return 1 ;;
+  esac
+}
+
+_global_allowed() {
+  local path=$1 root pattern inside=0
+  for root in "${GLOBAL_ROOTS[@]}"; do
+    if [[ "$root" == / || "$path" == "$root" || "$path" == "$root/"* ]]; then
+      inside=1
+      break
+    fi
+  done
+  ((inside)) || return 1
+  for pattern in "${GLOBAL_EXCLUDES[@]}"; do
+    pattern=${pattern%/}
+    [[ -z "$pattern" ]] && continue
+    # Deliberate glob matching against complete path components, never shell code.
+    if [[ "$path/" == */$pattern/* ]]; then return 1; fi
+  done
+  return 0
+}
+
+_global_format() {
+  local query=$1 path base candidate encoded color suffix count=0
+  while IFS= read -r -d '' path; do
+    [[ "$path" == / ]] || path=${path%/}
+    _global_allowed "$path" || continue
+    base=${path##*/}
+    [[ -n "$base" ]] || base=/
+    candidate=$base
+    [[ "$FZD_GLOBAL_FULLPATH" == 1 ]] && candidate=$path
+    [[ "${candidate,,}" == *"${query,,}"* ]] || continue
+    if [[ -d "$path" ]]; then
+      color=$c_dir; suffix=/
+    elif [[ -f "$path" ]]; then
+      color=$c_file; suffix=""
+    else
+      continue
+    fi
+    encoded=$(b64 "$path") || return 1
+    # Encode identity independently; control characters must not create records.
+    base=${base//\\/\\\\}
+    base=${base//$'\n'/\\n}; base=${base//$'\r'/\\r}; base=${base//$'\t'/\\t}
+    base=${base//$'\033'/\\e}
+    printf '%s\t%s%s%s%s\n' "$encoded" "$color" "$base" "$suffix" "$c_reset" || return 1
+    ((count += 1))
+    if ((count >= FZD_GLOBAL_MAXRESULTS)); then break; fi
+  done
+  return 0
+}
+
+_global_live_candidates() {
+  local query=$1 fd_bin pattern
+  fd_bin=$(command -v fd 2>/dev/null || command -v fdfind 2>/dev/null || true)
+  local command=()
+  if [[ -n "$fd_bin" ]]; then
+    command=("$fd_bin" -H -i --color=never -a --print0 -d "$FZD_GLOBAL_MAXDEPTH")
+    [[ "$FZD_GLOBAL_FULLPATH" == 1 ]] && command+=(--full-path)
+    for pattern in "${GLOBAL_EXCLUDES[@]}"; do
+      [[ -n "$pattern" ]] && command+=(--exclude "$pattern")
+    done
+    command+=(--fixed-strings -- "$query" "${GLOBAL_ROOTS[@]}")
+  else
+    command=(find -H "${GLOBAL_ROOTS[@]}" -mindepth 1 -maxdepth "$FZD_GLOBAL_MAXDEPTH" '(' -false)
+    for pattern in "${GLOBAL_EXCLUDES[@]}"; do
+      pattern=${pattern%/}
+      [[ -n "$pattern" ]] && command+=(-o -path "*/$pattern" -o -path "*/$pattern/*")
+    done
+    command+=(')' -prune -o '(' -type d -o -type f -o -type l ')' -print0)
+  fi
+  "${command[@]}"
+}
+
+_global_live_list() {
+  local rc=0
+  _global_live_candidates "$1" | _global_format "$1" || rc=$?
+  # A consumer reaching its result cap can close GNU find's output pipe.
+  if ((rc != 0 && rc != 141)); then
+    printf 'fzd: filesystem search failed (status %s)\n' "$rc" >&2
+    return "$rc"
+  fi
+  return 0
+}
+
+_global_index() {
+  _global_prepare || return
+  _global_live_list ""
+}
+
+_global_list() {
+  local query=$* locate_bin source_file pattern rc=0
+  _global_prepare || return
+  ((${#query} >= FZD_GLOBAL_MINLEN)) || return 0
+  locate_bin=$(command -v plocate 2>/dev/null || command -v locate 2>/dev/null || true)
+  if [[ "$FZD_GLOBAL_BACKEND" != live && "$FZD_GLOBAL_BACKEND" != cache && -n "$locate_bin" ]]; then
+    local arguments=() statuses=()
+    [[ -n "$FZD_LOCATE_DBS" ]] && arguments+=(-d "$FZD_LOCATE_DBS")
+    [[ "$FZD_GLOBAL_FULLPATH" == 0 ]] && arguments+=(-b)
+    # Locate glob syntax is escaped so every backend searches a literal substring.
+    pattern=${query//\\/\\\\}; pattern=${pattern//\*/\\*}; pattern=${pattern//\?/\\?}
+    pattern=${pattern//\[/\\[}; pattern=${pattern//\]/\\]}
+    source_file=$(mktemp) || return 1
+    if env -u LOCATE_PATH "$locate_bin" "${arguments[@]}" -0 -i -e -- "*$pattern*" | _global_format "$query" > "$source_file"; then
+      rc=0
+    else
+      statuses=("${PIPESTATUS[@]}")
+      if ((statuses[1] == 0 && (statuses[0] == 1 || statuses[0] == 141))); then
+        rc=0
+      else
+        rc=1
+      fi
+    fi
+    if ((rc == 0)); then
+      cat -- "$source_file"
+      rm -f -- "$source_file"
+      return 0
+    fi
+    rm -f -- "$source_file"
+    printf 'fzd: locate unavailable; falling back to filesystem search\n' >&2
+  fi
+  _global_live_list "$query"
 }
 
 _run_global_overlay() {
@@ -519,6 +538,15 @@ _run_global_overlay() {
       ;;
   esac
 }
+
+case "${1:-}" in
+  --_global_index) _global_index; exit $? ;;
+  --_global_list)
+    shift
+    if [[ "${1:-}" == --q ]]; then shift; fi
+    _global_list "$@"; exit $?
+    ;;
+esac
 
 # ----------------- MAIN LOOP -----------------
 main() {

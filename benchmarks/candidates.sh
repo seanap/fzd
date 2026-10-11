@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 # Measure unchanged candidate preparation across revisions, without starting fzf.
+# shellcheck disable=SC2034 # Variables are consumed by the extracted functions.
 set -euo pipefail
 repo=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)
 ref=${1:-WORKTREE}
