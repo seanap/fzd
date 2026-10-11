@@ -9,6 +9,8 @@ count=${2:-1000}
 export LC_ALL=C
 if [[ "$ref" == WORKTREE ]]; then
   source_file="$repo/fzd.sh"
+elif [[ "$ref" == /* && -r "$ref" ]]; then
+  source_file=$ref
 elif [[ "$ref" == BASELINE ]]; then
   source_file="$repo/.test-work/benchmarks/audit-source.sh"
   [[ -r "$source_file" ]] || {
@@ -36,5 +38,9 @@ FILES=()
 for ((i = 0; i < count; i++)); do
   FILES+=("entry-$i.txt")
 done
+if [[ ${3:-records} == format-only ]]; then
+  # Profiling control: isolate formatting from per-path process creation.
+  b64() { printf x; }
+fi
 build_lines
 [[ ${#LINES[@]} == $((count + 1)) ]]

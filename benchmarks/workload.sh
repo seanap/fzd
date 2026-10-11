@@ -3,6 +3,7 @@
 set -euo pipefail
 repo=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)
 mode=${1:-prepare}
+app=${FZD_BENCH_SCRIPT:-$repo/fzd.sh}
 work="$repo/.test-work/benchmarks/workload-1000"
 locate_tools() {
   locate_bin=$(command -v plocate 2>/dev/null || true)
@@ -28,6 +29,7 @@ if [[ "$mode" == prepare ]]; then
       printf 'FZD benchmark text\n' >"$work/files/group-$group/$name"
     done
   done
+  printf '\000\001\002binary\377' >"$work/binary.bin"
   printf 'FZD_GLOBAL_ROOTS=(%q)\nFZD_GLOBAL_MAXRESULTS=2000\n' "$work/files" >"$work/config/fzd.conf"
   exit 0
 fi
@@ -54,17 +56,23 @@ unset FZD_GLOBAL_ROOTS FZD_LOCATE_DBS
 export FZD_GLOBAL_MINLEN=2 FZD_GLOBAL_MAXDEPTH=6 FZD_GLOBAL_FULLPATH=0
 export FZD_EXCLUDES=.git,node_modules FZD_GLOBAL_XEXCLUDES=proc,sys,dev,run
 case "$mode" in
-startup) exec bash "$repo/fzd.sh" --_global_list --q '' ;;
-index) exec bash "$repo/fzd.sh" --_global_index ;;
-query) exec bash "$repo/fzd.sh" --_global_list --q needle ;;
+startup) exec bash "$app" --_global_list --q '' ;;
+index) exec bash "$app" --_global_index ;;
+query) exec bash "$app" --_global_list --q needle ;;
 query-locate)
   locate_tools || exit 1
   export PATH="$work/bin:$PATH" FZD_LOCATE_DBS="$work/locate.db" FZD_GLOBAL_BACKEND=locate
-  exec bash "$repo/fzd.sh" --_global_list --q needle
+  exec bash "$app" --_global_list --q needle
   ;;
 preview)
   encoded=$(printf '%s' "$work/files/group-0/entry-0001.txt" | base64 | tr -d '\n')
-  exec bash "$repo/fzd.sh" --_preview "$encoded"
+  exec bash "$app" --_preview "$encoded"
+  ;;
+preview-dir|preview-binary)
+  path="$work/files"
+  [[ "$mode" == preview-binary ]] && path="$work/binary.bin"
+  encoded=$(printf '%s' "$path" | base64 -w 0)
+  exec bash "$app" --_preview "$encoded"
   ;;
 *)
   printf 'Unknown benchmark mode: %s\n' "$mode" >&2
