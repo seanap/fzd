@@ -84,7 +84,7 @@ normalize_path() {
 get_cwd() { ( CDPATH='' cd -L -- "${1:-$PWD}" 2>/dev/null && printf '%s' "$PWD" ) || printf '%s' "$PWD"; }
 join_path() { local base="$1" child="${2#/}"; [[ "$base" == "/" ]] && printf '/%s' "$child" || printf '%s/%s' "$base" "$child"; }
 b64()   { printf '%s' "$1" | base64 -w 0; }
-deb64() { printf '%s' "$1" | base64 -d 2>/dev/null || true; }
+deb64() { base64 -d 2>/dev/null <<< "$1" || true; }
 
 # Encode a batch with one encoder, retaining exactly the existing base64 IDs.
 # NUL padding aligns each input to three bytes; it travels only through the pipe.
@@ -321,10 +321,11 @@ _preview_dir() {
   ls -A -- "$dir"
 }
 _preview_file() {
-  local file="$1"
+  local file="$1" mime=''
   local is_text=0
   if command -v file >/dev/null 2>&1; then
-    file -b --mime-type -- "$file" | grep -qE '^text/|json|xml|x-sh|javascript' && is_text=1
+    mime=$(file -b --mime-type -- "$file") || mime=''
+    case "$mime" in text/*|*json*|*xml*|*x-sh*|*javascript*) is_text=1 ;; esac
   else
     head -c 4096 -- "$file" | tr -d '\000' | grep -q $'\n' && is_text=1
   fi
@@ -338,7 +339,7 @@ _preview_file() {
   else
     printf '⚙ %s\n' "$(file -b -- "$file" 2>/dev/null || echo binary)"
     ls -lh -- "$file" 2>/dev/null || true
-    command -v hexdump >/dev/null 2>&1 && { echo; hexdump -C -- "$file" | head -n 64; }
+    if command -v hexdump >/dev/null 2>&1; then echo; hexdump -C -- "$file" | head -n 64; fi
   fi
 }
 _preview() {
