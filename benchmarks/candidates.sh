@@ -9,6 +9,12 @@ count=${2:-1000}
 export LC_ALL=C
 if [[ "$ref" == WORKTREE ]]; then
   source_file="$repo/fzd.sh"
+elif [[ "$ref" == BASELINE ]]; then
+  source_file="$repo/.test-work/benchmarks/audit-source.sh"
+  [[ -r "$source_file" ]] || {
+    echo 'Run benchmarks/hyperfine.sh to prepare BASELINE' >&2
+    exit 2
+  }
 else
   mkdir -p "$repo/.test-work/benchmarks"
   source_file=$(mktemp "$repo/.test-work/benchmarks/source.XXXXXX")

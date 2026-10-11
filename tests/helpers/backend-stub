@@ -2,8 +2,8 @@
 set -euo pipefail
 printf '%s\0' "$@" >"$FZD_STUB_LOG"
 case ${0##*/} in
-  plocate | locate) rc=${FZD_STUB_LOCATE_STATUS:-0} ;;
-  *) rc=${FZD_STUB_FD_STATUS:-0} ;;
+plocate | locate) rc=${FZD_STUB_LOCATE_STATUS:-0} ;;
+*) rc=${FZD_STUB_FD_STATUS:-0} ;;
 esac
 ((rc == 0)) || exit "$rc"
 null=0

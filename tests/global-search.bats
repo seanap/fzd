@@ -5,7 +5,7 @@ setup() { setup_fixture; }
 @test "global index does not execute command substitutions in filenames" {
   use_fd_stub
   local path="$FIXTURE_ROOT/needle\$(printf hit > FZD_INJECTION_MARKER).txt"
-  printf 'fixture\n' > "$path"
+  printf 'fixture\n' >"$path"
   set_results "$path"
   run bash -c 'cd -- "$1"; exec bash "$2" --_global_index' _ "$FIXTURE_ROOT" "$FZD_SCRIPT"
   [ ! -e "$FIXTURE_ROOT/FZD_INJECTION_MARKER" ]
@@ -35,7 +35,7 @@ setup() { setup_fixture; }
 
 @test "cache falls back to find when fd is unavailable" {
   mkdir -p "$FIXTURE_ROOT/needle-dir"
-  printf text > "$FIXTURE_ROOT/needle-file"
+  printf text >"$FIXTURE_ROOT/needle-file"
   run bash "$FZD_SCRIPT" --_global_index
   [ "$status" -eq 0 ]
   assert_record_path "$FIXTURE_ROOT/needle-dir"
@@ -44,7 +44,7 @@ setup() { setup_fixture; }
 
 @test "find search returns directories and files case insensitively" {
   mkdir -p "$FIXTURE_ROOT/Needle-dir"
-  printf text > "$FIXTURE_ROOT/Needle-file"
+  printf text >"$FIXTURE_ROOT/Needle-file"
   run bash "$FZD_SCRIPT" --_global_list --q needle
   [ "$status" -eq 0 ]
   assert_record_path "$FIXTURE_ROOT/Needle-dir"
@@ -54,8 +54,8 @@ setup() { setup_fixture; }
 @test "find honors exclusions with spaces without shell expansion" {
   export FZD_EXCLUDES='skip this'
   mkdir -p "$FIXTURE_ROOT/skip this" "$FIXTURE_ROOT/keep"
-  printf text > "$FIXTURE_ROOT/skip this/needle"
-  printf text > "$FIXTURE_ROOT/keep/needle"
+  printf text >"$FIXTURE_ROOT/skip this/needle"
+  printf text >"$FIXTURE_ROOT/keep/needle"
   run bash "$FZD_SCRIPT" --_global_list --q needle
   [ "$status" -eq 0 ]
   assert_record_path "$FIXTURE_ROOT/keep/needle"
@@ -66,8 +66,8 @@ setup() { setup_fixture; }
   use_locate_stub
   export FZD_GLOBAL_BACKEND=locate
   mkdir -p "$BATS_TEST_TMPDIR/outside"
-  printf text > "$FIXTURE_ROOT/needle"
-  printf text > "$BATS_TEST_TMPDIR/outside/needle"
+  printf text >"$FIXTURE_ROOT/needle"
+  printf text >"$BATS_TEST_TMPDIR/outside/needle"
   set_results "$BATS_TEST_TMPDIR/outside/needle" "$FIXTURE_ROOT/needle"
   run bash "$FZD_SCRIPT" --_global_list --q needle
   [ "$status" -eq 0 ]
@@ -78,7 +78,7 @@ setup() { setup_fixture; }
 @test "locate root slash admits descendants" {
   use_locate_stub
   export FZD_GLOBAL_BACKEND=locate FZD_GLOBAL_PATHS=/
-  printf text > "$FIXTURE_ROOT/needle"
+  printf text >"$FIXTURE_ROOT/needle"
   set_results "$FIXTURE_ROOT/needle"
   run bash "$FZD_SCRIPT" --_global_list --q needle
   [ "$status" -eq 0 ]
@@ -88,7 +88,7 @@ setup() { setup_fixture; }
 @test "failed locate database falls back to live filesystem search" {
   use_locate_stub
   export FZD_GLOBAL_BACKEND=locate FZD_STUB_LOCATE_STATUS=2
-  printf text > "$FIXTURE_ROOT/needle"
+  printf text >"$FIXTURE_ROOT/needle"
   run bash "$FZD_SCRIPT" --_global_list --q needle
   [ "$status" -eq 0 ]
   assert_record_path "$FIXTURE_ROOT/needle"
@@ -96,7 +96,7 @@ setup() { setup_fixture; }
 
 @test "explicit live mode does not call an available locate backend" {
   use_locate_stub
-  printf text > "$FIXTURE_ROOT/needle"
+  printf text >"$FIXTURE_ROOT/needle"
   run bash "$FZD_SCRIPT" --_global_list --q needle
   [ "$status" -eq 0 ]
   assert_record_path "$FIXTURE_ROOT/needle"
@@ -104,7 +104,7 @@ setup() { setup_fixture; }
 }
 
 @test "query option characters are literal filename data" {
-  printf text > "$FIXTURE_ROOT/--help"
+  printf text >"$FIXTURE_ROOT/--help"
   export FZD_GLOBAL_FULLPATH=1
   run bash "$FZD_SCRIPT" --_global_list --q --help
   [ "$status" -eq 0 ]
@@ -129,7 +129,7 @@ setup() { setup_fixture; }
   local paths=()
   for name in "${names[@]}"; do
     path="$FIXTURE_ROOT/$name"
-    printf text > "$path"
+    printf text >"$path"
     paths+=("$path")
   done
   set_results "${paths[@]}"
@@ -137,8 +137,11 @@ setup() { setup_fixture; }
     rm -f -- "$TEST_BIN/fd" "$TEST_BIN/plocate"
     export FZD_GLOBAL_BACKEND=live
     case "$producer" in
-      fd) use_fd_stub ;;
-      locate) use_locate_stub; export FZD_GLOBAL_BACKEND=locate ;;
+    fd) use_fd_stub ;;
+    locate)
+      use_locate_stub
+      export FZD_GLOBAL_BACKEND=locate
+      ;;
     esac
     run --separate-stderr bash "$FZD_SCRIPT" --_global_list --q needle
     [ "$status" -eq 0 ]
@@ -149,9 +152,9 @@ setup() { setup_fixture; }
 
 @test "find honors depth and result limits" {
   mkdir -p "$FIXTURE_ROOT/one/two"
-  printf text > "$FIXTURE_ROOT/needle-first"
-  printf text > "$FIXTURE_ROOT/needle-second"
-  printf text > "$FIXTURE_ROOT/one/two/needle-deep"
+  printf text >"$FIXTURE_ROOT/needle-first"
+  printf text >"$FIXTURE_ROOT/needle-second"
+  printf text >"$FIXTURE_ROOT/one/two/needle-deep"
   export FZD_GLOBAL_MAXDEPTH=1 FZD_GLOBAL_MAXRESULTS=1
   run bash "$FZD_SCRIPT" --_global_list --q needle
   [ "$status" -eq 0 ]
@@ -163,9 +166,9 @@ setup() { setup_fixture; }
   use_locate_stub
   export FZD_GLOBAL_BACKEND=locate FZD_GLOBAL_MAXRESULTS=1
   mkdir -p "$BATS_TEST_TMPDIR/outside" "$FIXTURE_ROOT/.git"
-  printf text > "$BATS_TEST_TMPDIR/outside/needle"
-  printf text > "$FIXTURE_ROOT/.git/needle"
-  printf text > "$FIXTURE_ROOT/needle"
+  printf text >"$BATS_TEST_TMPDIR/outside/needle"
+  printf text >"$FIXTURE_ROOT/.git/needle"
+  printf text >"$FIXTURE_ROOT/needle"
   set_results "$BATS_TEST_TMPDIR/outside/needle" "$FIXTURE_ROOT/.git/needle" "$FIXTURE_ROOT/needle"
   run bash "$FZD_SCRIPT" --_global_list --q needle
   [ "$status" -eq 0 ]
@@ -176,14 +179,17 @@ setup() { setup_fixture; }
 @test "basename and full-path policies agree across backends" {
   local producer
   mkdir -p "$FIXTURE_ROOT/needle-parent"
-  printf text > "$FIXTURE_ROOT/needle-parent/other"
+  printf text >"$FIXTURE_ROOT/needle-parent/other"
   set_results "$FIXTURE_ROOT/needle-parent/other"
   for producer in find fd locate; do
     rm -f -- "$TEST_BIN/fd" "$TEST_BIN/plocate"
     export FZD_GLOBAL_BACKEND=live
     case "$producer" in
-      fd) use_fd_stub ;;
-      locate) use_locate_stub; export FZD_GLOBAL_BACKEND=locate ;;
+    fd) use_fd_stub ;;
+    locate)
+      use_locate_stub
+      export FZD_GLOBAL_BACKEND=locate
+      ;;
     esac
     export FZD_GLOBAL_FULLPATH=0
     run bash "$FZD_SCRIPT" --_global_list --q needle
@@ -198,7 +204,7 @@ setup() { setup_fixture; }
 
 @test "missing and dangling results are omitted while live symlinks are preserved" {
   use_fd_stub
-  printf text > "$FIXTURE_ROOT/needle-target"
+  printf text >"$FIXTURE_ROOT/needle-target"
   ln -s "$FIXTURE_ROOT/needle-target" "$FIXTURE_ROOT/needle-link"
   ln -s "$FIXTURE_ROOT/missing" "$FIXTURE_ROOT/needle-dangling"
   set_results "$FIXTURE_ROOT/needle-link" "$FIXTURE_ROOT/needle-dangling" "$FIXTURE_ROOT/needle-missing"
@@ -210,7 +216,7 @@ setup() { setup_fixture; }
 
 @test "a failed locate producer cannot leak partial results before fallback" {
   use_locate_stub
-  cat > "$TEST_BIN/plocate-partial" <<'STUB'
+  cat >"$TEST_BIN/plocate-partial" <<'STUB'
 #!/usr/bin/env bash
 printf '%s\0' "$FZD_PARTIAL_RESULT"
 exit 2
@@ -218,7 +224,7 @@ STUB
   chmod +x "$TEST_BIN/plocate-partial"
   ln -sf "$TEST_BIN/plocate-partial" "$TEST_BIN/plocate"
   export FZD_GLOBAL_BACKEND=locate FZD_PARTIAL_RESULT="$FIXTURE_ROOT/needle"
-  printf text > "$FZD_PARTIAL_RESULT"
+  printf text >"$FZD_PARTIAL_RESULT"
   run --separate-stderr bash "$FZD_SCRIPT" --_global_list --q needle
   [ "$status" -eq 0 ]
   [ "${#lines[@]}" -eq 1 ]

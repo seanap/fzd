@@ -1,0 +1,154 @@
+#!/usr/bin/env bats
+load helpers/common
+
+setup() {
+  local host_path=$PATH
+  setup_fixture
+  export PATH=$host_path BASH_ENV=/dev/null
+  export FZD_SCRIPT
+  command -v tmux >/dev/null || skip 'tmux is not installed'
+  command -v fzf >/dev/null || skip 'fzf is not installed'
+  SOCKET="$BATS_TEST_TMPDIR/tmux.sock"
+  export FZD_PTY_RESULT="$BATS_TEST_TMPDIR/result"
+  export FZD_PTY_STATUS="$BATS_TEST_TMPDIR/status"
+  export FZD_PTY_ERROR="$BATS_TEST_TMPDIR/stderr"
+  export FZD_PTY_EDITOR="$BATS_TEST_TMPDIR/editor-arguments"
+}
+
+teardown() {
+  if [[ -n "${SOCKET:-}" ]]; then tmux -S "$SOCKET" kill-server 2>/dev/null || true; fi
+}
+
+start_terminal() {
+  local command
+  printf -v command 'exec bash --noprofile --norc %q' "$FZD_REPO/tests/helpers/pty-session"
+  tmux -S "$SOCKET" -f /dev/null new-session -d -x 120 -y 32 -s fzd -c "$FIXTURE_ROOT" "$command"
+  wait_screen '../'
+}
+
+wait_screen() {
+  local attempt screen
+  for ((attempt = 0; attempt < 160; attempt++)); do
+    screen=$(tmux -S "$SOCKET" capture-pane -p -t fzd:0.0)
+    [[ "$screen" == *"$1"* ]] && return 0
+    sleep 0.05
+  done
+  printf 'Expected screen text: %s\n%s\n' "$1" "$screen" >&2
+  cat "$FZD_PTY_ERROR" >&2
+  return 1
+}
+
+wait_file() {
+  local attempt
+  for ((attempt = 0; attempt < 160; attempt++)); do
+    [[ -s "$1" ]] && return 0
+    sleep 0.05
+  done
+  printf 'Timed out waiting for %s\n' "$1" >&2
+  tmux -S "$SOCKET" capture-pane -p -t fzd:0.0 >&2
+  cat "$FZD_PTY_ERROR" >&2
+  return 1
+}
+
+@test "real terminal Right Left and Enter restore the child selection" {
+  mkdir -p "$FIXTURE_ROOT/child"
+  printf text >"$FIXTURE_ROOT/child/inside-only.txt"
+  start_terminal
+  tmux -S "$SOCKET" send-keys -l child
+  wait_screen '1/2'
+  tmux -S "$SOCKET" send-keys Right
+  wait_screen inside-only.txt
+  tmux -S "$SOCKET" send-keys Left
+  wait_screen child/
+  tmux -S "$SOCKET" send-keys Enter
+  wait_file "$FZD_PTY_STATUS"
+  [ "$(cat "$FZD_PTY_STATUS")" -eq 0 ]
+  [ "$(cat "$FZD_PTY_RESULT")" = "$FIXTURE_ROOT/child" ]
+}
+
+check_global_navigation() {
+  mkdir -p "$FIXTURE_ROOT/needle-target"
+  printf text >"$FIXTURE_ROOT/needle-target/global-inside.txt"
+  if [[ "${1:-}" == locate || "${1:-}" == broken-locate ]]; then
+    private_locate
+    rm -f -- "$TEST_BIN/fzf"
+    export PATH="$TEST_BIN:$PATH"
+    if [[ "$1" == broken-locate ]]; then
+      export FZD_LOCATE_DBS="$BATS_TEST_TMPDIR/missing.db" FZD_GLOBAL_BACKEND=auto
+    fi
+  fi
+  start_terminal
+  tmux -S "$SOCKET" send-keys C-f
+  wait_screen 'global:/ >'
+  tmux -S "$SOCKET" send-keys -l needle-target
+  wait_screen '1/'
+  wait_screen 'needle-target/'
+  tmux -S "$SOCKET" send-keys Right
+  wait_screen global-inside.txt
+  tmux -S "$SOCKET" send-keys Enter
+  wait_file "$FZD_PTY_STATUS"
+  [ "$(cat "$FZD_PTY_STATUS")" -eq 0 ]
+  [ "$(cat "$FZD_PTY_RESULT")" = "$FIXTURE_ROOT/needle-target" ]
+}
+
+@test "real terminal Ctrl-F cache search Right and Enter keep their controls" {
+  export FZD_GLOBAL_BACKEND=cache
+  check_global_navigation
+}
+
+@test "real terminal Ctrl-F live search Right and Enter keep their controls" {
+  export FZD_GLOBAL_BACKEND=live
+  check_global_navigation
+}
+
+@test "real terminal Ctrl-F searches a private locate database" {
+  check_global_navigation locate
+}
+
+@test "real terminal auto search survives a broken locate database" {
+  check_global_navigation broken-locate
+}
+
+@test "real terminal Enter opens exact unusual filename then Esc returns 130" {
+  local path="$FIXTURE_ROOT/"$'needle \'quote $(printf BAD)\tlast\n'
+  # Exercise both pathname interpolation sites in the real fzf callbacks.
+  export FZD_TMP_DIR="$BATS_TEST_TMPDIR/"$'tmp \'quote $(printf BAD)\n'
+  ln -s "$FZD_SCRIPT" "$TEST_BIN/fzd 'quoted.sh"
+  export FZD_SCRIPT="$TEST_BIN/fzd 'quoted.sh"
+  printf 'preview-unique-text\n' >"$path"
+  export EDITOR="$TEST_BIN/editor"
+  printf '#!/bin/sh\nprintf "%%s\\0" "$@" > "$FZD_PTY_EDITOR"\n' >"$EDITOR"
+  chmod +x "$EDITOR"
+  start_terminal
+  tmux -S "$SOCKET" send-keys -l needle
+  wait_screen '1/2'
+  tmux -S "$SOCKET" send-keys Enter
+  wait_file "$FZD_PTY_EDITOR"
+  local expected actual
+  expected=$(printf '%s\0' -- "$path" | base64 | tr -d '\n')
+  actual=$(base64 <"$FZD_PTY_EDITOR" | tr -d '\n')
+  [ "$actual" = "$expected" ]
+  wait_screen '../'
+  tmux -S "$SOCKET" send-keys Escape
+  wait_file "$FZD_PTY_STATUS"
+  [ "$(cat "$FZD_PTY_STATUS")" -eq 130 ]
+  [ ! -s "$FZD_PTY_RESULT" ]
+}
+
+@test "real terminal remains usable after resizing to 60 columns and 16 rows" {
+  start_terminal
+  tmux -S "$SOCKET" resize-window -t fzd:0 -x 60 -y 16
+  wait_screen '../'
+  tmux -S "$SOCKET" send-keys Enter
+  wait_file "$FZD_PTY_STATUS"
+  [ "$(cat "$FZD_PTY_RESULT")" = "$FIXTURE_ROOT" ]
+}
+
+@test "real terminal Ctrl-C leaves no control files" {
+  start_terminal
+  tmux -S "$SOCKET" send-keys C-c
+  wait_file "$FZD_PTY_STATUS"
+  [ "$(cat "$FZD_PTY_STATUS")" -eq 130 ]
+  run find "$XDG_RUNTIME_DIR" -type f
+  [ -z "$output" ]
+}
