@@ -1,0 +1,75 @@
+1..74
+ok 1 explicit configuration path is loaded
+ok 2 XDG configuration path is loaded when no explicit file is set
+ok 3 legacy root variables expand without evaluating shell commands
+ok 4 legacy leading tilde roots expand without evaluating shell code
+ok 5 shipped configuration defines one backend and one root list
+ok 6 root arrays preserve spaces and override the legacy root string
+ok 7 root arrays retain quotes substitutions and trailing newlines as path data
+ok 8 configuration declarations retain top-level Bash scope
+ok 9 configured runtime paths are applied before creating storage
+ok 10 legacy root expansion never executes substitution text
+ok 11 invalid numeric settings fail with an actionable diagnostic
+ok 12 unknown backend fails before launching a picker
+ok 13 sourcing exposes functions without configuration or filesystem side effects
+ok 14 local listing retains newlines hidden names and symlinks without duplicates
+ok 15 local records keep exact path bytes and escape display record separators
+ok 16 navigation preserves directory names with trailing newlines
+ok 17 Left at the filesystem root is a safe no-op under errexit
+ok 18 inaccessible directories are safe no-op transitions
+ok 19 an empty directory still offers the current-directory Enter shortcut
+ok 20 selection decoding retains every trailing newline byte
+ok 21 preview opens the exact filename including a trailing newline
+ok 22 callback shell quoting preserves spaces quotes substitutions and newlines
+ok 23 global index does not execute command substitutions in filenames
+ok 24 cache sends configured roots and exclusions to fd
+ok 25 cache directory labels contain the directory basename
+ok 26 cache falls back to find when fd is unavailable
+ok 27 find search returns directories and files case insensitively
+ok 28 find honors exclusions with spaces without shell expansion
+ok 29 locate filters results outside configured roots
+ok 30 locate root slash admits descendants
+ok 31 failed locate database falls back to live filesystem search
+ok 32 explicit live mode does not call an available locate backend
+ok 33 query option characters are literal filename data
+ok 34 short queries return no records successfully
+ok 35 no matches is a successful empty search
+ok 36 all search producers preserve unusual path bytes without executing names
+ok 37 find honors depth and result limits
+ok 38 locate applies result cap after scope and exclusion filtering
+ok 39 basename and full-path policies agree across backends
+ok 40 missing and dangling results are omitted while live symlinks are preserved
+ok 41 a failed locate producer cannot leak partial results before fallback
+ok 42 real fd indexes configured roots and labels directories
+ok 43 real fd query preserves newline paths and literal option characters
+ok 44 real plocate private database preserves unusual names and directory labels
+ok 45 real plocate treats wildcard query characters literally
+ok 46 real plocate missing database falls back to the filesystem
+ok 47 real plocate no matches succeeds without a fallback scan
+ok 48 real fd honors relative roots containing dot components
+ok 49 real fd and find agree that depth zero yields no descendants
+ok 50 global Right on a file is a no-op and leaves FZD running
+ok 51 global Right on a disappeared result is a no-op
+ok 52 live overlay Right enters a directory with the existing controls
+ok 53 global Left retains its existing overlay-cancel behavior
+ok 54 local Right on a file does not terminate FZD
+ok 55 Left restores the child directory selection
+ok 56 Enter on the parent row preserves the current-directory shortcut
+ok 57 Esc exits with 130 and no directory output
+ok 58 unwritable runtime storage fails clearly before starting fzf
+ok 59 failed mktemp never launches a session with an empty control pathname
+ok 60 normal exit and Esc remove all control files
+ok 61 termination cleans a locate staging file and reports signal status
+ok 62 existing Bash integration changes directory with quotes Unicode and embedded newline
+ok 63 existing zsh integration changes directory with quotes Unicode and embedded newline
+ok 64 existing Bash integration treats Esc as a cancelled navigation
+ok 65 existing zsh integration treats Esc as a cancelled navigation
+ok 66 legacy shell wrapper trailing-newline limitation remains explicitly deferred # skip install.sh wrappers strip trailing newlines through command substitution; installer modernization is excluded from this phase
+ok 67 real terminal Right Left and Enter restore the child selection
+ok 68 real terminal Ctrl-F cache search Right and Enter keep their controls
+ok 69 real terminal Ctrl-F live search Right and Enter keep their controls
+ok 70 real terminal Ctrl-F searches a private locate database
+ok 71 real terminal auto search survives a broken locate database
+ok 72 real terminal Enter opens exact unusual filename then Esc returns 130
+ok 73 real terminal remains usable after resizing to 60 columns and 16 rows
+ok 74 real terminal Ctrl-C leaves no control files

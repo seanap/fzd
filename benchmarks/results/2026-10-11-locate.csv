@@ -1,0 +1,2 @@
+command,mean,stddev,median,user,system,min,max
+bash benchmarks/workload.sh query-locate,0.08897402973999999,0.004519807605564832,0.08938640294,0.01726588,0.01113436,0.08446050394,0.09593882594
