@@ -64,6 +64,25 @@ setup() { setup_fixture; }
   [ -z "$stderr" ]
 }
 
+@test "configuration declarations retain top-level Bash scope" {
+  printf text >"$FIXTURE_ROOT/needle"
+  printf 'declare FZD_GLOBAL_BACKEND=live\ndeclare -a FZD_GLOBAL_ROOTS=(%q)\n' "$FIXTURE_ROOT" >"$FZD_CONF_FILE"
+  export FZD_GLOBAL_PATHS=/does/not/exist
+  run --separate-stderr bash "$FZD_SCRIPT" --_global_list --q needle
+  [ "$status" -eq 0 ]
+  assert_record_path "$FIXTURE_ROOT/needle"
+  [ -z "$stderr" ]
+}
+
+@test "configured runtime paths are applied before creating storage" {
+  local custom="$BATS_TEST_TMPDIR/custom-runtime"
+  printf 'FZD_TMP_DIR=%q\n' "$custom" >"$FZD_CONF_FILE"
+  run bash "$FZD_SCRIPT" --_global_list --q ''
+  [ "$status" -eq 0 ]
+  [ -d "$custom" ]
+  [ ! -d "$XDG_RUNTIME_DIR/fzd" ]
+}
+
 @test "legacy root expansion never executes substitution text" {
   export FZD_GLOBAL_PATHS='$(printf hit > FZD_ROOT_MARKER)'
   run bash -c 'cd -- "$1"; exec bash "$2" --_global_list --q needle' _ "$FIXTURE_ROOT" "$FZD_SCRIPT"

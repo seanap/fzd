@@ -13,7 +13,7 @@
 # - Do NOT clobber FZF_DEFAULT_OPTS so Omarchy/Hyprland/Alacritty themes are inherited.
 # - Optional per-entry color via FZD_COLOR_DIR / FZD_COLOR_FILE (hex like #aabbcc). Default: no extra color.
 
-_fzd_init() {
+_fzd_paths() {
   # ----------------- XDG + PATHS -----------------
   : "${XDG_CONFIG_HOME:=$HOME/.config}"
   : "${XDG_STATE_HOME:=$HOME/.local/state}"
@@ -26,7 +26,10 @@ _fzd_init() {
   fi
   : "${FZD_STATE_DIR:=$XDG_STATE_HOME/fzd}"
   : "${FZD_CACHE_DIR:=$XDG_CACHE_HOME/fzd}"
+  FZD_CONF_FILE="${FZD_CONF_FILE:-$XDG_CONFIG_HOME/fzd/fzd.conf}"
+}
 
+_fzd_init() {
   if ! mkdir -p "$FZD_STATE_DIR" "$FZD_CACHE_DIR" "$FZD_TMP_DIR"; then
     printf 'fzd: cannot create state, cache or temporary directories\n' >&2
     return 1
@@ -34,11 +37,6 @@ _fzd_init() {
   export TMPDIR="$FZD_TMP_DIR"
 
   # ----------------- CONFIG DEFAULTS -----------------
-  # Configuration is trusted Bash code, sourced only at application entry.
-  FZD_CONF_FILE="${FZD_CONF_FILE:-$XDG_CONFIG_HOME/fzd/fzd.conf}"
-  # shellcheck source=/dev/null
-  [[ -f "$FZD_CONF_FILE" ]] && source "$FZD_CONF_FILE"
-
   : "${FZD_GLOBAL_BACKEND:=auto}" # auto|locate|cache|live
   : "${FZD_GLOBAL_MINLEN:=2}"
   : "${FZD_GLOBAL_MAXDEPTH:=6}"
@@ -737,4 +735,13 @@ _fzd_entry() {
 }
 
 # Sourcing exposes functions for unit tests without running initialization or UI.
-if [[ ${BASH_SOURCE[0]} == "$0" ]]; then _fzd_entry "$@"; fi
+if [[ ${BASH_SOURCE[0]} == "$0" ]]; then
+  set -euo pipefail
+  export LC_ALL=C
+  _fzd_paths
+  # Keep configuration at top level: `declare` must not become function-local.
+  # Configuration remains trusted Bash code, as in the original application.
+  # shellcheck source=/dev/null
+  [[ -f "$FZD_CONF_FILE" ]] && source "$FZD_CONF_FILE"
+  _fzd_entry "$@"
+fi
