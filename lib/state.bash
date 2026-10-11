@@ -126,8 +126,10 @@ _reference_path() {
 }
 _references_update() {
   # Caller holds the state lock. Rebase before discarding now-missing old paths.
-  local old=$1 new=$2 index
+  local old=$1 new=$2 index parent
   _recents_read && _clipboard_read || return 1
+  _parent_path "$old"
+  parent=$REPLY
   for index in "${!RAW_RECENTS[@]}"; do
     _reference_path "${RAW_RECENTS[index]}" "$old" "$new"
     RAW_RECENTS[index]=$REPLY
@@ -137,9 +139,13 @@ _references_update() {
     RECENT_PENDING[index]=$REPLY
   done
   for index in "${!H_PATHS[@]}"; do
+    if [[ ${H_PATHS[index]} == "$parent" && ${H_SELECTIONS[index]} == "${old##*/}" ]]; then
+      H_SELECTIONS[index]=${new##*/}
+    fi
     _reference_path "${H_PATHS[index]}" "$old" "$new"
     H_PATHS[index]=$REPLY
   done
+  if [[ ${LAST_CHILD[$parent]:-} == "${old##*/}" ]]; then LAST_CHILD["$parent"]=${new##*/}; fi
   _reference_path "$CUR" "$old" "$new"
   CUR=$REPLY
   if [[ -n $CLIP_PATH ]]; then

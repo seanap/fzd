@@ -22,6 +22,8 @@ init_operations() {
 init_explorer() {
   # shellcheck source=/dev/null
   source "$FZD_SCRIPT"
+  # Sourcing inside a function makes the application's declaration local.
+  declare -gA LAST_CHILD=()
   # shellcheck source=/dev/null
   source "$FZD_TEST_REPO/lib/state.bash"
   _fzd_paths

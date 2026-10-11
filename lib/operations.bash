@@ -143,11 +143,56 @@ _clipboard_paste() {
     _status_item Copied "$destination"
   else _status_item Moved "$destination"; fi
 }
+_rename_item() {
+  local source=$1 name=$2 destination rc=0
+  _operation_item "$source" && _operation_name "$name" || return 1
+  destination=${source%/*}/$name
+  [[ $source != "$destination" ]] || {
+    FZD_STATUS='Name unchanged'
+    return 0
+  }
+  if [[ -e $destination || -L $destination ]]; then
+    FZD_STATUS='Rename failed: destination exists'
+    return 1
+  fi
+  _state_lock || return 1
+  if ! _recents_read || ! _clipboard_read; then
+    _state_unlock
+    return 1
+  fi
+  if _operation_run mv -nT -- "$source" "$destination"; then
+    if [[ -e $source || -L $source || (! -e $destination && ! -L $destination) ]]; then
+      FZD_STATUS='Rename failed: source or destination changed'
+      rc=1
+    elif ! _references_update "$source" "$destination"; then
+      FZD_STATUS='Item renamed; persistent references could not be saved'
+      rc=1
+    fi
+  else rc=1; fi
+  _state_unlock
+  ((rc == 0)) || return "$rc"
+  FZD_SELECT_NAME=$name
+  FZD_QUERY=''
+  _status_item Renamed "$destination"
+}
+_mkdir_item() {
+  local name=$1
+  _operation_name "$name" || return 1
+  _operation_run mkdir -- "${CUR%/}/$name" || return 1
+  FZD_SELECT_NAME=$name
+  FZD_QUERY=''
+  _status_item Created "${CUR%/}/$name"
+}
 _explorer_action() {
   case "$1" in
   COPY) _clipboard_set copy "$2" "${3:-local}" ;;
   CUT) _clipboard_set cut "$2" "${3:-local}" ;;
   PASTE) _clipboard_paste ;;
+  RENAME)
+    _operation_item "$2" || return 1
+    if _ui_name Rename "${2##*/}"; then _rename_item "$2" "$REPLY"; else return 1; fi
+    ;;
+  MKDIR) if _ui_name 'New directory' ''; then _mkdir_item "$REPLY"; else return 1; fi ;;
   *) return 1 ;;
   esac
 }

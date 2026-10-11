@@ -643,6 +643,7 @@ _run_global_overlay() {
       --preview-window=right,60%:wrap \
       --bind "change:reload:$self_command --_global_list --q {q} || true" \
       --bind "esc:abort" \
+      --bind "f1:execute($self_command --_help global)" \
       "${EXPLORER_BINDS[@]}" \
       --bind "enter:execute-silent(echo A:G_ENTER:{1} > $control_command)+abort" \
       --bind "left:execute-silent(echo A:G_LEFT:{1} > $control_command)+abort" \
@@ -667,6 +668,7 @@ _run_global_overlay() {
       --preview "$self_command --_preview {1}" \
       --preview-window=right,60%:wrap \
       --bind "esc:abort" \
+      --bind "f1:execute($self_command --_help global)" \
       "${EXPLORER_BINDS[@]}" \
       --bind "enter:execute-silent(echo A:G_ENTER:{1} > $control_command)+abort" \
       --bind "left:execute-silent(echo A:G_LEFT:{1} > $control_command)+abort" \
@@ -755,6 +757,7 @@ _history_step() {
     path=${H_PATHS[next]}
     if [[ -d $path && -r $path && -x $path ]]; then
       H_INDEX=$next; CUR=$path; FZD_SELECT_NAME=${H_SELECTIONS[next]}
+      if ((step < 0)); then FZD_STATUS='Back'; else FZD_STATUS='Forward'; fi
       _recent_queue "$CUR"
       return 0
     fi
@@ -791,7 +794,8 @@ _explorer_bindings() {
   EXPLORER_BINDS=()
   local pairs=('ctrl-c:COPY' 'alt-c:COPY' 'ctrl-x:CUT' 'alt-x:CUT')
   if [[ $scope == local ]]; then
-    pairs+=('alt-left:BACK' 'alt-right:FORWARD' 'alt-h:RECENTS' 'f1:HELP' 'ctrl-v:PASTE' 'alt-v:PASTE')
+    pairs+=('alt-left:BACK' 'alt-right:FORWARD' 'alt-h:RECENTS' 'f1:HELP' 'ctrl-v:PASTE' 'alt-v:PASTE'
+      'ctrl-r:RENAME' 'f2:RENAME' 'f7:MKDIR' 'ctrl-n:MKDIR')
   fi
   for pair in "${pairs[@]}"; do
     key=${pair%%:*}; action=${pair#*:}
@@ -867,7 +871,7 @@ main() {
     _history_remember
     FZD_STATUS=''
     FZD_QUERY=''
-    case "$action" in HELP|RECENTS|COPY|CUT|PASTE) FZD_QUERY=${FZF_OUT[0]:-} ;; esac
+    case "$action" in HELP|RECENTS|COPY|CUT|PASTE|RENAME|MKDIR) FZD_QUERY=${FZF_OUT[0]:-} ;; esac
 
     case "$action" in
       BACK) _history_step -1 ;;
@@ -875,9 +879,11 @@ main() {
       GLOBAL) _run_global_overlay ;;
       RECENTS) if _explorer_load ui; then _ui_recents || true; fi ;;
       HELP) if _explorer_load ui; then _ui_help; fi ;;
-      COPY|CUT|PASTE)
+      COPY|CUT|PASTE|RENAME|MKDIR)
         if _explorer_load state && _explorer_load operations; then
-          _explorer_action "$action" "$RAW" local || true
+          if [[ $action == COPY || $action == CUT || $action == PASTE ]] || _explorer_load ui; then
+            _explorer_action "$action" "$RAW" local || true
+          fi
         fi
         ;;
       LEFT)
@@ -939,6 +945,10 @@ _fzd_entry() {
   esac
   FZF_BIN="$(type -P fzf 2>/dev/null || command -v fzf || true)"
   [[ -x "$FZF_BIN" ]] || { echo "fzd: ERROR: fzf not found" >&2; return 1; }
+  if [[ ${1:-} == --_help ]]; then
+    if _explorer_load ui; then _ui_help "${2:-local}"; fi
+    return 0
+  fi
   unset FZF_CTRL_T_COMMAND FZF_ALT_C_COMMAND FZF_DEFAULT_COMMAND 2>/dev/null || true
   HAS_POS=0
   if printf 'x\n' | "$FZF_BIN" --bind='start:pos(1)' --select-1 --exit-0 >/dev/null 2>&1; then HAS_POS=1; fi

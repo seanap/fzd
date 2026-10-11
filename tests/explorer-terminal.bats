@@ -4,6 +4,71 @@ load helpers/terminal
 setup() { setup_terminal_fixture; }
 teardown() { stop_terminal; }
 
+@test "real terminal F2 preserves an unusual name unchanged and Ctrl-R renames and restores highlighting" {
+  local old=$'needle é\t\n\377' new=$'renamed 雪\n'
+  printf payload >"$FIXTURE_ROOT/$old"
+  start_terminal
+  tmux -S "$SOCKET" send-keys -l needle
+  wait_screen '1/2'
+  tmux -S "$SOCKET" send-keys F2
+  wait_screen 'Rename >'
+  tmux -S "$SOCKET" send-keys Enter
+  wait_screen 'Name unchanged'
+  [ -f "$FIXTURE_ROOT/$old" ]
+  tmux -S "$SOCKET" send-keys C-r
+  wait_screen 'Rename >'
+  tmux -S "$SOCKET" send-keys C-u
+  tmux -S "$SOCKET" send-keys -l 'renamed 雪\n'
+  tmux -S "$SOCKET" send-keys Enter
+  wait_screen 'Renamed: renamed 雪\n'
+  wait_screen '> renamed 雪\n' '▌ renamed 雪\n'
+  [ -f "$FIXTURE_ROOT/$new" ]
+  [ ! -e "$FIXTURE_ROOT/$old" ]
+  tmux -S "$SOCKET" send-keys Escape
+  wait_file "$FZD_PTY_STATUS"
+  [ ! -s "$FZD_PTY_RESULT" ]
+}
+
+@test "real terminal Ctrl-N and F7 validate cancel and create directories with escaped names" {
+  start_terminal
+  tmux -S "$SOCKET" send-keys C-n
+  wait_screen 'New directory >'
+  tmux -S "$SOCKET" send-keys Enter
+  wait_screen 'Name must be nonempty'
+  tmux -S "$SOCKET" send-keys F7
+  wait_screen 'New directory >'
+  tmux -S "$SOCKET" send-keys -l 'new-folder\n'
+  tmux -S "$SOCKET" send-keys Enter
+  wait_screen 'Created: new-folder\n'
+  wait_screen '> new-folder\n/' '▌ new-folder\n/'
+  [ -d "$FIXTURE_ROOT/"$'new-folder\n' ]
+  tmux -S "$SOCKET" send-keys C-n
+  wait_screen 'New directory >'
+  tmux -S "$SOCKET" send-keys Escape
+  wait_screen 'Cancelled'
+  tmux -S "$SOCKET" send-keys Escape
+  wait_file "$FZD_PTY_STATUS"
+  [ ! -s "$FZD_PTY_RESULT" ]
+}
+
+@test "real terminal global F1 help restores the active global query" {
+  mkdir -p "$FIXTURE_ROOT/needle-dir"
+  printf payload >"$FIXTURE_ROOT/needle-dir/inside"
+  start_terminal
+  tmux -S "$SOCKET" send-keys C-f
+  wait_screen 'global:/ >'
+  tmux -S "$SOCKET" send-keys -l needle-dir
+  wait_screen '1/'
+  tmux -S "$SOCKET" send-keys F1
+  wait_screen 'Help >'
+  tmux -S "$SOCKET" send-keys Escape
+  wait_screen 'global:/ > needle-dir'
+  tmux -S "$SOCKET" send-keys Right
+  wait_screen inside
+  tmux -S "$SOCKET" send-keys Escape
+  wait_file "$FZD_PTY_STATUS"
+}
+
 clipboard_terminal_cycle() {
   local copy_key=$1 cut_key=$2 paste_key=$3
   printf payload >"$FIXTURE_ROOT/needle-item"
@@ -79,6 +144,7 @@ clipboard_terminal_cycle() {
   tmux -S "$SOCKET" send-keys M-Left
   wait_screen '> child/' '▌ child/'
   tmux -S "$SOCKET" send-keys M-Right
+  wait_screen Forward
   wait_screen inside-local
   tmux -S "$SOCKET" send-keys C-f
   wait_screen 'global:/ >'
