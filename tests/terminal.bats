@@ -152,3 +152,25 @@ check_global_navigation() {
   run find "$XDG_RUNTIME_DIR" -type f
   [ -z "$output" ]
 }
+
+@test "real fzf completes a delayed action write before navigation resumes" {
+  mkdir -p "$FIXTURE_ROOT/child"
+  printf text >"$FIXTURE_ROOT/child/first"
+  printf text >"$FIXTURE_ROOT/child/second"
+  export SHELL="$TEST_BIN/delayed-shell"
+  cat >"$SHELL" <<'SH'
+#!/bin/sh
+case "$*" in *'echo A:RIGHT:'*) sleep 0.3 ;; esac
+exec /bin/sh "$@"
+SH
+  chmod +x "$SHELL"
+  start_terminal
+  tmux -S "$SOCKET" send-keys -l child
+  wait_screen '1/2'
+  tmux -S "$SOCKET" send-keys Right
+  wait_screen '3/3'
+  tmux -S "$SOCKET" send-keys Enter
+  wait_file "$FZD_PTY_STATUS"
+  [ "$(cat "$FZD_PTY_RESULT")" = "$FIXTURE_ROOT/child" ]
+  [ "$(cat "$FZD_PTY_STATUS")" -eq 0 ]
+}

@@ -88,3 +88,23 @@ setup() { setup_fixture; }
   [ "$status" -eq 0 ]
   [ "$output" = "$(printf '%s' "$value" | base64 | tr -d '\n')" ]
 }
+
+@test "enumeration restores glob options and does not duplicate hidden entries" {
+  mkdir -p "$FIXTURE_ROOT/.hidden-dir" "$FIXTURE_ROOT/visible-dir"
+  printf text >"$FIXTURE_ROOT/.hidden"
+  run bash -euo pipefail -c '
+    source "$1"; CUR=$2
+    for null in s u; do
+      for dot in s u; do
+        shopt -"$null" nullglob; shopt -"$dot" dotglob
+        before=$(shopt -p nullglob dotglob || true)
+        list_entries
+        after=$(shopt -p nullglob dotglob || true)
+        [[ "$before" == "$after" ]]
+        [[ ${#DIRS[@]} == 2 && ${#FILES[@]} == 1 ]]
+        [[ ${FILES[0]} == .hidden ]]
+      done
+    done
+  ' _ "$FZD_SCRIPT" "$FIXTURE_ROOT"
+  [ "$status" -eq 0 ]
+}

@@ -195,21 +195,18 @@ print_cd_target() { printf '%s\n' "$RAW"; }
 list_entries() {
   DIRS=(); FILES=()
 
-  local oldopt; oldopt="$(shopt -p nullglob 2>/dev/null || true)"
+  local had_nullglob=0 had_dotglob=0
+  shopt -q nullglob && had_nullglob=1
+  shopt -q dotglob && had_dotglob=1
   shopt -s nullglob
+  shopt -u dotglob
 
   local path base
-  # dirs (include dot dirs; not using dotglob)
-  for path in "$CUR"/*/ "$CUR"/.[!.]*/ "$CUR"/..?*/; do
-    [[ -d "$path" ]] || continue
-    base="${path%/}"; base="${base##*/}"
-    DIRS+=("${base}/")
-  done
-  # files
+  # Enumerate once, including hidden names without overlapping glob patterns.
   for path in "$CUR"/* "$CUR"/.[!.]* "$CUR"/..?*; do
-    [[ -f "$path" ]] || continue
     base="${path##*/}"
-    FILES+=("$base")
+    if [[ -d "$path" ]]; then DIRS+=("$base/")
+    elif [[ -f "$path" ]]; then FILES+=("$base"); fi
   done
 
   if (( ${#DIRS[@]} > 1 )); then
@@ -219,7 +216,8 @@ list_entries() {
     mapfile -d '' -t FILES < <(printf '%s\0' "${FILES[@]}" | sort -zf)
   fi
 
-  eval "$oldopt" 2>/dev/null || true
+  if ((had_nullglob == 0)); then shopt -u nullglob; fi
+  if ((had_dotglob)); then shopt -s dotglob; fi
 }
 
 build_lines() {
@@ -534,10 +532,12 @@ _global_index() {
 }
 
 _global_list() {
-  local query=$* locate_bin source_file error_file pattern rc=0
+  local query=$* locate_bin='' source_file error_file pattern rc=0
   _global_prepare || return
   ((${#query} >= FZD_GLOBAL_MINLEN)) || return 0
-  locate_bin=$(command -v plocate 2>/dev/null || command -v locate 2>/dev/null || true)
+  if [[ "$FZD_GLOBAL_BACKEND" != live && "$FZD_GLOBAL_BACKEND" != cache ]]; then
+    locate_bin=$(command -v plocate 2>/dev/null || command -v locate 2>/dev/null || true)
+  fi
   if [[ "$FZD_GLOBAL_BACKEND" != live && "$FZD_GLOBAL_BACKEND" != cache && -n "$locate_bin" ]]; then
     local arguments=() statuses=()
     [[ -n "$FZD_LOCATE_DBS" ]] && arguments+=(-d "$FZD_LOCATE_DBS")
@@ -624,16 +624,14 @@ _run_global_overlay() {
 
   fi
 
-  # read the overlay action
-  sleep 0.005
-  local action_line raw_b64 action sel_path
-  action_line="$(grep -m1 '^A:' "$CTRL" || true)"
-  raw_b64="$(printf '%s' "$action_line" | cut -d: -f3-)"
-  action="$(printf '%s' "$action_line" | cut -d: -f2)"
-  _decode_path "$raw_b64"; sel_path=$REPLY
+  # execute-silent is synchronous: its write is complete before fzf returns.
+  local tag='' raw_b64='' action='' sel_path
+  IFS=: read -r tag action raw_b64 < "$CTRL" || true
+  [[ "$tag" == A ]] || action=''
   _remove_temp "$CTRL"
 
   [[ -z "${action:-}" ]] && { dbg "GLOBAL overlay cancelled"; return; }
+  _decode_path "$raw_b64"; sel_path=$REPLY
 
   case "$action" in
     G_RIGHT)
@@ -668,7 +666,6 @@ main() {
   dbg "cwd=$CUR"
 
   local HIST_FILE="$FZD_STATE_DIR/query-history"
-  mkdir -p "$(dirname "$HIST_FILE")" 2>/dev/null || true
 
   while :; do
     list_entries
@@ -705,8 +702,6 @@ main() {
         || true
     )
 
-    sleep 0.005
-
     # If Ctrl-F was pressed (with --print-query + --expect order ambiguity)
     if [[ "${FZF_OUT[0]:-}" == "ctrl-f" || "${FZF_OUT[1]:-}" == "ctrl-f" ]]; then
       (( FZD_DEBUG == 1 )) && printf 'fzd: ctrl-f detected via expect\n' > /dev/tty
@@ -715,20 +710,13 @@ main() {
       continue
     fi
 
-    # Wait briefly for the temp-file write
-    for _i in {1..20}; do
-      [[ -s "$CTRL" ]] && break
-      sleep 0.01
-    done
-
-    local action_line raw_b64 action
-    action_line="$(grep -m1 '^A:' "$CTRL" || true)"
-    raw_b64="$(printf '%s' "$action_line" | cut -d: -f3-)"
-    action="$(printf '%s' "$action_line" | cut -d: -f2)"
-    _decode_path "$raw_b64"; RAW=$REPLY
+    local tag='' raw_b64='' action=''
+    IFS=: read -r tag action raw_b64 < "$CTRL" || true
+    [[ "$tag" == A ]] || action=''
     _remove_temp "$CTRL"
 
     [[ -z "${action:-}" ]] && { dbg "fzf aborted (Esc/close)"; exit 130; }
+    _decode_path "$raw_b64"; RAW=$REPLY
 
     case "$action" in
       LEFT)
