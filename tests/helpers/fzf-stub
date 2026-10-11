@@ -1,0 +1,21 @@
+#!/usr/bin/env bash
+set -euo pipefail
+for arg; do
+  [[ "$arg" == --select-1 ]] && exit 0
+done
+[[ -n ${FZD_STUB_ACTION:-} ]] || exit 130
+for arg; do
+  if [[ "$arg" == *"echo A:${FZD_STUB_ACTION}:"* ]]; then
+    control=${arg##* > }
+    control=${control%)+abort}
+    # Later command strings quote fixed paths; the fixture path contains no quotes.
+    control=${control#\'}
+    control=${control%\'}
+    control=${control#\"}
+    control=${control%\"}
+    encoded=$(printf '%s' "${FZD_STUB_SELECTION:-}" | base64 | tr -d '\n')
+    printf 'A:%s:%s\n' "$FZD_STUB_ACTION" "$encoded" >"$control"
+    exit 130
+  fi
+done
+exit 2
