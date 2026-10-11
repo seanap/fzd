@@ -9,12 +9,7 @@ setup() {
 }
 
 extract_init() {
-  # Extract the literal heredoc as data; never execute the installer.
-  awk -v shell="$1" '
-    $0 ~ "cat >.*init[.]" shell { copying=1; next }
-    copying && /^EOF$/ { exit }
-    copying { print }
-  ' "$FZD_REPO/install.sh" >"$BATS_TEST_TMPDIR/init"
+  cat "$FZD_REPO/shell/integration.sh" >"$BATS_TEST_TMPDIR/init"
   [ -s "$BATS_TEST_TMPDIR/init" ]
 }
 
@@ -53,6 +48,66 @@ check_shell_cancel() {
   check_shell_cancel zsh "$FZD_REAL_ZSH"
 }
 
-@test "legacy shell wrapper trailing-newline limitation remains explicitly deferred" {
-  skip 'install.sh wrappers strip trailing newlines through command substitution; installer modernization is excluded from this phase'
+@test "Bash and zsh wrappers preserve directories ending with multiple newlines" {
+  export FZD_DEST="$FIXTURE_ROOT/"$'trailing\n\n'
+  mkdir -p "$FZD_DEST"
+  check_shell_cd bash bash
+  check_shell_cd zsh "$FZD_REAL_ZSH"
+}
+
+@test "Bash and zsh wrappers preserve every legal non-NUL filename byte" {
+  local bytes='' byte i
+  for ((i = 1; i < 256; i++)); do
+    ((i == 47)) && continue
+    printf -v byte '%03o' "$i"
+    printf -v byte '%b' "\\$byte"
+    bytes+=$byte
+  done
+  export FZD_DEST="$FIXTURE_ROOT/$bytes"
+  mkdir -p "$FZD_DEST"
+  check_shell_cd bash bash
+  check_shell_cd zsh "$FZD_REAL_ZSH"
+}
+
+@test "shell integration leaves existing lf functions aliases and executables intact" {
+  extract_init bash
+  for shell in bash "$FZD_REAL_ZSH"; do
+    run "$shell" -c 'lf() { printf existing; }; source "$1"; [[ $(lf) == existing ]]; command -v fzd_cd' _ "$BATS_TEST_TMPDIR/init"
+    [ "$status" -eq 0 ]
+    run "$shell" -c 'alias lf="printf existing"; source "$1"; alias lf' _ "$BATS_TEST_TMPDIR/init"
+    [ "$status" -eq 0 ]
+    [[ "$output" == *existing* ]]
+  done
+  printf '#!/bin/sh\nprintf existing\n' >"$TEST_BIN/lf"
+  chmod +x "$TEST_BIN/lf"
+  for shell in bash "$FZD_REAL_ZSH"; do
+    run "$shell" -c 'source "$1"; [[ $(lf) == existing ]]' _ "$BATS_TEST_TMPDIR/init"
+    [ "$status" -eq 0 ]
+  done
+}
+
+@test "shell integration preserves editor colors and never sources Bash user configuration in zsh" {
+  extract_init bash
+  printf 'printf executed >"$XDG_CONFIG_HOME/marker"\ndeclare -A bash_only=()\n' >"$FZD_CONF_FILE"
+  for shell in bash "$FZD_REAL_ZSH"; do
+    run "$shell" -c 'export EDITOR=custom VISUAL=other LS_COLORS=original; source "$1"; source "$1"; [[ $EDITOR == custom && $VISUAL == other && $LS_COLORS == original ]]' _ "$BATS_TEST_TMPDIR/init"
+    [ "$status" -eq 0 ]
+  done
+  [ ! -e "$XDG_CONFIG_HOME/marker" ]
+}
+
+@test "shell wrappers propagate failures safely under errexit and treat empty output as success" {
+  extract_init bash
+  export FZD_EXIT=7
+  for shell in bash "$FZD_REAL_ZSH"; do
+    run "$shell" -ec 'source "$1"; lf; printf unreachable' _ "$BATS_TEST_TMPDIR/init"
+    [ "$status" -eq 7 ]
+    [[ "$output" != *unreachable* ]]
+  done
+  export FZD_EXIT=0 FZD_DEST=''
+  for shell in bash "$FZD_REAL_ZSH"; do
+    run "$shell" -ec 'source "$1"; lf; [[ $PWD == "$2" ]]' _ "$BATS_TEST_TMPDIR/init" "$PWD"
+    # The stub emits the protocol newline even for an empty value: reject it.
+    [ "$status" -eq 1 ]
+  done
 }
