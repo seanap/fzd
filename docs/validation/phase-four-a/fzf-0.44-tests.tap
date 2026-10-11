@@ -1,0 +1,210 @@
+1..209
+ok 1 invalid color overrides are ignored without terminating startup
+ok 2 hex colors accept optional hash and mixed case while rejecting invalid digits
+ok 3 explicit configuration path is loaded
+ok 4 XDG configuration path is loaded when no explicit file is set
+ok 5 legacy root variables expand without evaluating shell commands
+ok 6 legacy leading tilde roots expand without evaluating shell code
+ok 7 shipped configuration defines one backend and one root list
+ok 8 root arrays preserve spaces and override the legacy root string
+ok 9 root arrays retain quotes substitutions and trailing newlines as path data
+ok 10 configuration declarations retain top-level Bash scope
+ok 11 configured runtime paths are applied before creating storage
+ok 12 legacy root expansion never executes substitution text
+ok 13 invalid numeric settings fail with an actionable diagnostic
+ok 14 unknown backend fails before launching a picker
+ok 15 Explorer dependency detection reports missing flock and maps distribution providers
+ok 16 Ubuntu and Debian apt transaction authenticates once and refreshes metadata once
+ok 17 Fedora dnf and Arch pacman use bounded deduplicated package transactions
+ok 18 interactive sudo authenticates normally while noninteractive authentication failures stop
+ok 19 dependency package failures are propagated without continuing installation
+ok 20 dependency mappings and versions handle executable aliases and numerical comparison
+ok 21 fd bat executable aliases and an existing configured editor prevent unnecessary installs
+ok 22 fzf capability detection ignores hostile inherited defaults and rejects unsupported bindings
+ok 23 distribution detection uses os-release rather than an unrelated package manager on PATH
+ok 24 present but incompatible GNU serialization tools fail their capability checks
+ok 25 filename labels escape every non-NUL ASCII control byte and DEL
+ok 26 filename display retains Unicode and distinguishes literal escapes from control bytes
+ok 27 local candidate labels are printable while control-character path identities remain exact
+ok 28 global candidate labels are printable while control-character path identities remain exact
+ok 29 isolated Ubuntu profile detects apt installs missing findutils and completes
+ok 30 isolated Debian profile detects apt installs missing findutils and completes
+ok 31 isolated Fedora profile detects dnf installs missing findutils and completes
+ok 32 isolated Arch profile detects pacman installs missing findutils and completes
+ok 33 batch encoding matches GNU base64 for every non-NUL byte and alignment
+ok 34 one encoder handles a thousand local records without per-path execution
+ok 35 truncated encoder output fails without publishing partial path identities
+ok 36 encoder failure after complete output is still propagated
+ok 37 global batches preserve order exact paths and caps across chunk boundaries
+ok 38 global serialization uses one encoder per bounded batch
+ok 39 repeated encoding closes descriptors and reaps its producers
+ok 40 global search emits the first match while its producer is still scanning
+ok 41 a competing destination created during rename is not replaced
+ok 42 name prompt codec roundtrips every non-NUL byte and keeps valid Unicode readable
+ok 43 rename preserves exact name bytes and unchanged names perform no move
+ok 44 directory rename rebases browser history recents clipboard and highlighted names
+ok 45 rename conflicts never replace files links or merge directories
+ok 46 mkdir accepts unusual bytes rejects invalid names and never replaces existing targets
+ok 47 rename permission failures preserve names and state
+ok 48 copy persists across sessions and preserves unusual filenames contents and permissions
+ok 49 recursive copy preserves directory permissions hardlinks and symlinks without touching targets
+ok 50 cut only records intent then successful paste moves and clears its clipboard
+ok 51 paste refuses its original location and directory descendants including symlink aliases
+ok 52 dangling symlinks can be listed copied and moved as links
+ok 53 existing destination files directories and symlinks are never replaced or merged
+ok 54 missing clipboard sources and synthetic navigation entries fail safely
+ok 55 failed copying cleans private staging while preserving the source and clipboard
+ok 56 a destination appearing during atomic copy publication is not overwritten or reported successful
+ok 57 permission failures preserve cut sources and allow retry
+ok 58 concurrent clipboard writers publish complete private records
+ok 59 cut paste works across an isolated tmpfs boundary
+ok 60 termination during copying cleans private staging and preserves clipboard and source
+ok 61 failed atomic publication retains the previous state and permits retry
+ok 62 invalid clipboard versions truncated records and extra fields are rejected
+ok 63 local Enter and global Enter persist the returned directory as most recent
+ok 64 browser history traverses without duplicates and discards the forward branch
+ok 65 browser history skips missing and inaccessible directories and is bounded
+ok 66 recent directories persist in MRU order with exact bytes and private permissions
+ok 67 recents discard stale paths and retain at most 25 unique directories
+ok 68 concurrent recent-directory updates retain each session without corrupting records
+ok 69 invalid state and symlinked state files fail without replacing unrelated data
+ok 70 real terminal preserves inherited initial query and colors while reserving operation keys
+ok 71 real terminal pickers ignore inherited queries and print-query without losing the local query
+ok 72 real terminal F8 requires explicit confirmation and keeps the application usable
+ok 73 real terminal Delete still edits the query and F1 help works at 60 by 16
+ok 74 real terminal F2 preserves an unusual name unchanged and Ctrl-R renames and restores highlighting
+ok 75 real terminal Ctrl-N and F7 validate cancel and create directories with escaped names
+ok 76 real terminal global F1 help restores the active global query
+ok 77 real terminal Ctrl-C Ctrl-X Ctrl-V copy cut and paste without aborting
+ok 78 real terminal Alt-C Alt-X Alt-V provide the same clipboard operations
+ok 79 real terminal can copy a selected global result and paste into the browsed directory
+ok 80 real terminal Alt arrows traverse local and global visits without replacing parent navigation
+ok 81 real terminal F1 and recent-directory cancellation restore the filtered view
+ok 82 real terminal recent picker navigates and session history includes that visit
+ok 83 missing Trash backend leaves data untouched without any permanent-delete fallback
+ok 84 Trash passes exact file directory and symlink arguments and never follows the link
+ok 85 trashing a directory clears affected clipboard and prunes recents and browser history
+ok 86 failed Trash operations retain source and clipboard and do not report success
+ok 87 trash-put is used when gio is unavailable
+ok 88 a changed item after confirmation is not trashed
+ok 89 real gio uses an isolated XDG Trash with recoverable metadata
+ok 90 sourcing exposes functions without configuration or filesystem side effects
+ok 91 local listing retains newlines hidden names and symlinks without duplicates
+ok 92 local records keep exact path bytes and escape display record separators
+ok 93 navigation preserves directory names with trailing newlines
+ok 94 Left at the filesystem root is a safe no-op under errexit
+ok 95 inaccessible directories are safe no-op transitions
+ok 96 an empty directory still offers the current-directory Enter shortcut
+ok 97 selection decoding retains every trailing newline byte
+ok 98 preview opens the exact filename including a trailing newline
+ok 99 callback shell quoting preserves spaces quotes substitutions and newlines
+ok 100 enumeration restores glob options and does not duplicate hidden entries
+ok 101 global index does not execute command substitutions in filenames
+ok 102 cache sends configured roots and exclusions to fd
+ok 103 cache directory labels contain the directory basename
+ok 104 cache falls back to find when fd is unavailable
+ok 105 find search returns directories and files case insensitively
+ok 106 find honors exclusions with spaces without shell expansion
+ok 107 locate filters results outside configured roots
+ok 108 locate root slash admits descendants
+ok 109 failed locate database falls back to live filesystem search
+ok 110 explicit live mode does not call an available locate backend
+ok 111 query option characters are literal filename data
+ok 112 short queries return no records successfully
+ok 113 no matches is a successful empty search
+ok 114 all search producers preserve unusual path bytes without executing names
+ok 115 find honors depth and result limits
+ok 116 locate applies result cap after scope and exclusion filtering
+ok 117 basename and full-path policies agree across backends
+ok 118 missing results are omitted while live and dangling symlinks remain operable
+ok 119 a failed locate producer cannot leak partial results before fallback
+ok 120 installed Explorer modules load from share and uninstall removes only owned helpers
+ok 121 fresh noninteractive install verifies without root and matches the runtime exactly
+ok 122 reinstallation is idempotent and updates retain user configuration and shell contents
+ok 123 installed lifecycle script uninstalls without the checkout and preserves shared files
+ok 124 custom XDG ZDOTDIR prefix and configuration paths are preserved exactly
+ok 125 existing FZD configuration is checked but never executed or rewritten by install or verify
+ok 126 invalid configuration and invalid CLI options fail before any installation writes
+ok 127 missing dependencies and incompatible fzf fail with useful errors before user changes
+ok 128 available dependencies cause no sudo or package-manager calls
+ok 129 shell integration preserves existing lf executable editor settings and third-party themes
+ok 130 symbolic shell rc files keep their links mode and unrelated contents
+ok 131 malformed shell blocks roll back all application and configuration writes
+ok 132 unmanaged files require explicit adoption and keep recoverable originals
+ok 133 modified owned files block updates and are preserved on uninstall
+ok 134 legacy configuration migrates by copying without executing or deleting its source
+ok 135 manual mode installs no shell integration or user configuration
+ok 136 package staging separates distribution files from all user lifecycle state
+ok 137 download failures and checksum mismatch never publish fzf or application files
+ok 138 unverified downloads and relative install paths are rejected before transactions
+ok 139 failed file publication and SIGTERM restore prior shell and application files
+ok 140 SIGKILL leaves an explicit recoverable transaction and blocks concurrent installs
+ok 141 recovery refuses a live installer owner
+ok 142 installed Bash and zsh wrappers transport a real FZD selection ending with newlines
+ok 143 real pinned upstream fzf archive installs verifies and remains owned across updates
+ok 144 installer upgrades an owned runtime from a changed source checkout
+ok 145 uninstall preserves shell edits added after installation and foreign replacement blocks
+ok 146 unterminated shell files survive repeated installation and uninstall byte-for-byte
+ok 147 application destination symlinks and malformed manifests are never followed
+ok 148 canonical prefix paths keep installed lifecycle ownership consistent
+ok 149 recovery clears a stale lock after a completed transaction was archived
+ok 150 rc targets outside HOME also roll back safely through retained dotfile symlinks
+ok 151 installed Bash and zsh launchers change parent directory through a real fzf terminal
+ok 152 failed uninstall restores deleted files without replacing an unrelated temporary-looking file
+ok 153 real fd indexes configured roots and labels directories
+ok 154 real fd query preserves newline paths and literal option characters
+ok 155 real plocate private database preserves unusual names and directory labels
+ok 156 real plocate treats wildcard query characters literally
+ok 157 real plocate missing database falls back to the filesystem
+ok 158 real plocate no matches succeeds without a fallback scan
+ok 159 real fd honors relative roots containing dot components
+ok 160 real fd and find agree that depth zero yields no descendants
+ok 161 global Right on a file is a no-op and leaves FZD running
+ok 162 global Right on a disappeared result is a no-op
+ok 163 live overlay Right enters a directory with the existing controls
+ok 164 global Left retains its existing overlay-cancel behavior
+ok 165 local Right on a file does not terminate FZD
+ok 166 Left restores the child directory selection
+ok 167 Enter on the parent row preserves the current-directory shortcut
+ok 168 Esc exits with 130 and no directory output
+ok 169 Debian payload includes all Explorer modules and opt-in integration
+ok 170 Debian package has no maintainer scripts home files or source lifecycle
+ok 171 Debian dependencies explicitly cover interpreter fzf flock GNU tools and default editor
+ok 172 Debian build is byte reproducible with fixed source epoch
+ok 173 Debian revision supports ordered package upgrades
+ok 174 Build rejects invalid source epoch and package revisions
+ok 175 Immutable release build ignores untracked inputs and validates checksums
+ok 176 Package files have only standard root ownership and data permissions
+ok 177 eza preserves the inherited palette without explicit overrides even with vivid installed
+ok 178 eza replaces only the requested directory color and retains separators
+ok 179 eza replaces adjacent directory and file colors including palette endpoints
+ok 180 eza appends missing override entries and handles an empty inherited palette
+ok 181 eza retains escaped colons backslashes and empty palette entries
+ok 182 invalid eza color overrides retain the inherited entries
+ok 183 preview preserves text MIME policy renderer options and exact filename
+ok 184 binary MIME and failed MIME detection retain binary previews
+ok 185 directory preview retains tree colors depth exclusions and path bytes
+ok 186 unwritable runtime storage fails clearly before starting fzf
+ok 187 failed mktemp never launches a session with an empty control pathname
+ok 188 normal exit and Esc remove all control files
+ok 189 termination cleans a locate staging file and reports signal status
+ok 190 existing Bash integration changes directory with quotes Unicode and embedded newline
+ok 191 existing zsh integration changes directory with quotes Unicode and embedded newline
+ok 192 existing Bash integration treats Esc as a cancelled navigation
+ok 193 existing zsh integration treats Esc as a cancelled navigation
+ok 194 Bash and zsh wrappers preserve directories ending with multiple newlines
+ok 195 Bash and zsh wrappers preserve every legal non-NUL filename byte
+ok 196 shell integration leaves existing lf functions aliases and executables intact
+ok 197 shell integration preserves editor colors and never sources Bash user configuration in zsh
+ok 198 shell wrappers propagate failures safely under errexit and treat empty output as success
+ok 199 shell wrappers forward existing unexported editor and colors without changing the parent environment
+ok 200 real terminal Right Left and Enter restore the child selection
+ok 201 real terminal Ctrl-F cache search Right and Enter keep their controls
+ok 202 real terminal Ctrl-F live search Right and Enter keep their controls
+ok 203 real terminal Ctrl-F searches a private locate database
+ok 204 real terminal auto search survives a broken locate database
+ok 205 real terminal Enter opens exact unusual filename then Esc returns 130
+ok 206 real terminal remains usable after resizing to 60 columns and 16 rows
+ok 207 real terminal Ctrl-C refuses the navigation row and Esc leaves no control files
+ok 208 real fzf completes a delayed action write before navigation resumes
+ok 209 real terminal works without an alternate-screen restore capability

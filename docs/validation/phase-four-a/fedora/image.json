@@ -1,0 +1,75 @@
+[
+     {
+          "Id": "2888cc2c2cc0ad4bfcf46799719b91e9fb1224fad8d122a519c71ea9a58ce5fa",
+          "Digest": "sha256:1b8544582f974533fb8d9a5d6bf6dc2caf0d977ea54979d5e864a6ffd345c32e",
+          "RepoTags": [
+               "registry.fedoraproject.org/fedora:44"
+          ],
+          "RepoDigests": [
+               "registry.fedoraproject.org/fedora@sha256:05e3c351a7e762aca8fb067a9a92c1f775a7c4fbb1382c97cdd87bd6fb5b162c",
+               "registry.fedoraproject.org/fedora@sha256:1b8544582f974533fb8d9a5d6bf6dc2caf0d977ea54979d5e864a6ffd345c32e"
+          ],
+          "Parent": "",
+          "Comment": "",
+          "Created": "2026-10-11T06:48:06.280313729Z",
+          "Config": {
+               "Env": [
+                    "PATH=/usr/local/bin:/usr/bin",
+                    "container=oci"
+               ],
+               "Cmd": [
+                    "/bin/bash"
+               ],
+               "WorkingDir": "/",
+               "Labels": {
+                    "io.buildah.version": "1.43.4",
+                    "org.opencontainers.image.licenses": "MIT",
+                    "org.opencontainers.image.title": "fedora",
+                    "org.opencontainers.image.url": "https://fedoraproject.org/",
+                    "org.opencontainers.image.vendor": "Fedora Project",
+                    "org.opencontainers.image.version": "44"
+               }
+          },
+          "Version": "",
+          "Author": "Fedora Project Contributors <devel@lists.fedoraproject.org>",
+          "Architecture": "amd64",
+          "Os": "linux",
+          "Size": 190940464,
+          "VirtualSize": 190940464,
+          "GraphDriver": {
+               "Name": "vfs",
+               "Data": null
+          },
+          "RootFS": {
+               "Type": "layers",
+               "Layers": [
+                    "sha256:89dde8bc589d24c2941a6f6847df3bb54bd2a9b9814f086ab7cdaff444c14853"
+               ]
+          },
+          "Labels": {
+               "io.buildah.version": "1.43.4",
+               "org.opencontainers.image.licenses": "MIT",
+               "org.opencontainers.image.title": "fedora",
+               "org.opencontainers.image.url": "https://fedoraproject.org/",
+               "org.opencontainers.image.vendor": "Fedora Project",
+               "org.opencontainers.image.version": "44"
+          },
+          "Annotations": {
+               "org.opencontainers.image.base.digest": "",
+               "org.opencontainers.image.base.name": "",
+               "org.opencontainers.image.created": "2026-10-11T06:48:06.280313729Z"
+          },
+          "ManifestType": "application/vnd.oci.image.manifest.v1+json",
+          "User": "",
+          "History": [
+               {
+                    "created": "2026-10-11T06:48:08.746748145Z",
+                    "created_by": "KIWI 11.1.1",
+                    "author": "Fedora Project Contributors <devel@lists.fedoraproject.org>"
+               }
+          ],
+          "NamesHistory": [
+               "registry.fedoraproject.org/fedora:44"
+          ]
+     }
+]

@@ -1,0 +1,9 @@
+1..8
+ok 1 Debian payload includes all Explorer modules and opt-in integration
+ok 2 Debian package has no maintainer scripts home files or source lifecycle
+ok 3 Debian dependencies explicitly cover interpreter fzf flock GNU tools and default editor
+ok 4 Debian build is byte reproducible with fixed source epoch
+ok 5 Debian revision supports ordered package upgrades
+ok 6 Build rejects invalid source epoch and package revisions
+ok 7 Immutable release build ignores untracked inputs and validates checksums
+ok 8 Package files have only standard root ownership and data permissions

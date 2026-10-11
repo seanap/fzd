@@ -1,0 +1,12 @@
+script,entries,run,event,milliseconds
+/home/htpc/projects/fzd/.test-work/phase-four-a/benchmarks/root/usr/bin/fzd,10,1,startup,30.000
+/home/htpc/projects/fzd/.test-work/phase-four-a/benchmarks/root/usr/bin/fzd,10,1,local-query,10.000
+/home/htpc/projects/fzd/.test-work/phase-four-a/benchmarks/root/usr/bin/fzd,10,1,right,30.000
+/home/htpc/projects/fzd/.test-work/phase-four-a/benchmarks/root/usr/bin/fzd,10,1,left,30.000
+/home/htpc/projects/fzd/.test-work/phase-four-a/benchmarks/root/usr/bin/fzd,10,1,file-query,0.000
+/home/htpc/projects/fzd/.test-work/phase-four-a/benchmarks/root/usr/bin/fzd,10,1,preview-first,100.000
+/home/htpc/projects/fzd/.test-work/phase-four-a/benchmarks/root/usr/bin/fzd,10,1,preview-change,110.000
+/home/htpc/projects/fzd/.test-work/phase-four-a/benchmarks/root/usr/bin/fzd,10,1,global-open,10.000
+/home/htpc/projects/fzd/.test-work/phase-four-a/benchmarks/root/usr/bin/fzd,10,1,global-query,210.000
+/home/htpc/projects/fzd/.test-work/phase-four-a/benchmarks/root/usr/bin/fzd,10,1,global-close,130.000
+/home/htpc/projects/fzd/.test-work/phase-four-a/benchmarks/root/usr/bin/fzd,10,1,exit,120.000

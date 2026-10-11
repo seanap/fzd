@@ -1,0 +1,188 @@
+{
+  "results": [
+    {
+      "command": "bash /home/htpc/projects/fzd/benchmarks/local.sh /home/htpc/projects/fzd/fzd.sh 10",
+      "mean": 0.008417228566666666,
+      "stddev": 0.001308110603793247,
+      "median": 0.0090402229,
+      "user": 0.00359306,
+      "system": 0.0016843466666666667,
+      "min": 0.0069140679,
+      "max": 0.0092973949,
+      "times": [
+        0.0090402229,
+        0.0069140679,
+        0.0092973949
+      ],
+      "exit_codes": [
+        0,
+        0,
+        0
+      ],
+      "parameters": {
+        "count": "10"
+      }
+    },
+    {
+      "command": "bash /home/htpc/projects/fzd/benchmarks/local.sh /home/htpc/projects/fzd/.test-work/phase-four-a/benchmarks/root/usr/bin/fzd 10",
+      "mean": 0.0079794859,
+      "stddev": 0.0006774545476472935,
+      "median": 0.0080514219,
+      "user": 0.002992726666666666,
+      "system": 0.002176853333333333,
+      "min": 0.007268933900000001,
+      "max": 0.0086181019,
+      "times": [
+        0.0086181019,
+        0.007268933900000001,
+        0.0080514219
+      ],
+      "exit_codes": [
+        0,
+        0,
+        0
+      ],
+      "parameters": {
+        "count": "10"
+      }
+    },
+    {
+      "command": "bash /home/htpc/projects/fzd/benchmarks/local.sh /home/htpc/projects/fzd/fzd.sh 100",
+      "mean": 0.011556133566666668,
+      "stddev": 0.0005330452849714868,
+      "median": 0.0118285559,
+      "user": 0.005992726666666667,
+      "system": 0.002232853333333333,
+      "min": 0.0109419299,
+      "max": 0.0118979149,
+      "times": [
+        0.0118979149,
+        0.0109419299,
+        0.0118285559
+      ],
+      "exit_codes": [
+        0,
+        0,
+        0
+      ],
+      "parameters": {
+        "count": "100"
+      }
+    },
+    {
+      "command": "bash /home/htpc/projects/fzd/benchmarks/local.sh /home/htpc/projects/fzd/.test-work/phase-four-a/benchmarks/root/usr/bin/fzd 100",
+      "mean": 0.011771269899999999,
+      "stddev": 0.001099677699264198,
+      "median": 0.0115683369,
+      "user": 0.007910059999999998,
+      "system": 0.002857013333333333,
+      "min": 0.0107871929,
+      "max": 0.0129582799,
+      "times": [
+        0.0107871929,
+        0.0115683369,
+        0.0129582799
+      ],
+      "exit_codes": [
+        0,
+        0,
+        0
+      ],
+      "parameters": {
+        "count": "100"
+      }
+    },
+    {
+      "command": "bash /home/htpc/projects/fzd/benchmarks/local.sh /home/htpc/projects/fzd/fzd.sh 1000",
+      "mean": 0.0552755939,
+      "stddev": 0.0015636209336898099,
+      "median": 0.0546241109,
+      "user": 0.04673772666666667,
+      "system": 0.016343853333333335,
+      "min": 0.0541430529,
+      "max": 0.0570596179,
+      "times": [
+        0.0570596179,
+        0.0541430529,
+        0.0546241109
+      ],
+      "exit_codes": [
+        0,
+        0,
+        0
+      ],
+      "parameters": {
+        "count": "1000"
+      }
+    },
+    {
+      "command": "bash /home/htpc/projects/fzd/benchmarks/local.sh /home/htpc/projects/fzd/.test-work/phase-four-a/benchmarks/root/usr/bin/fzd 1000",
+      "mean": 0.05561640056666667,
+      "stddev": 0.00134546678299404,
+      "median": 0.0550160669,
+      "user": 0.04457639333333333,
+      "system": 0.018459519999999997,
+      "min": 0.0546756079,
+      "max": 0.0571575269,
+      "times": [
+        0.0546756079,
+        0.0550160669,
+        0.0571575269
+      ],
+      "exit_codes": [
+        0,
+        0,
+        0
+      ],
+      "parameters": {
+        "count": "1000"
+      }
+    },
+    {
+      "command": "bash /home/htpc/projects/fzd/benchmarks/local.sh /home/htpc/projects/fzd/fzd.sh 10000",
+      "mean": 0.6310030069000001,
+      "stddev": 0.008058007349526488,
+      "median": 0.6331474479000001,
+      "user": 0.5368117266666667,
+      "system": 0.16271351999999997,
+      "min": 0.6220897079000001,
+      "max": 0.6377718649,
+      "times": [
+        0.6377718649,
+        0.6331474479000001,
+        0.6220897079000001
+      ],
+      "exit_codes": [
+        0,
+        0,
+        0
+      ],
+      "parameters": {
+        "count": "10000"
+      }
+    },
+    {
+      "command": "bash /home/htpc/projects/fzd/benchmarks/local.sh /home/htpc/projects/fzd/.test-work/phase-four-a/benchmarks/root/usr/bin/fzd 10000",
+      "mean": 0.5934435562333334,
+      "stddev": 0.01875185531179851,
+      "median": 0.5975117319000001,
+      "user": 0.52102506,
+      "system": 0.17735952,
+      "min": 0.5729915549000001,
+      "max": 0.6098273819000001,
+      "times": [
+        0.6098273819000001,
+        0.5729915549000001,
+        0.5975117319000001
+      ],
+      "exit_codes": [
+        0,
+        0,
+        0
+      ],
+      "parameters": {
+        "count": "10000"
+      }
+    }
+  ]
+}

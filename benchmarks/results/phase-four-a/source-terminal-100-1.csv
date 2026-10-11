@@ -1,0 +1,12 @@
+script,entries,run,event,milliseconds
+/home/htpc/projects/fzd/fzd.sh,100,1,startup,70.000
+/home/htpc/projects/fzd/fzd.sh,100,1,local-query,0.000
+/home/htpc/projects/fzd/fzd.sh,100,1,right,40.000
+/home/htpc/projects/fzd/fzd.sh,100,1,left,60.000
+/home/htpc/projects/fzd/fzd.sh,100,1,file-query,0.000
+/home/htpc/projects/fzd/fzd.sh,100,1,preview-first,100.000
+/home/htpc/projects/fzd/fzd.sh,100,1,preview-change,120.000
+/home/htpc/projects/fzd/fzd.sh,100,1,global-open,20.000
+/home/htpc/projects/fzd/fzd.sh,100,1,global-query,220.000
+/home/htpc/projects/fzd/fzd.sh,100,1,global-close,160.000
+/home/htpc/projects/fzd/fzd.sh,100,1,exit,120.000
