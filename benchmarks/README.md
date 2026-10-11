@@ -1,5 +1,17 @@
 # Performance measurements
 
+For a Phase 4A source-versus-Debian comparison, with all tests/containers stopped:
+
+```bash
+bash packaging/benchmark.sh .test-work/my-candidate/fzd_0.1.0~rc.1-1_all.deb \
+  .test-work/package-benchmarks 3
+```
+
+This reuses the existing component, workload and real-PTY harnesses at 10, 100,
+1,000 and 10,000 entries. It verifies runtime/module/integration identity first,
+then alternates source/package order for terminal trials. The output directory
+must be fresh. PTY observations retain the existing 10 ms kernel-clock resolution.
+
 Run on an otherwise idle Linux host from the checkout. Fixtures, sockets and
 temporary results stay under `.test-work/`. No installer or system index runs.
 Use Bash, GNU utilities and hyperfine; PTY measurements also need tmux/fzf.

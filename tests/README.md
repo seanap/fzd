@@ -1,5 +1,22 @@
 # Regression checks
 
+Phase 4A adds eight packaging checks to the original 201 tests (209 total).
+Debian builds are checked for complete payloads, runtime identity, metadata,
+ownership, absence of maintainer hooks/home edits, revision ordering, immutable
+source selection, checksums and byte reproducibility.
+
+To run runtime and terminal checks against an installed or extracted payload:
+
+```bash
+FZD_TEST_SCRIPT=/usr/bin/fzd bash tests/run.sh
+```
+
+Installer fixtures still use private prefixes; they never install into /usr.
+Actual distribution lifecycle tests are separate from the four simulated
+profiles: see [Packaging](../docs/packaging.md). History PTY tests use a wider
+pane to observe the full directory prompt and avoid confusing preview text with
+a completed navigation frame. Small-terminal coverage remains at 60 by 16.
+
 From the Linux checkout:
 
 ```bash

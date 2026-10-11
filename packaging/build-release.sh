@@ -24,6 +24,7 @@ source_root=$work/fzd-$version
 TMPDIR=$work bash "$source_root/packaging/build-deb.sh" "$source_root" "$output"
 digest=$(sha256sum <"$output/$archive")
 sed -e "s/@VERSION@/$version/g" -e "s/@ARCH_VERSION@/${version/-/}/g" \
+  -e "s/@COMMIT@/$commit/g" -e "s/@EPOCH@/$SOURCE_DATE_EPOCH/g" \
   -e "s/@SHA256@/${digest%% *}/g" "$source_root/packaging/arch/PKGBUILD.in" >"$output/PKGBUILD"
 printf 'version=%s\ncommit=%s\nsource_date_epoch=%s\n' "$version" "$commit" "$SOURCE_DATE_EPOCH" >"$output/SOURCE"
 (cd "$output" && sha256sum "$archive" ./*.deb PKGBUILD SOURCE >SHA256SUMS)

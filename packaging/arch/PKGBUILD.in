@@ -1,4 +1,6 @@
 # Generated from an immutable FZD commit. Build with makepkg, never as root.
+# Source commit: @COMMIT@
+# Reproducible builds: SOURCE_DATE_EPOCH=@EPOCH@ makepkg
 # Before publication, place the matching source archive beside this PKGBUILD.
 pkgname=fzd
 pkgver=@ARCH_VERSION@

@@ -72,6 +72,16 @@ setup_file() {
   run bash "$PACKAGE_REPO/packaging/build-release.sh" HEAD "$PACKAGE_FIXTURE/release"
   [ "$status" -eq 0 ]
   (cd "$PACKAGE_FIXTURE/release" && sha256sum -c SHA256SUMS)
+  local commit version
+  commit=$(git -C "$PACKAGE_REPO" rev-parse HEAD)
+  version=$(git -C "$PACKAGE_REPO" show HEAD:VERSION)
+  grep -Fx "commit=$commit" "$PACKAGE_FIXTURE/release/SOURCE"
+  grep -Fx "# Source commit: $commit" "$PACKAGE_FIXTURE/release/PKGBUILD"
+  diff <(git -C "$PACKAGE_REPO" show HEAD:fzd.sh) \
+    <(tar -xOzf "$PACKAGE_FIXTURE/release/fzd-$version.tar.gz" "fzd-$version/fzd.sh")
+  run tar -tzf "$PACKAGE_FIXTURE/release/fzd-$version.tar.gz"
+  [ "$status" -eq 0 ]
+  [[ "$output" != *'/.test-work/'* ]]
   run bash "$PACKAGE_REPO/packaging/build-release.sh" HEAD "$PACKAGE_FIXTURE/release"
   [ "$status" -eq 2 ]
   [[ "$output" == *'Output already exists'* ]]

@@ -92,6 +92,15 @@ On Arch, place generated PKGBUILD and matching archive together and run
 approved GitHub release. Until publication, the local archive satisfies makepkg's
 cache with the same mandatory checksum. No SKIP checksum or moving Git branch
 is used. Generate AUR metadata with `makepkg --printsrcinfo > .SRCINFO`.
+For reproducible Arch builds, export the source epoch from the generated SOURCE
+record before invoking makepkg (the PKGBUILD header also gives the exact value):
+
+```bash
+export SOURCE_DATE_EPOCH=$(sed -n 's/^source_date_epoch=//p' SOURCE)
+makepkg --force
+```
+
+The Arch validator builds twice with this epoch and compares the package bytes.
 Real Arch validation retains .SRCINFO and its package. The recipe is ready for
 review/build; public source availability and AUR submission await approval.
 

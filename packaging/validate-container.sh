@@ -12,6 +12,9 @@ mkdir -p /work /results
 cat /etc/os-release
 cat /artifacts/SOURCE
 (cd /artifacts && sha256sum -c SHA256SUMS)
+export SOURCE_DATE_EPOCH
+SOURCE_DATE_EPOCH=$(sed -n 's/^source_date_epoch=//p' /artifacts/SOURCE)
+[[ $SOURCE_DATE_EPOCH =~ ^[0-9]+$ ]] || exit 2
 archive=(/artifacts/fzd-*.tar.gz)
 tar -xzf "${archive[0]}" -C /work
 source_dirs=(/work/fzd-*)
@@ -50,6 +53,11 @@ arch)
   pacman -Q bash fzf coreutils findutils util-linux micro fzd
   pacman -Qkk fzd
   cp /work/arch/fzd-*-any.pkg.tar.zst /results/
+  (cd /work/arch && runuser -u builder -- makepkg --force --noconfirm)
+  package_files=(/work/arch/fzd-*-any.pkg.tar.zst)
+  cmp "${package_files[0]}" "/results/${package_files[0]##*/}"
+  (cd /results && sha256sum ./*.pkg.tar.zst >package.sha256)
+  printf 'PASS: Arch package byte reproducibility with pinned source epoch\n'
   ;;
 fedora)
   dnf install -y bash fzf coreutils findutils util-linux-core grep sed gawk micro
@@ -68,8 +76,6 @@ fzf --version
 # Upgrade preserves user files; the same source is rebuilt at package revision 2.
 case $target in
 ubuntu | debian)
-  export SOURCE_DATE_EPOCH
-  SOURCE_DATE_EPOCH=$(sed -n 's/^source_date_epoch=//p' /artifacts/SOURCE)
   FZD_DEB_REVISION=2 bash "$source_root/packaging/build-deb.sh" "$source_root" /work/upgrade
   apt-get install --no-install-recommends -y /work/upgrade/*.deb
   dpkg-query -W fzd

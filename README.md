@@ -5,8 +5,6 @@ filter as you type, preview files and directories, and press **Ctrl+F** to searc
 globally. Copy, move, rename, create folders, and use Linux Trash from the
 keyboard. Selecting a directory returns to your shell in that directory.
 
-![FZD demo](share/demo/fzd_demo.gif)
-
 ## Install
 
 **Release candidate:** `.deb` and Arch build artifacts are generated locally or
