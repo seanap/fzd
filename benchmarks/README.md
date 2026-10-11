@@ -104,3 +104,21 @@ reproduction. `before` now materializes its chosen revision as `baseline.sh`.
 Run benchmarks sequentially on an idle host, after tests have completed. Use
 `terminal.sh` with that baseline and the installed executable to verify the
 actual package/source-install payload without changing timing methodology.
+
+For Explorer comparisons, the Phase Three runtime plus the reviewed color and
+display fixes is pinned at `e73b22d`. Keep benchmarks separate from test execution:
+
+```bash
+FZD_BENCH_BASELINE=e73b22d FZD_BENCH_OUTPUT_DIR="$PWD/.test-work/explorer" bash benchmarks/phase-two.sh before 3
+FZD_BENCH_OUTPUT_DIR="$PWD/.test-work/explorer" bash benchmarks/phase-two.sh after 3
+for size in 10 100 1000 10000; do
+  bash benchmarks/terminal.sh "$PWD/.test-work/explorer/baseline.sh" "$size" 3 > ".test-work/explorer/before-terminal-$size.csv"
+  bash benchmarks/terminal.sh "$PWD/fzd.sh" "$size" 3 > ".test-work/explorer/after-terminal-$size.csv"
+done
+```
+
+Recents are queued in memory during navigation; state writes occur at exit or
+feature use. The existing codec process-budget tests continue to protect the
+candidate path. Explorer's history test also asserts that visits create no
+persistent state directory before a flush. See
+[the Explorer report](../docs/phase-three-five.md) for measured costs and limits.

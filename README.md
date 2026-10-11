@@ -1,8 +1,9 @@
 # FZD
 
-A small Bash file navigator built around fzf. Browse with the arrow keys, fuzzy
+A small Bash file explorer built around fzf. Browse with the arrow keys, fuzzy
 filter as you type, preview files and directories, and press **Ctrl+F** to search
-globally. Selecting a directory returns to your shell in that directory.
+globally. Copy, move, rename, create folders, and use Linux Trash from the
+keyboard. Selecting a directory returns to your shell in that directory.
 
 ![FZD demo](share/demo/fzd_demo.gif)
 
@@ -47,14 +48,63 @@ It does not authorize changing other applications' settings.
 | Esc | Cancel; keep the shell's current directory |
 | Ctrl+F | Global search; Esc returns to local navigation |
 | Type | Fuzzy filter the current directory |
+| Alt+Left / Alt+Right | Back / Forward through this session's directory history |
+| Alt+H | Recent directories; Enter visits, Esc returns |
+| Ctrl+C / Alt+C | Copy the highlighted item into FZD's internal clipboard |
+| Ctrl+X / Alt+X | Cut the highlighted item; source stays in place until Paste |
+| Ctrl+V / Alt+V | Paste into the directory being browsed |
+| Ctrl+R / F2 | Rename the highlighted item |
+| Ctrl+N / F7 | Create a directory |
+| F8 | Move to Linux Trash after confirmation; requires a Trash tool |
+| F1 | Contextual help; F1 or Esc closes it |
+| Ctrl+G | Exit FZD; Ctrl+C now copies while browsing |
+
+Global search also supports Copy/Cut on the highlighted result, then returns to
+the directory view. F1 explains the controls available in each view. Delete
+continues to edit the fuzzy query.
+
+Some terminal emulators intercept Ctrl+C/V or Alt+arrow keys. Use the Alt+C/X/V
+fallbacks or adjust the emulator's key assignments to deliver the shortcuts to
+FZD. The clipboard belongs to FZD and is separate from the desktop clipboard.
+
+## File operations and history
+
+Copy or Cut one highlighted item, navigate to a destination, then Paste. Copy
+preserves directory trees, permissions where supported, and symbolic links.
+Cut moves only after Paste succeeds, including across filesystems. Existing
+destinations cancel Paste or Rename; the clipboard remains available for retry.
+Choose another directory or rename the source before retrying. Copy remains
+available for repeated pastes; a completed Cut clears the clipboard.
+
+Rename starts with the current name. Enter confirms; Esc cancels. Names with
+control characters or invalid UTF-8 bytes use visible escapes in the prompt:
+`\n` for newline, `\t` for tab, `\r` for carriage return, `\e` for Escape,
+`\xHH` for a byte, and `\\` for a literal backslash. Existing names are
+prepopulated automatically; spaces and ordinary Unicode can be typed directly.
+The newly created or renamed item remains highlighted.
+
+F8 offers **Cancel** first. Choose **Move to Trash** to confirm. Restore items
+through your desktop's Trash or the installed Trash tool. Install `gio` or
+`trash-cli` to enable this feature; on Ubuntu/Debian, `gio` is provided by
+`libglib2.0-bin`. FZD reports unavailable or unsupported Trash operations and
+never substitutes permanent deletion. Large copies and cross-filesystem moves
+run in the foreground; Ctrl+C during an active operation interrupts it and exits
+FZD.
+
+Back/Forward keeps up to 100 visits in memory and restores highlighted items
+where possible. A new visit after Back replaces the forward branch. Up to 25
+unique recent directories and the clipboard persist under
+`${XDG_STATE_HOME:-$HOME/.local/state}/fzd/explorer/` (or your configured
+`FZD_STATE_DIR`). Missing recent directories are skipped. These features use no
+filesystem index or background process. Uninstallation preserves this state.
 
 ## Prerequisites and dependency choices
 
 | Level | Tools |
 | --- | --- |
-| Required | Bash 4.4+, fzf >= 0.44.0 with the tested bindings, GNU coreutils, findutils, standard Linux text utilities, and an editor |
+| Required | Bash 4.4+, fzf >= 0.44.0 with the tested bindings, GNU coreutils, findutils, flock (util-linux), standard Linux text utilities, and an editor |
 | Recommended | fd/fdfind, bat/batcat, file, tree |
-| Optional | plocate/locate with an existing index, eza and a compatible icon font, hexdump, tput |
+| Optional | gio or trash-put for Trash, plocate/locate with an existing index, eza and a compatible icon font, hexdump, tput |
 | Optional download | curl, CA certificates, tar, gzip |
 
 `--deps none` (the default) checks prerequisites without package transactions.
@@ -119,7 +169,9 @@ current configuration does not exist, leaving the original intact.
 
 The [example configuration](fzd.conf.example) documents exclusions, result
 limits, preview depth/time/line limits, colors, and an optional locate database.
-FZD retains its existing colors and inherits fzf options. To request different
+FZD retains its existing colors and inherits fzf appearance/search options.
+Its controls, single-item operation mode, and output protocol take precedence
+over fzf's `--expect` and multiselect settings. To request different
 label colors, set `FZD_COLOR_DIR` / `FZD_COLOR_FILE` in your FZD configuration
 to six hexadecimal digits, optionally prefixed with `#`. Invalid overrides are
 ignored. Eza previews inherit `LS_COLORS`, replacing only explicitly requested
@@ -222,12 +274,20 @@ Open a new terminal afterward to clear previously loaded functions.
 - **Global search slow / empty:** check roots, exclusions and permissions. Use
   `FZD_GLOBAL_BACKEND=live` to bypass a stale locate database. Database maintenance
   belongs to your distribution; FZD never invokes sudo updatedb.
+- **Explorer state busy:** another FZD instance may be completing a file
+  operation. Retry when it finishes. Invalid state is reported without replacing
+  it; close FZD and move the affected state file aside before retrying.
+- **Trash failed:** confirm that `gio` or `trash-put` is installed and that the
+  filesystem supports its Trash implementation. Mount permissions and removable
+  or network filesystems can prevent trashing; FZD reports the backend error.
 
 ## Development and packaging
 
 Run `bash tests/run.sh`; see [test instructions](tests/README.md) and
 [benchmarks](benchmarks/README.md). Installer tests use disposable homes and
 controlled package-manager commands.
+See the [Explorer engineering report](docs/phase-three-five.md) for architecture,
+safety behavior, validation and performance comparisons.
 
 Distribution packages stage standard files with
 `bash install.sh --stage "$PWD/package-root" --prefix /usr`. They must not run

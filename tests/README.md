@@ -25,6 +25,7 @@ plocate, and assert that successful locate checks did not silently fall back.
 | Suite | Coverage |
 | --- | --- |
 | configuration.bats | Explicit/XDG configuration, environment expansion, root arrays, validation |
+| display.bats | Every non-NUL ASCII control byte, DEL, Unicode and exact local/global identities |
 | encoding.bats | Byte-exact batch encoding, process budgets, failures, stream-first output, descriptor/child cleanup |
 | filesystem.bats | NUL-safe local listing, byte-exact paths, previews, permissions, root navigation |
 | global-search.bats | Injection, scope, excludes, labels, limits, fallback, symlinks, unusual names |
@@ -37,11 +38,38 @@ plocate, and assert that successful locate checks did not silently fall back.
 | installer.bats | Fresh install/update/verify/uninstall, preservation, XDG/ZDOTDIR, staging, download failures, TERM/KILL recovery, installed-wrapper PTYs |
 | shell-integration.bats | Shared Bash/zsh integration, all non-NUL filename bytes, trailing newlines, cancellations, aliases and editor/color preservation |
 | terminal.bats | Real fzf controls/backends, editor arguments, resize, signals, delayed actions and screen restoration |
+| explorer-state.bats | Bounded browser history, persistent MRU, concurrency, atomic failures, invalid records, final Enter recording |
+| explorer-operations.bats | Persistent clipboard, recursive copies, links, permissions, destination races, cross-filesystem moves and interrupted-copy cleanup |
+| explorer-names.bats | All-byte prompt codec, rename/create, conflicts, permissions, reference updates and competing rename destinations |
+| explorer-trash.bats | Missing/failed backends, exact arguments, links, reference pruning, confirmation changes and real isolated gio Trash |
+| explorer-terminal.bats | Explorer keybindings, filtered-view restoration, global help/copy, inherited options, confirmation and small terminals |
 
 The terminal harness creates its own tmux server and socket, observes rendered
 text or output files, and uses bounded polling. It never connects to existing
 tmux sessions. A Codex sandbox can deny Unix sockets; run those checks with the
 appropriate tool approval. This restriction is separate from WSL compatibility.
+
+Explorer tests modify only disposable fixtures. The cross-filesystem test mounts
+a private tmpfs through bubblewrap. The real gio test sets a disposable HOME and
+XDG_DATA_HOME, disables remote VFS, and mounts the real host read-only; it verifies
+recoverable Trash files and metadata without using your personal Trash. These
+tests work in this WSL2 environment with user namespaces enabled. Native desktop
+emulator interception, removable/network filesystems and actual distribution
+userspaces remain separate validation work.
+
+Use the prepared official binary to exercise the same suite with fzf 0.65.2:
+
+```bash
+PATH="$PWD/.test-work/phase-three/fzf-0.65-bin:$PATH" bash tests/run.sh
+```
+
+The directory above is the development fixture used for this phase; another
+verified fzf installation can be selected through PATH instead. Both versions
+receive real Ctrl+C/X/V, Alt+C/X/V, Alt+arrow, F1/F2/F7/F8, Ctrl+R/N and Delete
+key events. The older Ctrl+C-aborts test now verifies safe refusal on the
+synthetic parent row followed by Esc cleanup, matching the approved Copy binding.
+The completed Explorer suite has 201 tests, all passing without skips on both
+versions; [the report](../docs/phase-three-five.md) links the full TAP results.
 
 For a subset, pass Bats paths or options to the runner:
 
@@ -103,12 +131,12 @@ Static checks used for this phase:
 
 ```bash
 bash -n fzd.sh
-shellcheck fzd.sh tests/run.sh tests/helpers/common.bash \
+shellcheck fzd.sh lib/*.bash tests/run.sh tests/helpers/*.bash \
   install.sh installer/*.bash shell/integration.sh \
   tests/helpers/installer.bash tests/helpers/installer-mv-stub \
   tests/helpers/fzf-stub tests/helpers/backend-stub tests/helpers/pty-session \
   benchmarks/*.sh dev/*.sh
-shfmt -d -i 2 tests/run.sh tests/helpers/common.bash \
+shfmt -d -i 2 lib/*.bash tests/run.sh tests/helpers/*.bash \
   install.sh installer/*.bash shell/integration.sh \
   tests/helpers/installer.bash tests/helpers/installer-mv-stub \
   tests/helpers/fzf-stub tests/helpers/backend-stub tests/helpers/pty-session \
@@ -143,9 +171,10 @@ workload does not launch the TUI. No installation, theme generation or system
 indexing is timed. The simpler `benchmarks/run.sh REVISION RUNS` remains available,
 but arbitrary historical revisions include per-run extraction overhead.
 
-Fresh distribution installation, system updatedb services, package lifecycle,
-native terminal emulators and wider fzf-version coverage require the next
-disposable/native Linux validation phase. They were not tested here.
+Native distribution package transactions, system updatedb services, graphical
+terminal key interception and wider architecture coverage remain separate
+validation gates. Source installation lifecycle and both fzf 0.44.1 and 0.65.2
+are exercised by the current regression suite.
 
 Phase Two adds reproducible component and real-terminal matrices at 10, 100,
 1,000 and 10,000 entries. See [../benchmarks/README.md](../benchmarks/README.md).

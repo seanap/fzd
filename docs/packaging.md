@@ -7,7 +7,8 @@ The interactive source installer is never a distribution post-install script.
 
 | Component | Source installation | Distribution package |
 | --- | --- | --- |
-| Application | `PREFIX/bin/fzd` (unchanged Phase Two script) | `/usr/bin/fzd`, or the package prefix's `bin/fzd` |
+| Application | `PREFIX/bin/fzd` | `/usr/bin/fzd`, or the package prefix's `bin/fzd` |
+| Explorer helpers | `PREFIX/share/fzd/lib/{state,operations,ui}.bash` | Same relative paths; loaded on demand |
 | Shell functions | `PREFIX/share/fzd/integration.sh` | Same relative path; opt-in sourcing |
 | Configuration example | `PREFIX/share/fzd/fzd.conf.example` | Read-only example under the package prefix |
 | User configuration | `$XDG_CONFIG_HOME/fzd/fzd.conf` or `$FZD_CONF_FILE` | User creates it; runtime defaults work without a file |
@@ -25,8 +26,8 @@ application; package integrations normally resolve `fzd` through PATH.
 The source installer offers dependencies, files, configuration and rc setup as
 separate operations/options. `--stage` bypasses all dependency transactions,
 configuration initialization, shell rc changes, verification probes, downloads
-and source-install metadata. It copies exactly the application, integration,
-example and MIT license, using standard executable/data permissions.
+and source-install metadata. It copies the application, Explorer helpers,
+integration, example and MIT license, using standard executable/data permissions.
 
 ```bash
 bash install.sh --stage "$PWD/package-root" --prefix /usr
@@ -71,13 +72,19 @@ ownership mechanisms.
 
 ## Dependency policy
 
-Require Bash >=4.4, compatible fzf >=0.44.0, GNU coreutils/findutils and the standard
+Require Bash >=4.4, compatible fzf >=0.44.0, GNU coreutils/findutils, flock
+(util-linux; util-linux-core on Fedora), and the standard
 text utilities used by the script. Test fzf behavior as well as its version.
 Ubuntu's 0.44.1 and official 0.65.2 have been exercised locally. Recommend fd,
 bat, file, tree and a usable editor; select the distribution's editor dependency
 policy explicitly. Source installation checks the configured single executable
 and otherwise ensures micro is available. Locate, eza, icons, hexdump and tput
-remain optional. Do not start locate services or download a second fzf from a
+remain optional. Recommend an optional Trash provider: `gio` (Ubuntu/Debian
+`libglib2.0-bin`, [Arch glib2](https://archlinux.org/packages/core/x86_64/glib2/files/)
+and [Fedora glib2](https://packages.fedoraproject.org/pkgs/glib2/glib2/fedora-44.html))
+or `trash-put` (`trash-cli`). Persistent
+Explorer records are user-owned XDG state and remain after package removal.
+Do not start locate services or download a second fzf from a
 package-maintainer script.
 
 | Target | Next-phase recipe/build work |
