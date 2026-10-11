@@ -1,0 +1,4 @@
+/usr/bin/fzf old=0
+/usr/bin/fzf new=0
+/home/htpc/projects/fzd/.test-work/phase-three/fzf-0.65-bin/fzf old=0
+/home/htpc/projects/fzd/.test-work/phase-three/fzf-0.65-bin/fzf new=0

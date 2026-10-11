@@ -1,0 +1,12 @@
+script,entries,run,event,milliseconds
+/home/htpc/projects/fzd/.test-work/explorer/baseline.sh,1000,1,startup,90.000
+/home/htpc/projects/fzd/.test-work/explorer/baseline.sh,1000,1,local-query,10.000
+/home/htpc/projects/fzd/.test-work/explorer/baseline.sh,1000,1,right,110.000
+/home/htpc/projects/fzd/.test-work/explorer/baseline.sh,1000,1,left,100.000
+/home/htpc/projects/fzd/.test-work/explorer/baseline.sh,1000,1,file-query,20.000
+/home/htpc/projects/fzd/.test-work/explorer/baseline.sh,1000,1,preview-first,110.000
+/home/htpc/projects/fzd/.test-work/explorer/baseline.sh,1000,1,preview-change,120.000
+/home/htpc/projects/fzd/.test-work/explorer/baseline.sh,1000,1,global-open,10.000
+/home/htpc/projects/fzd/.test-work/explorer/baseline.sh,1000,1,global-query,210.000
+/home/htpc/projects/fzd/.test-work/explorer/baseline.sh,1000,1,global-close,200.000
+/home/htpc/projects/fzd/.test-work/explorer/baseline.sh,1000,1,exit,110.000

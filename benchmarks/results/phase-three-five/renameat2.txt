@@ -1,0 +1,2 @@
+renameat2(AT_FDCWD, ".test-work/explorer/rename-probe/source", AT_FDCWD, ".test-work/explorer/rename-probe/destination", RENAME_NOREPLACE) = 0
++++ exited with 0 +++

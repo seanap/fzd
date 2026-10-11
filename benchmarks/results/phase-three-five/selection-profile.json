@@ -1,0 +1,58 @@
+{
+  "results": [
+    {
+      "command": "bash benchmarks/candidates.sh '/home/htpc/projects/fzd/fzd.sh' 10000",
+      "mean": 0.39291397922000004,
+      "stddev": 0.019768686166781072,
+      "median": 0.3970662112200001,
+      "user": 0.37687934,
+      "system": 0.07757386,
+      "min": 0.36266715722000004,
+      "max": 0.41179503422,
+      "times": [
+        0.3970662112200001,
+        0.36266715722000004,
+        0.41179503422,
+        0.40766930622,
+        0.38537218722000005
+      ],
+      "exit_codes": [
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "parameters": {
+        "script": "/home/htpc/projects/fzd/fzd.sh"
+      }
+    },
+    {
+      "command": "bash benchmarks/candidates.sh '/home/htpc/projects/fzd/.test-work/explorer/no-file-check.sh' 10000",
+      "mean": 0.37227896842,
+      "stddev": 0.01887553317322395,
+      "median": 0.37650349022000007,
+      "user": 0.35307553999999997,
+      "system": 0.08855466,
+      "min": 0.34933770522000007,
+      "max": 0.39320826822000005,
+      "times": [
+        0.37650349022000007,
+        0.35633167222000006,
+        0.39320826822000005,
+        0.38601370622000003,
+        0.34933770522000007
+      ],
+      "exit_codes": [
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "parameters": {
+        "script": "/home/htpc/projects/fzd/.test-work/explorer/no-file-check.sh"
+      }
+    }
+  ]
+}

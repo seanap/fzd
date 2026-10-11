@@ -1,0 +1,96 @@
+{
+  "results": [
+    {
+      "command": "bash benchmarks/candidates.sh '/home/htpc/projects/fzd/.test-work/explorer/baseline.sh' 10",
+      "mean": 0.005491362180000001,
+      "stddev": 0.0008697164150129628,
+      "median": 0.00517797618,
+      "user": 0.0034423533333333336,
+      "system": 0.0013467199999999998,
+      "min": 0.004821769180000001,
+      "max": 0.006474341180000001,
+      "times": [
+        0.00517797618,
+        0.006474341180000001,
+        0.004821769180000001
+      ],
+      "exit_codes": [
+        0,
+        0,
+        0
+      ],
+      "parameters": {
+        "count": "10"
+      }
+    },
+    {
+      "command": "bash benchmarks/candidates.sh '/home/htpc/projects/fzd/.test-work/explorer/baseline.sh' 100",
+      "mean": 0.007964177513333335,
+      "stddev": 0.0005329088814209551,
+      "median": 0.00782730618,
+      "user": 0.006550353333333332,
+      "system": 0.0009388133333333333,
+      "min": 0.007513054180000001,
+      "max": 0.008552172180000001,
+      "times": [
+        0.00782730618,
+        0.008552172180000001,
+        0.007513054180000001
+      ],
+      "exit_codes": [
+        0,
+        0,
+        0
+      ],
+      "parameters": {
+        "count": "100"
+      }
+    },
+    {
+      "command": "bash benchmarks/candidates.sh '/home/htpc/projects/fzd/.test-work/explorer/baseline.sh' 1000",
+      "mean": 0.03916593751333333,
+      "stddev": 0.0006801285200183351,
+      "median": 0.03939717218,
+      "user": 0.040436353333333334,
+      "system": 0.0013451466666666667,
+      "min": 0.038400341180000006,
+      "max": 0.03970029918,
+      "times": [
+        0.038400341180000006,
+        0.03970029918,
+        0.03939717218
+      ],
+      "exit_codes": [
+        0,
+        0,
+        0
+      ],
+      "parameters": {
+        "count": "1000"
+      }
+    },
+    {
+      "command": "bash benchmarks/candidates.sh '/home/htpc/projects/fzd/.test-work/explorer/baseline.sh' 10000",
+      "mean": 0.36175732218000006,
+      "stddev": 0.009339962388807138,
+      "median": 0.36440530018,
+      "user": 0.4000226866666667,
+      "system": 0.060752053333333327,
+      "min": 0.35137927018000004,
+      "max": 0.36948739618000004,
+      "times": [
+        0.35137927018000004,
+        0.36948739618000004,
+        0.36440530018
+      ],
+      "exit_codes": [
+        0,
+        0,
+        0
+      ],
+      "parameters": {
+        "count": "10000"
+      }
+    }
+  ]
+}

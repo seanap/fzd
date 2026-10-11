@@ -1,0 +1,165 @@
+{
+  "results": [
+    {
+      "command": "FZD_BENCH_SCRIPT='/home/htpc/projects/fzd/fzd.sh' bash benchmarks/workload.sh startup",
+      "mean": 0.006991804413333334,
+      "stddev": 0.00027537698867613,
+      "median": 0.0068576930799999995,
+      "user": 0.003674126666666666,
+      "system": 0.0016640933333333333,
+      "min": 0.006809174080000001,
+      "max": 0.0073085460800000005,
+      "times": [
+        0.0068576930799999995,
+        0.0073085460800000005,
+        0.006809174080000001
+      ],
+      "exit_codes": [
+        0,
+        0,
+        0
+      ],
+      "parameters": {
+        "workload": "startup"
+      }
+    },
+    {
+      "command": "FZD_BENCH_SCRIPT='/home/htpc/projects/fzd/fzd.sh' bash benchmarks/workload.sh index",
+      "mean": 0.17382927074666668,
+      "stddev": 0.0006072737591814103,
+      "median": 0.17415547608,
+      "user": 0.13321479333333333,
+      "system": 0.028234806666666667,
+      "min": 0.17312860508000003,
+      "max": 0.17420373108,
+      "times": [
+        0.17420373108,
+        0.17415547608,
+        0.17312860508000003
+      ],
+      "exit_codes": [
+        0,
+        0,
+        0
+      ],
+      "parameters": {
+        "workload": "index"
+      }
+    },
+    {
+      "command": "FZD_BENCH_SCRIPT='/home/htpc/projects/fzd/fzd.sh' bash benchmarks/workload.sh query",
+      "mean": 0.03962320574666667,
+      "stddev": 0.002436200227808119,
+      "median": 0.039911572080000006,
+      "user": 0.010758793333333334,
+      "system": 0.010501139999999999,
+      "min": 0.037055656080000006,
+      "max": 0.041902389080000005,
+      "times": [
+        0.041902389080000005,
+        0.039911572080000006,
+        0.037055656080000006
+      ],
+      "exit_codes": [
+        0,
+        0,
+        0
+      ],
+      "parameters": {
+        "workload": "query"
+      }
+    },
+    {
+      "command": "FZD_BENCH_SCRIPT='/home/htpc/projects/fzd/fzd.sh' bash benchmarks/workload.sh query-locate",
+      "mean": 0.01835282608,
+      "stddev": 0.0007932296375804423,
+      "median": 0.01867876208,
+      "user": 0.01193446,
+      "system": 0.0026368066666666665,
+      "min": 0.01744855008,
+      "max": 0.01893116608,
+      "times": [
+        0.01893116608,
+        0.01867876208,
+        0.01744855008
+      ],
+      "exit_codes": [
+        0,
+        0,
+        0
+      ],
+      "parameters": {
+        "workload": "query-locate"
+      }
+    },
+    {
+      "command": "FZD_BENCH_SCRIPT='/home/htpc/projects/fzd/fzd.sh' bash benchmarks/workload.sh preview",
+      "mean": 0.06420115941333335,
+      "stddev": 0.0035489511012749032,
+      "median": 0.06614888908000001,
+      "user": 0.021478126666666663,
+      "system": 0.011711473333333333,
+      "min": 0.06010482508000001,
+      "max": 0.06634976408000001,
+      "times": [
+        0.06614888908000001,
+        0.06634976408000001,
+        0.06010482508000001
+      ],
+      "exit_codes": [
+        0,
+        0,
+        0
+      ],
+      "parameters": {
+        "workload": "preview"
+      }
+    },
+    {
+      "command": "FZD_BENCH_SCRIPT='/home/htpc/projects/fzd/fzd.sh' bash benchmarks/workload.sh preview-dir",
+      "mean": 0.033660866413333344,
+      "stddev": 0.002400839052098316,
+      "median": 0.032890019080000006,
+      "user": 0.00691346,
+      "system": 0.006040139999999999,
+      "min": 0.031740130080000005,
+      "max": 0.03635245008000001,
+      "times": [
+        0.031740130080000005,
+        0.032890019080000006,
+        0.03635245008000001
+      ],
+      "exit_codes": [
+        0,
+        0,
+        0
+      ],
+      "parameters": {
+        "workload": "preview-dir"
+      }
+    },
+    {
+      "command": "FZD_BENCH_SCRIPT='/home/htpc/projects/fzd/fzd.sh' bash benchmarks/workload.sh preview-binary",
+      "mean": 0.01425502008,
+      "stddev": 0.0004156131308476677,
+      "median": 0.014474757080000001,
+      "user": 0.0043047933333333335,
+      "system": 0.004411473333333333,
+      "min": 0.01377566408,
+      "max": 0.01451463908,
+      "times": [
+        0.01451463908,
+        0.01377566408,
+        0.014474757080000001
+      ],
+      "exit_codes": [
+        0,
+        0,
+        0
+      ],
+      "parameters": {
+        "workload": "preview-binary"
+      }
+    }
+  ]
+}
