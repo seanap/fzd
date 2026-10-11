@@ -18,3 +18,16 @@ fi
 hyperfine --warmup 1 --runs "$runs" --export-json "$work/$mode-candidates.json" --export-csv "$work/$mode-candidates.csv" \
   --parameter-list count 10,100,1000,10000 \
   "bash benchmarks/candidates.sh '$script' {count}"
+for count in 10 100 1000 10000; do
+  bash benchmarks/local.sh "$script" "$count" prepare
+done
+for component in full enumerate sort; do
+  hyperfine --warmup 1 --runs "$runs" --export-json "$work/$mode-local-$component.json" --export-csv "$work/$mode-local-$component.csv" \
+    --parameter-list count 10,100,1000,10000 \
+    "bash benchmarks/local.sh '$script' {count} '$component'"
+done
+bash benchmarks/workload.sh prepare
+bash benchmarks/workload.sh prepare-locate
+hyperfine --warmup 1 --runs "$runs" --export-json "$work/$mode-workload.json" --export-csv "$work/$mode-workload.csv" \
+  --parameter-list workload startup,index,query,query-locate,preview,preview-dir,preview-binary \
+  "FZD_BENCH_SCRIPT='$script' bash benchmarks/workload.sh {workload}"

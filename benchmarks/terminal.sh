@@ -29,8 +29,13 @@ trap 'exit 143' TERM
 now() { REPLY=${EPOCHREALTIME/./}; }
 wait_screen() {
   local deadline=$((SECONDS + 90))
+  gap_start=''
   while ((SECONDS < deadline)); do
     screen=$(tmux -S "$socket" capture-pane -p -t fzd:0.0)
+    if [[ "$screen" == *FZD_BENCH_PRIMARY_SCREEN* && -z "$gap_start" ]]; then
+      now
+      gap_start=$REPLY
+    fi
     [[ "$screen" == *"$1"* ]] && {
       now
       observed=$REPLY
@@ -42,6 +47,12 @@ wait_screen() {
   return 1
 }
 record() { awk -v script="$script" -v count="$count" -v run="$iteration" -v event="$1" -v elapsed="$((observed - start))" 'BEGIN { printf "%s,%d,%d,%s,%.3f\n", script,count,run,event,elapsed/1000 }'; }
+record_gap() {
+  if [[ -n "$gap_start" ]]; then
+    start=$gap_start
+    record "$1-primary-screen-gap"
+  fi
+}
 printf 'script,entries,run,event,milliseconds\n'
 for ((iteration = 1; iteration <= runs; iteration++)); do
   cleanup
@@ -72,11 +83,13 @@ for ((iteration = 1; iteration <= runs; iteration++)); do
   tmux -S "$socket" send-keys Right
   wait_screen "$((count + 1))/$((count + 1))"
   record right
+  record_gap right
   now
   start=$REPLY
   tmux -S "$socket" send-keys Left
   wait_screen "$((count + 2))/$((count + 2))"
   record left
+  record_gap left
   now
   start=$REPLY
   tmux -S "$socket" send-keys -l file-00001.txt

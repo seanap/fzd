@@ -6,12 +6,20 @@ mode=${1:-prepare}
 app=${FZD_BENCH_SCRIPT:-$repo/fzd.sh}
 work="$repo/.test-work/benchmarks/workload-1000"
 locate_tools() {
-  locate_bin=$(command -v plocate 2>/dev/null || true)
-  updatedb_bin=$(command -v updatedb.plocate 2>/dev/null || command -v updatedb 2>/dev/null || true)
+  # Reuse prepared executables: optional-tool discovery is setup, not query time.
+  if [[ -x "$work/bin/plocate" && -x "$work/bin/updatedb" ]]; then
+    locate_bin="$work/bin/plocate"
+    updatedb_bin="$work/bin/updatedb"
+  else
+    locate_bin=$(command -v plocate 2>/dev/null || true)
+    updatedb_bin=$(command -v updatedb.plocate 2>/dev/null || command -v updatedb 2>/dev/null || true)
+  fi
   local tools="$repo/.test-work/tools/root" library
   if [[ -z "$locate_bin" && -x "$tools/usr/bin/plocate" ]]; then
     locate_bin="$tools/usr/bin/plocate"
     updatedb_bin="$tools/usr/sbin/updatedb.plocate"
+  fi
+  if [[ -x "$tools/usr/bin/plocate" ]]; then
     for library in "$tools"/usr/lib/*-linux-gnu*; do
       [[ -d "$library" ]] || continue
       export LD_LIBRARY_PATH="$library${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
@@ -43,7 +51,8 @@ if [[ "$mode" == prepare-locate ]]; then
     exit 1
   }
   mkdir -p "$work/bin"
-  ln -sf -- "$locate_bin" "$work/bin/plocate"
+  if [[ "$locate_bin" != "$work/bin/plocate" ]]; then ln -sf -- "$locate_bin" "$work/bin/plocate"; fi
+  if [[ "$updatedb_bin" != "$work/bin/updatedb" ]]; then ln -sf -- "$updatedb_bin" "$work/bin/updatedb"; fi
   "$updatedb_bin" --database-root "$work/files" --output "$work/locate.db" \
     --require-visibility no --prunepaths '' --prunenames '' --prunefs '' --prune-bind-mounts no
   exit 0
@@ -68,7 +77,7 @@ preview)
   encoded=$(printf '%s' "$work/files/group-0/entry-0001.txt" | base64 | tr -d '\n')
   exec bash "$app" --_preview "$encoded"
   ;;
-preview-dir|preview-binary)
+preview-dir | preview-binary)
   path="$work/files"
   [[ "$mode" == preview-binary ]] && path="$work/binary.bin"
   encoded=$(printf '%s' "$path" | base64 -w 0)
