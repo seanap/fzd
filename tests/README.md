@@ -10,10 +10,15 @@ Use Bash 4.4 or later, Bats-core 1.5 or later, and GNU utilities. Real backend
 tests additionally use fd/fdfind and plocate. Terminal tests use tmux and fzf;
 shell integration tests use zsh when available. Missing optional tools produce
 explicit skips. The phase-one environment uses Bash 5.2 and Bats 1.10.
+Installer fixtures also expect fzf, micro, file, tree, curl, tar and gzip in the
+development environment. Distribution-profile isolation additionally uses
+bubblewrap; those four checks explicitly skip if it is not installed.
 
 Fixtures, XDG directories, private databases, sockets and transient output stay
-under the ignored `.test-work/` directory. Tests never execute the installer or
-write to the user's home configuration. Backend tests deliberately restrict PATH
+under the ignored `.test-work/` directory. Installer tests execute the modernized
+installer only with disposable HOME/XDG/ZDOTDIR/prefix fixtures, and no real
+package manager or sudo is reachable on their restricted PATH. They never write
+to the user's home configuration. Backend tests deliberately restrict PATH
 to exercise find and controlled failures. Native tests also call actual fd and
 plocate, and assert that successful locate checks did not silently fall back.
 
@@ -27,7 +32,10 @@ plocate, and assert that successful locate checks did not silently fall back.
 | navigation.bats | Deterministic action sequences, stale results, selection restoration, exit codes |
 | preview.bats | MIME policy, renderer options, exact paths, binary fallback and missing optional tools |
 | recovery.bats | Failed runtime creation, failed mktemp, normal cleanup, interrupted search |
-| shell-integration.bats | Literal Bash/zsh init blocks extracted as data from install.sh |
+| dependencies.bats | Version/capability checks, executable aliases, package mappings, sudo and bounded package-manager transactions |
+| distributions.bats | Full installer with Ubuntu/Debian/Fedora/Arch metadata and manager stubs in a bubblewrap namespace; host read-only, network isolated |
+| installer.bats | Fresh install/update/verify/uninstall, preservation, XDG/ZDOTDIR, staging, download failures, TERM/KILL recovery, installed-wrapper PTYs |
+| shell-integration.bats | Shared Bash/zsh integration, all non-NUL filename bytes, trailing newlines, cancellations, aliases and editor/color preservation |
 | terminal.bats | Real fzf controls/backends, editor arguments, resize, signals, delayed actions and screen restoration |
 
 The terminal harness creates its own tmux server and socket, observes rendered
@@ -60,27 +68,58 @@ a filename. The original indexer created that marker in its disposable working
 directory. The repaired application treats the entire filename as data. The
 first regression commit intentionally records failures before their fixes.
 
-One test explicitly skips the existing shell wrappers' trailing-newline directory
-limitation. FZD's internal identities and stdout preserve these bytes, but the
-installer-generated `dest="$(fzd ...)"` strips them. This remains visible rather
-than being counted as a passing regression.
+Phase Three resolves the former shell-wrapper skip. A sentinel preserves stdout
+through command substitution, and the wrapper removes exactly the protocol's one
+final newline. Byte-exact tests and real installed Bash/zsh terminal sessions
+verify directories ending in multiple newlines.
+
+For the optional official-fzf bootstrap regression, prepare its pinned,
+checksum-verified archive in the ignored workspace:
+
+```bash
+bash dev/prepare-fzf-test.sh
+bash tests/run.sh tests/installer.bats
+```
+
+This optional preparation downloads the official Linux x86_64 fzf 0.65.2 archive;
+it does not install a binary or execute an external script. The test copies the
+archive through a curl stub, then exercises the real extraction, verification,
+version probe, installation, update and uninstall code in a disposable home.
+Without the prepared archive that one test explicitly skips. Download failure
+and digest mismatch tests always run using controlled inputs. Source uninstall
+preserves fzf, including a bootstrap it originally installed, as a shared
+dependency. All 138 checks ran without skips in the Phase Three WSL environment.
+
+apt/dnf/pacman tests verify real installer functions with controlled executables.
+Four full installation profiles also replace os-release metadata inside an
+isolated Ubuntu userspace; only each fixture is writable. They need bubblewrap
+and user/network namespaces. These are not native Debian/Fedora/Arch package
+transactions. No root host operation or
+system locate database rebuild is part of this suite. Clean native distribution
+and ARM validation remain packaging release gates; see
+[packaging readiness](../docs/packaging.md).
 
 Static checks used for this phase:
 
 ```bash
 bash -n fzd.sh
 shellcheck fzd.sh tests/run.sh tests/helpers/common.bash \
+  install.sh installer/*.bash shell/integration.sh \
+  tests/helpers/installer.bash tests/helpers/installer-mv-stub \
   tests/helpers/fzf-stub tests/helpers/backend-stub tests/helpers/pty-session \
   benchmarks/*.sh dev/*.sh
 shfmt -d -i 2 tests/run.sh tests/helpers/common.bash \
+  install.sh installer/*.bash shell/integration.sh \
+  tests/helpers/installer.bash tests/helpers/installer-mv-stub \
   tests/helpers/fzf-stub tests/helpers/backend-stub tests/helpers/pty-session \
   benchmarks/*.sh dev/*.sh
 shfmt -d -i 2 -ln bats tests/*.bats
 git diff --check
 ```
 
-The legacy application file is not reformatted wholesale, and the unchanged
-installer is not included in the passing ShellCheck claim.
+The application file is not reformatted wholesale. The modernized installer,
+dependency/lifecycle modules and shared shell integration are included in static
+checks.
 
 For a manual, isolated application baseline, run `bash dev/run.sh`. It copies the
 example configuration once to `.test-work/manual/config/fzd/fzd.conf` and directs
