@@ -121,6 +121,10 @@ for test_file in tests/*.bats; do
 done
 useradd -m validator
 chown -R validator:validator "$source_root" /results
+# Fail clearly when the host kernel prevents the safety tests' nested isolation.
+# In particular, Ubuntu's AppArmor user-namespace policy also covers containers.
+runuser -u validator -- bwrap --unshare-user --unshare-pid --unshare-net --die-with-parent \
+  --ro-bind / / --proc /proc --dev /dev -- true
 if ! runuser -u validator -- env HOME=/work FZD_TEST_SCRIPT=/usr/bin/fzd \
   bash tests/run.sh "${test_files[@]}" --print-output-on-failure --no-tempdir-cleanup >/results/tests.tap; then
   tar -czf /results/failed-fixtures.tar.gz -C "$source_root/.test-work/tmp" .

@@ -76,6 +76,11 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install --no-install-recommends -y podman dpkg-dev curl ca-certificates
+          # Nested bubblewrap needs the same user-namespace access as host tests.
+          # Change only this disposable runner; retain test network isolation.
+          if [[ -e /proc/sys/kernel/apparmor_restrict_unprivileged_userns ]]; then
+            sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
+          fi
           bash dev/prepare-fzf-test.sh
           bash packaging/build-release.sh HEAD .test-work/candidate
       - name: Actual distribution lifecycle and installed regression suite
