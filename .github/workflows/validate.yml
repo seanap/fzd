@@ -40,7 +40,7 @@ jobs:
           fzf --version
           bash packaging/check.sh
           mkdir -p .test-work/phase-four-a
-          bash tests/run.sh --print-output-on-failure > .test-work/phase-four-a/tests.tap
+          bash tests/run.sh tests/*.bats --print-output-on-failure > .test-work/phase-four-a/tests.tap
           if grep -Eq '^(not ok|ok .*# skip)' .test-work/phase-four-a/tests.tap; then exit 1; fi
       - name: Build twice and verify deterministic artifacts
         run: |
