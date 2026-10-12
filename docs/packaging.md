@@ -26,7 +26,8 @@ versions with validation evidence.
 
 Outputs: source archive, architecture-independent `.deb`, generated `PKGBUILD`,
 `SOURCE` provenance record and `SHA256SUMS`. SHA256 detects mismatches; it is not
-a publisher signature. Signing/public provenance remains a release decision.
+a publisher signature. This release candidate uses checksums and Git commit
+provenance; it does not claim an independent cryptographic signature.
 
 ## Versioning
 
@@ -82,16 +83,24 @@ Permanent deletion is never substituted.
 
 ## Install, integrate, update and remove
 
+Download `fzd_0.1.0~rc.1-1_all.deb`, `SHA256SUMS` and `SOURCE` from the
+`v0.1.0-rc.1` entry on [GitHub Releases](https://github.com/seanap/fzd/releases).
+If that entry is absent, publication is pending. FZD is not in the official
+Ubuntu/Debian repositories; APT installs the downloaded file and its dependencies.
+
 ```bash
 sha256sum --ignore-missing -c SHA256SUMS
+cat SOURCE
 sudo apt install ./fzd_0.1.0~rc.1-1_all.deb
 ```
 
-On Arch, place generated PKGBUILD and matching archive together and run
-`makepkg -si` as a normal user. The HTTPS source URL names the prospective
-approved GitHub release. Until publication, the local archive satisfies makepkg's
-cache with the same mandatory checksum. No SKIP checksum or moving Git branch
-is used. Generate AUR metadata with `makepkg --printsrcinfo > .SRCINFO`.
+On fully updated Arch, download `PKGBUILD` from the same release into a clean
+directory and run `makepkg -si` as a normal user. Its HTTPS URL fetches the exact
+custom release archive; the pinned checksum is mandatory. Before publication,
+place the matching locally built archive beside the recipe for validation.
+No SKIP checksum or moving Git branch is used. An AUR listing requires separate
+submission and announcement; the direct recipe does not require AUR availability.
+Generate AUR metadata with `makepkg --printsrcinfo > .SRCINFO`.
 For reproducible Arch builds, export the source epoch from the generated SOURCE
 record before invoking makepkg (the PKGBUILD header also gives the exact value):
 
@@ -101,8 +110,8 @@ makepkg --force
 ```
 
 The Arch validator builds twice with this epoch and compares the package bytes.
-Real Arch validation retains .SRCINFO and its package. The recipe is ready for
-review/build; public source availability and AUR submission await approval.
+Real Arch validation retains .SRCINFO and its package locally; hosted validation
+retains metadata and checksums. Publication and AUR submission are separate steps.
 
 Add this line to your Bash/zsh startup file, respecting ZDOTDIR:
 
@@ -110,9 +119,9 @@ Add this line to your Bash/zsh startup file, respecting ZDOTDIR:
 . /usr/share/fzd/integration.sh
 ```
 
-Open a new shell and run lf; use fzd_cd if lf already exists. Sourcing integration
-runs no external commands. Existing commands, editor settings, LS_COLORS and
-themes are preserved. Raw fzd prints the chosen directory; only the wrapper
+Open a new shell and run fzd_cd, or lf when that name is available. Sourcing
+integration runs no external commands. Existing commands, editor settings,
+LS_COLORS and themes are preserved. Raw fzd prints the chosen directory; only the wrapper
 changes its calling shell's directory. No implicit system-wide integration hook
 is installed.
 
@@ -175,8 +184,9 @@ checksums/linting and real distro validation. Hosted artifacts retain only test
 evidence, checksums and provenance; packages and source archives remain ephemeral
 on runners until publication is separately approved. Local validation retains
 the packages for review.
-GitHub execution cannot be claimed until approved push and a workflow run;
-local equivalents are tested first.
+[Hosted workflow results](https://github.com/seanap/fzd/actions/workflows/validate.yml)
+identify each tested source revision. Match the run's commit SHA with the
+candidate's `SOURCE` record and checksums when reviewing release evidence.
 
 Separate approval is required for public releases, signing/APT repositories,
 Debian source packages, AUR submission, Homebrew, Pacstall, Fedora RPM/COPR and

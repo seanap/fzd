@@ -7,33 +7,44 @@ keyboard. Selecting a directory returns to your shell in that directory.
 
 ## Install
 
-**Release candidate:** `.deb` and Arch build artifacts are generated locally or
-by the validation workflow. Nothing has been published to APT, AUR, or GitHub
-Releases yet. Use an approved local checkout or source archive for source installs.
+**Prerelease for testing: `v0.1.0-rc.1`.** Get its assets from
+[GitHub Releases](https://github.com/seanap/fzd/releases). If this candidate is
+not listed, publication is still pending. FZD is not available in the official
+Ubuntu or Debian repositories.
 
-For a downloaded Debian/Ubuntu candidate, check its checksum and install it with
-APT so dependencies are resolved:
+Tested on Linux x86_64: Ubuntu 24.04, Debian 13 and current Arch Linux. Fedora 44
+has staged-runtime validation, not an RPM package. ARM64 is not yet validated.
+
+For Ubuntu/Debian, download `fzd_0.1.0~rc.1-1_all.deb`, `SHA256SUMS` and `SOURCE`
+into a clean directory. Verify the checksum and source revision, then install
+with APT so dependencies are resolved:
 
 ```bash
 sha256sum --ignore-missing -c SHA256SUMS
+cat SOURCE
 sudo apt install ./fzd_0.1.0~rc.1-1_all.deb
 ```
 
-For Arch, place the generated `PKGBUILD` and matching source archive in a clean
-directory and run `makepkg -si` as your normal user. Arch's normal full system
-update must precede builds; avoid partial upgrades. The generated download URL
-will become usable only after release publication is approved.
+For Arch, download `PKGBUILD` from the same release into a clean directory and
+run `makepkg -si` as your normal user. It fetches the exact custom release archive
+and verifies its pinned checksum. Fully update Arch before building; avoid
+partial upgrades. Use this recipe directly unless an AUR listing is explicitly
+announced; do not assume the package is available in AUR.
 
-Packages leave your home untouched. Add this line to `~/.bashrc` or
+`SOURCE` identifies the immutable Git commit used to build the release.
+Checksums provide integrity checking, not an independent cryptographic signature.
+
+Packages leave your home and shell startup files untouched.
+Add this line to `~/.bashrc` or
 `${ZDOTDIR:-$HOME}/.zshrc`, then open a new terminal (or run the line now):
 
 ```bash
 . /usr/share/fzd/integration.sh
 ```
 
-Run **`lf`**, or **`fzd_cd`** if you already have an `lf` command. Defaults work
-without copying a configuration file. Package details and reproducible builds
-are in [Packaging](docs/packaging.md).
+Run **`fzd_cd`**, or **`lf`** when that name is available. Existing `lf` commands
+are preserved. Defaults work without copying a configuration file. Package
+details and reproducible builds are in [Packaging](docs/packaging.md).
 
 ### From source
 
@@ -41,12 +52,17 @@ Use Linux with Bash 4.4+ and GNU utilities. Bash and zsh are supported as
 interactive shells. Ubuntu/Debian, Fedora, and Arch dependency managers are
 supported. The source installer is separate from package installation; it owns
 only its user-local files. Other Linux systems can use the manual installation
-below. See the [release validation report](docs/phase-four-a.md) for tested
-platforms and remaining release gates.
+below. See [Packaging](docs/packaging.md) for build and validation details.
 
-From an approved checkout or extracted source archive, run as your normal user:
+Download the custom `fzd-0.1.0-rc.1.tar.gz`, `SHA256SUMS` and `SOURCE` from the
+same release. GitHub's automatically generated source links are different archives.
+Extract the custom archive and install as your normal user:
 
 ```bash
+sha256sum --ignore-missing -c SHA256SUMS
+cat SOURCE
+tar -xzf fzd-0.1.0-rc.1.tar.gz
+cd fzd-0.1.0-rc.1
 bash install.sh --deps recommended
 ```
 
