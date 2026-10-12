@@ -14,7 +14,12 @@ esac
 runtime=${FZD_CONTAINER_RUNTIME:-podman}
 runtime_options=()
 run_options=()
-[[ $runtime != podman ]] || run_options=(--cgroups=disabled)
+if [[ $runtime == podman ]]; then
+  # Locked proc submounts prevent nested bubblewrap from mounting its private
+  # procfs on hosted Ubuntu kernels. Keep /sys masks and the normal capability
+  # budget; unmask only /proc inside this disposable test container.
+  run_options=(--cgroups=disabled --security-opt 'unmask=/proc/*')
+fi
 if [[ $runtime == podman && ${FZD_CONTAINER_LOCAL_STORAGE:-0} == 1 ]]; then
   runtime_options=(--root "$repo/.test-work/containers/storage" --runroot /tmp/fzd-containers-run --storage-driver vfs)
 fi

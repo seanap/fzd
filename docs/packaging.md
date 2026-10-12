@@ -132,7 +132,11 @@ Prepare the pinned x86_64 fixture and install Podman (or Docker). Tests modify
 only disposable container filesystems. No host home, package-manager database
 or container socket is mounted. Host networking permits package downloads; no
 ports are exposed. Nested bubblewrap requires relaxed seccomp/AppArmor filters,
-without privileged mode.
+without privileged mode. Podman also unmasks container `/proc` submounts so the
+tests can mount their own private procfs; `/sys` masks and the container capability
+budget remain in place. Ubuntu-hosted runners permit unprivileged user namespaces
+only for the disposable job. These settings belong to the test harness, never
+the installed application.
 
 ```bash
 bash dev/prepare-fzf-test.sh
