@@ -27,5 +27,13 @@ sed -e "s/@VERSION@/$version/g" -e "s/@ARCH_VERSION@/${version/-/}/g" \
   -e "s/@COMMIT@/$commit/g" -e "s/@EPOCH@/$SOURCE_DATE_EPOCH/g" \
   -e "s/@SHA256@/${digest%% *}/g" "$source_root/packaging/arch/PKGBUILD.in" >"$output/PKGBUILD"
 printf 'version=%s\ncommit=%s\nsource_date_epoch=%s\n' "$version" "$commit" "$SOURCE_DATE_EPOCH" >"$output/SOURCE"
-(cd "$output" && sha256sum "$archive" ./*.deb PKGBUILD SOURCE >SHA256SUMS)
+assets=("$archive" "fzd-$version-debian-all.deb" PKGBUILD SOURCE)
+# Use a conservative GitHub-compatible filename alphabet, including the manifest.
+for asset in "${assets[@]}" SHA256SUMS; do
+  [[ $asset =~ ^[A-Za-z0-9][A-Za-z0-9._-]*[A-Za-z0-9]$ ]] || {
+    printf 'Release asset name is not GitHub compatible: %s\n' "$asset" >&2
+    exit 2
+  }
+done
+(cd "$output" && sha256sum "${assets[@]}" >SHA256SUMS)
 printf 'Local release artifacts: %s\n' "$output"

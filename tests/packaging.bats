@@ -44,6 +44,33 @@ setup_file() {
   [[ "$output" == *'libglib2.0-bin | trash-cli'* ]]
 }
 
+@test "Debian downloadable filename is GitHub safe while metadata retains Debian prerelease ordering" {
+  local version internal
+  IFS= read -r version <"$PACKAGE_REPO/VERSION"
+  [ "${PACKAGE_DEB##*/}" = "fzd-$version-debian-all.deb" ]
+  [[ ${PACKAGE_DEB##*/} =~ ^[A-Za-z0-9][A-Za-z0-9._-]*[A-Za-z0-9]$ ]]
+  internal=$(dpkg-deb -f "$PACKAGE_DEB" Version)
+  [ "$internal" = "${version/-/'~'}-1" ]
+  if [[ $version == *-rc.* ]]; then
+    dpkg --compare-versions "$internal" lt "${version%-rc.*}"
+  fi
+}
+
+@test "Stable and future candidate builds automatically use GitHub safe Debian filenames" {
+  local source version deb
+  source=$PACKAGE_FIXTURE/future-source
+  mkdir -p "$source"
+  git -C "$PACKAGE_REPO" archive HEAD | tar -xf - -C "$source"
+  for version in 0.1.0 0.2.0-rc.17; do
+    printf '%s\n' "$version" >"$source/VERSION"
+    SOURCE_DATE_EPOCH=1700000000 run bash "$PACKAGE_REPO/packaging/build-deb.sh" "$source" "$PACKAGE_FIXTURE/$version"
+    [ "$status" -eq 0 ]
+    deb=$PACKAGE_FIXTURE/$version/fzd-$version-debian-all.deb
+    [ -f "$deb" ]
+    [ "$(dpkg-deb -f "$deb" Version)" = "${version/-/'~'}-1" ]
+  done
+}
+
 @test "Debian build is byte reproducible with fixed source epoch" {
   SOURCE_DATE_EPOCH=1700000000 run bash "$PACKAGE_REPO/packaging/build-deb.sh" "$PACKAGE_REPO" "$PACKAGE_FIXTURE/repeated"
   [ "$status" -eq 0 ]
@@ -88,6 +115,33 @@ setup_file() {
   run bash "$PACKAGE_REPO/packaging/build-release.sh" HEAD "$PACKAGE_FIXTURE/release"
   [ "$status" -eq 2 ]
   [[ "$output" == *'Output already exists'* ]]
+}
+
+@test "Release manifest uses exact GitHub safe asset names and pins matching Arch metadata" {
+  local version release asset archive_digest
+  version=$(git -C "$PACKAGE_REPO" show HEAD:VERSION)
+  release=$PACKAGE_FIXTURE/names-release
+  run bash "$PACKAGE_REPO/packaging/build-release.sh" HEAD "$release"
+  [ "$status" -eq 0 ]
+  diff <(printf '%s\n' "fzd-$version.tar.gz" "fzd-$version-debian-all.deb" PKGBUILD SOURCE | sort) \
+    <(awk '{print $2}' "$release/SHA256SUMS" | sort)
+  for asset in "$release"/*; do
+    [[ ${asset##*/} =~ ^[A-Za-z0-9][A-Za-z0-9._-]*[A-Za-z0-9]$ ]]
+  done
+  (cd "$release" && sha256sum -c SHA256SUMS)
+  grep -Fx "pkgver=${version/-/}" "$release/PKGBUILD"
+  grep -Fx "source=('https://github.com/seanap/fzd/releases/download/v$version/fzd-$version.tar.gz')" "$release/PKGBUILD"
+  archive_digest=$(sha256sum <"$release/fzd-$version.tar.gz")
+  grep -Fx "sha256sums=('${archive_digest%% *}')" "$release/PKGBUILD"
+}
+
+@test "Current release installation documentation matches the generated Debian filename" {
+  local version document
+  IFS= read -r version <"$PACKAGE_REPO/VERSION"
+  for document in README.md docs/packaging.md "docs/releases/v$version.md"; do
+    grep -Fx "sudo apt install ./${PACKAGE_DEB##*/}" "$PACKAGE_REPO/$document"
+  done
+  diff "$PACKAGE_REPO/README.md" <(gzip -dc "$PACKAGE_FIXTURE/root/usr/share/doc/fzd/README.md.gz")
 }
 
 @test "Package files have only standard root ownership and data permissions" {

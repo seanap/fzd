@@ -12,6 +12,8 @@ mkdir -p /work /results
 cat /etc/os-release
 cat /artifacts/SOURCE
 (cd /artifacts && sha256sum -c SHA256SUMS)
+release_version=$(sed -n 's/^version=//p' /artifacts/SOURCE)
+[[ $release_version =~ ^[0-9]+\.[0-9]+\.[0-9]+(-rc\.[1-9][0-9]*)?$ ]] || exit 2
 export SOURCE_DATE_EPOCH
 SOURCE_DATE_EPOCH=$(sed -n 's/^source_date_epoch=//p' /artifacts/SOURCE)
 [[ $SOURCE_DATE_EPOCH =~ ^[0-9]+$ ]] || exit 2
@@ -31,8 +33,14 @@ case $target in
 ubuntu | debian)
   export DEBIAN_FRONTEND=noninteractive
   apt-get update
+  apt-get install --no-install-recommends -y sudo
   # First transaction exercises Depends without Recommended preview/Trash tools.
-  apt-get install --no-install-recommends -y /artifacts/*.deb
+  # Use the documented sudo/apt command and exact downloadable filename.
+  (cd /artifacts && sudo -n apt install --no-install-recommends -y "./fzd-$release_version-debian-all.deb")
+  [[ $(dpkg-deb -f "/artifacts/fzd-$release_version-debian-all.deb" Version) == "${release_version/-/'~'}-1" ]]
+  if [[ $release_version == *-rc.* ]]; then
+    dpkg --compare-versions "${release_version/-/'~'}-1" lt "${release_version%-rc.*}"
+  fi
   dpkg-query -W bash fzf coreutils findutils util-linux micro fzd
   dpkg -V fzd
   ;;

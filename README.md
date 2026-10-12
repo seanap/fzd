@@ -19,7 +19,7 @@ keyboard. Selecting a directory returns to your shell in that directory.
 
 ## Install
 
-**Prerelease for testing: `v0.1.0-rc.1`.** Get its assets from
+**Prerelease for testing: `v0.1.0-rc.2`.** Get its assets from
 [GitHub Releases](https://github.com/seanap/fzd/releases). If this candidate is
 not listed, publication is still pending. FZD is not available in the official
 Ubuntu or Debian repositories.
@@ -27,14 +27,14 @@ Ubuntu or Debian repositories.
 Tested on Linux x86_64: Ubuntu 24.04, Debian 13 and current Arch Linux. Fedora 44
 has staged-runtime validation, not an RPM package. ARM64 is not yet validated.
 
-For Ubuntu/Debian, download `fzd_0.1.0~rc.1-1_all.deb`, `SHA256SUMS` and `SOURCE`
+For Ubuntu/Debian, download `fzd-0.1.0-rc.2-debian-all.deb`, `SHA256SUMS` and `SOURCE`
 into a clean directory. Verify the checksum and source revision, then install
 with APT so dependencies are resolved:
 
 ```bash
 sha256sum --ignore-missing -c SHA256SUMS
 cat SOURCE
-sudo apt install ./fzd_0.1.0~rc.1-1_all.deb
+sudo apt install ./fzd-0.1.0-rc.2-debian-all.deb
 ```
 
 For Arch, download `PKGBUILD` from the same release into a clean directory and
@@ -66,15 +66,15 @@ supported. The source installer is separate from package installation; it owns
 only its user-local files. Other Linux systems can use the manual installation
 below. See [Packaging](docs/packaging.md) for build and validation details.
 
-Download the custom `fzd-0.1.0-rc.1.tar.gz`, `SHA256SUMS` and `SOURCE` from the
+Download the custom `fzd-0.1.0-rc.2.tar.gz`, `SHA256SUMS` and `SOURCE` from the
 same release. GitHub's automatically generated source links are different archives.
 Extract the custom archive and install as your normal user:
 
 ```bash
 sha256sum --ignore-missing -c SHA256SUMS
 cat SOURCE
-tar -xzf fzd-0.1.0-rc.1.tar.gz
-cd fzd-0.1.0-rc.1
+tar -xzf fzd-0.1.0-rc.2.tar.gz
+cd fzd-0.1.0-rc.2
 bash install.sh --deps recommended
 ```
 

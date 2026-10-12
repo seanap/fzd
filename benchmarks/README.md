@@ -3,7 +3,7 @@
 For a Phase 4A source-versus-Debian comparison, with all tests/containers stopped:
 
 ```bash
-bash packaging/benchmark.sh .test-work/my-candidate/fzd_0.1.0~rc.1-1_all.deb \
+bash packaging/benchmark.sh .test-work/my-candidate/fzd-0.1.0-rc.2-debian-all.deb \
   .test-work/package-benchmarks 3
 ```
 

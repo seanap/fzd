@@ -31,18 +31,30 @@ provenance; it does not claim an independent cryptographic signature.
 
 ## Versioning
 
-`VERSION` is MAJOR.MINOR.PATCH, optionally `-rc.N`. The first candidate is
-`0.1.0-rc.1`; the build creates no tag.
+`VERSION` is MAJOR.MINOR.PATCH, optionally `-rc.N`. The current candidate is
+`0.1.0-rc.2`; the build creates no tag. The public `v0.1.0-rc.1` tag is retained
+unchanged; its draft release remains unpublished after a filename compatibility failure.
 
 | Upstream | Debian | Arch |
 | --- | --- | --- |
-| `0.1.0-rc.1` | `0.1.0~rc.1-1` | `0.1.0rc.1-1` |
+| `0.1.0-rc.2` | `0.1.0~rc.2-1` | `0.1.0rc.2-1` |
 | `0.1.0` | `0.1.0-1` | `0.1.0-1` |
 
 Prereleases sort below the final release. Packaging-only rebuilds increment the
 distribution revision; application releases increment VERSION. The Debian builder
 accepts FZD_DEB_REVISION=2 for upgrade tests. Arch uses pkgrel. Never replace a
 published archive at the same version. Checksums identify the exact source commit.
+
+Downloadable Debian files use `fzd-VERSION-debian-all.deb`, independently of the
+internal Debian version and packaging revision. For this candidate the filename
+is `fzd-0.1.0-rc.2-debian-all.deb`, while `dpkg-deb -f FILE Version` returns
+`0.1.0~rc.2-1`. Debian's tilde keeps the prerelease below `0.1.0`; GitHub normalizes
+tildes in asset names, so tildes must never appear in downloadable filenames.
+The builders emit the final filename directly and generate matching manifest
+entries; do not rename files after building. Release filenames are restricted
+to ASCII letters, digits, periods, underscores and hyphens, starting and ending
+with a letter or digit. Regression checks cover stable and future RC versions,
+exact manifest names, Arch source/checksum metadata and installation examples.
 
 ## Paths and ownership
 
@@ -83,15 +95,15 @@ Permanent deletion is never substituted.
 
 ## Install, integrate, update and remove
 
-Download `fzd_0.1.0~rc.1-1_all.deb`, `SHA256SUMS` and `SOURCE` from the
-`v0.1.0-rc.1` entry on [GitHub Releases](https://github.com/seanap/fzd/releases).
+Download `fzd-0.1.0-rc.2-debian-all.deb`, `SHA256SUMS` and `SOURCE` from the
+`v0.1.0-rc.2` entry on [GitHub Releases](https://github.com/seanap/fzd/releases).
 If that entry is absent, publication is pending. FZD is not in the official
 Ubuntu/Debian repositories; APT installs the downloaded file and its dependencies.
 
 ```bash
 sha256sum --ignore-missing -c SHA256SUMS
 cat SOURCE
-sudo apt install ./fzd_0.1.0~rc.1-1_all.deb
+sudo apt install ./fzd-0.1.0-rc.2-debian-all.deb
 ```
 
 On fully updated Arch, download `PKGBUILD` from the same release into a clean

@@ -11,6 +11,8 @@ IFS= read -r version <"$source_root/VERSION"
 revision=${FZD_DEB_REVISION:-1}
 [[ $revision =~ ^[1-9][0-9]*$ ]] || exit 2
 deb_version=${version/-/'~'}-$revision
+# GitHub normalizes '~' in asset names. Keep Debian ordering in metadata only.
+deb_asset=fzd-$version-debian-all.deb
 mkdir -p -- "$output"
 work=$(mktemp -d)
 trap 'rm -rf -- "$work"' EXIT
@@ -32,4 +34,4 @@ sed "s/@VERSION@/$deb_version/g" "$source_root/packaging/debian/control.in" >"$s
 printf 'Installed-Size: %s\n' "$(du -sk "$stage/usr" | cut -f1)" >>"$stage/DEBIAN/control"
 (cd "$stage" && find usr -type f -print0 | LC_ALL=C sort -z | xargs -0 md5sum) >"$stage/DEBIAN/md5sums"
 find "$stage" -exec touch -h -d "@$epoch" {} +
-dpkg-deb --root-owner-group -Zxz -z6 --build "$stage" "$output/fzd_${deb_version}_all.deb"
+dpkg-deb --root-owner-group -Zxz -z6 --build "$stage" "$output/$deb_asset"
