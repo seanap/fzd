@@ -1,9 +1,21 @@
 # FZD
 
+<p align="center">
+  <img src="https://i.imgur.com/InGa0TZ.png" alt="FZD — a terminal file explorer and fuzzy finder">
+</p>
+
+<p align="center"><strong>Explore like Windows. Work like Linux.</strong></p>
+
 A small Bash file explorer built around fzf. Browse with the arrow keys, fuzzy
 filter as you type, preview files and directories, and press **Ctrl+F** to search
 globally. Copy, move, rename, create folders, and use Linux Trash from the
 keyboard. Selecting a directory returns to your shell in that directory.
+
+<p align="center">
+  <img src="share/demo/fzd_demo.gif" alt="Animated demonstration of FZD terminal navigation">
+  <br>
+  <sub>This demo shows an earlier version of FZD. An updated demo is coming.</sub>
+</p>
 
 ## Install
 
