@@ -49,13 +49,14 @@ jobs:
           diff -r .test-work/candidate .test-work/repeated
           (cd .test-work/candidate && sha256sum -c SHA256SUMS)
           lintian --tag-display-limit 0 .test-work/candidate/*.deb
-      - name: Retain local-style candidates and evidence (no publication)
+      - name: Retain checksums, provenance and test evidence only
         if: always()
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2, Node 24
         with:
           name: candidate-${{ github.sha }}-fzf-${{ matrix.fzf }}
           path: |
-            .test-work/candidate/
+            .test-work/candidate/SHA256SUMS
+            .test-work/candidate/SOURCE
             .test-work/phase-four-a/*.tap
           if-no-files-found: error
           retention-days: 14
@@ -86,7 +87,13 @@ jobs:
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2, Node 24
         with:
           name: distribution-${{ matrix.distro }}-${{ github.sha }}
-          path: .test-work/phase-four-a/${{ matrix.distro }}/
+          path: |
+            .test-work/phase-four-a/${{ matrix.distro }}/RESULT
+            .test-work/phase-four-a/${{ matrix.distro }}/*.tap
+            .test-work/phase-four-a/${{ matrix.distro }}/*.log
+            .test-work/phase-four-a/${{ matrix.distro }}/*.json
+            .test-work/phase-four-a/${{ matrix.distro }}/*.sha256
+            .test-work/phase-four-a/${{ matrix.distro }}/.SRCINFO
           include-hidden-files: true
           if-no-files-found: error
           retention-days: 14

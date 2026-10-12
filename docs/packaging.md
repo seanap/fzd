@@ -167,7 +167,10 @@ explicitly simulated checks. See [executed evidence](phase-four-a.md).
 The GitHub workflow uses read-only repository permissions, pinned action commits,
 no persisted credentials and no push/tag/release/publish steps. It runs static
 checks, regression tests with both supported fzf versions, repeated builds,
-checksums/linting and real distro validation, retaining artifacts and logs.
+checksums/linting and real distro validation. Hosted artifacts retain only test
+evidence, checksums and provenance; packages and source archives remain ephemeral
+on runners until publication is separately approved. Local validation retains
+the packages for review.
 GitHub execution cannot be claimed until approved push and a workflow run;
 local equivalents are tested first.
 
