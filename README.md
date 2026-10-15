@@ -54,13 +54,15 @@ under review. Run as your normal user on Ubuntu/Debian, Arch, or Fedora:
 ```bash
 git clone --branch feature/zoxide-navigation https://github.com/seanap/fzd.git
 cd fzd
-bash install.sh --deps recommended
+bash install.sh --deps recommended --inline-suggestions
 ```
 
 Open a **new terminal**, then run `lf`. The installer resolves missing dependencies
 through your distribution's package manager, installs FZD under `~/.local`, and
-adds Bash/zsh integration. Sudo is requested only for missing system packages.
-You need Git to clone the repository.
+adds Bash/zsh integration with gray inline suggestions. Press **Right** to accept
+a suggestion. Sudo is requested only for missing system packages. You need Git
+to clone the repository. Leave off `--inline-suggestions` to keep engine setup
+unchanged, or use `--shell bash` / `--shell zsh` to configure one shell.
 
 <details>
 <summary>Packages, manual installation, updates and removal</summary>
@@ -93,13 +95,13 @@ If another tool already owns `lf` or `lff`, use `fzd_cd` or `fzd_find` instead.
 
 ## Finish the thought
 
-Press **Tab** to complete learned names and local directories in Bash or zsh.
-With a compatible suggestion engine, `lf imm` can display `lf immich` inline.
-You can also press Enter immediately and let zoxide resolve the partial name.
+Type `lf imm` and accept the gray suggestion with **Right**, or press Enter
+immediately and let zoxide resolve the partial name. Native **Tab** completion
+also works in Bash and fresh zsh sessions.
 
-FZD works with user-installed ble.sh and zsh-autosuggestions; inline behavior
-depends on their settings. Zsh-autosuggestions needs its optional completion
-strategy for suggestions from learned directories. [Setup and tested behavior](docs/TECHNICAL.md#tab-completion-and-inline-suggestions).
+The installer’s explicit `--inline-suggestions` option installs and configures
+ble.sh for Bash and zsh-autosuggestions for zsh. Existing engines are reused.
+[Setup, updates and removal](docs/TECHNICAL.md#tab-completion-and-inline-suggestions).
 
 ## Go deeper
 

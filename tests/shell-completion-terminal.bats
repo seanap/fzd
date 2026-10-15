@@ -41,8 +41,6 @@ RC
     cat >"$HOME/.zshrc" <<'RC'
 PS1='FZD_PROMPT> '
 source "$FZD_REPO/shell/integration.sh"
-autoload -Uz compinit
-compinit -i -D
 source "$FZD_REPO/shell/integration.sh"
 [[ ${FZD_TEST_NO_HOOK:-0} != 1 ]] || eval "$(zoxide init zsh --no-cmd --hook none)"
 if [[ $FZD_TEST_ENGINE == autosuggestions ]]; then
@@ -55,8 +53,34 @@ bindkey '^X^B' _fzd_test_buffer
 RC
     printf -v command 'exec zsh -d -i'
   fi
+  if [[ $engine == installed ]]; then
+    if [[ $shell == bash ]]; then
+      cat >"$HOME/rc" <<'RC'
+PS1='FZD_PROMPT> '
+source "$HOME/.bashrc"
+bind -x '"\C-x\C-b": printf "%s" "$READLINE_LINE" >"$FZD_SHELL_BUFFER"'
+RC
+    else
+      # The ordinary helper wrote its fixture zshrc. Replace it with the exact
+      # installer output kept by prepare_installed_inline, plus test widgets.
+      cp "$HOME/installed.zshrc" "$HOME/.zshrc"
+      cat >>"$HOME/.zshrc" <<'RC'
+PS1='FZD_PROMPT> '
+_fzd_test_buffer() { printf '%s' "$BUFFER" >"$FZD_SHELL_BUFFER"; }
+zle -N _fzd_test_buffer
+bindkey '^X^B' _fzd_test_buffer
+RC
+    fi
+  fi
+  rm -f "$FZD_SHELL_BUFFER.ready"
+  if [[ $shell == bash ]]; then
+    printf '%s\n' 'printf ready >"$FZD_SHELL_BUFFER.ready"' >>"$HOME/rc"
+  else
+    printf '%s\n' 'printf ready >"$FZD_SHELL_BUFFER.ready"' >>"$HOME/.zshrc"
+  fi
   export FZD_REPO FZD_TEST_ENGINE=$engine
   tmux -S "$SOCKET" -f /dev/null new-session -d -x 120 -y 32 -s fzd -c "$FIXTURE_ROOT" "$command"
+  wait_file "$FZD_SHELL_BUFFER.ready"
   wait_screen FZD_PROMPT
 }
 
@@ -169,4 +193,51 @@ check_inline_suggestion() {
     stop_terminal
     rm -f "$FZD_SHELL_BUFFER"
   done
+}
+
+prepare_installed_inline() {
+  local archive="$FZD_COMPAT_ROOT/ble-0.4.0-devel3-2.tar.xz"
+  [[ -f $archive ]] || skip 'run bash dev/prepare-shell-compat.sh'
+  mkdir -p "$HOME/dependencies"
+  tar -xJf "$archive" -C "$HOME/dependencies"
+  export FZD_BLESH_PATH="$HOME/dependencies/ble-0.4.0-devel3/ble.sh"
+  export FZD_ZSH_AUTOSUGGESTIONS_PATH="$FZD_COMPAT_ROOT/zsh-autosuggestions/zsh-autosuggestions.zsh"
+  unset FZD_BIN
+  run bash "$FZD_REPO/install.sh" --inline-suggestions --deps none --noninteractive
+  [ "$status" -eq 0 ]
+  cp "$HOME/.zshrc" "$HOME/installed.zshrc"
+}
+
+@test "installer-enabled Bash inline suggestions display gray ghost text with Right acceptance" {
+  prepare_installed_inline
+  check_inline_suggestion bash installed
+}
+
+@test "installer-enabled zsh inline suggestions work on the first prompt without manual compinit or plugin setup" {
+  prepare_installed_inline
+  check_inline_suggestion zsh installed
+}
+
+@test "fresh zsh initializes compinit once and preserves a framework initialized later in startup" {
+  cat >"$HOME/.zshrc" <<'RC'
+PS1='FZD_PROMPT> '
+source "$FZD_REPO/shell/integration.sh"
+autoload -Uz compinit
+compinit -i -D
+functions[_fzd_test_original_compinit]=$functions[compinit]
+compinit() { printf duplicate >"$FZD_SHELL_BUFFER"; _fzd_test_original_compinit "$@"; }
+source "$FZD_REPO/shell/integration.sh"
+RC
+  export FZD_REPO
+  tmux -S "$SOCKET" -f /dev/null new-session -d -x 120 -y 32 -s fzd -c "$FIXTURE_ROOT" 'exec zsh -d -i'
+  wait_screen FZD_PROMPT
+  tmux -S "$SOCKET" send-keys -l 'lf imm'
+  tmux -S "$SOCKET" send-keys Tab
+  wait_screen 'lf immich'
+  [ ! -e "$FZD_SHELL_BUFFER" ]
+}
+
+@test "explicit completion opt-out preserves a zsh setup without compinit" {
+  run zsh -efc 'FZD_AUTO_COMPLETION=0; source "$1/shell/integration.sh"; _fzd_init_completion; ! whence compdef' _ "$FZD_REPO"
+  [ "$status" -eq 0 ]
 }

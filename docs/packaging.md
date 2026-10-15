@@ -211,7 +211,7 @@ edits or invoking the user installer.
 Zoxide >= 0.9.0 is a required upstream dependency in Debian and Arch metadata,
 and in the source installer. Fedora staging validation installs its native
 zoxide package. No zoxide executable or database is bundled. Packages include
-both shell integration files and the detailed `TECHNICAL.md` guide. The source
+the shell integration files and the detailed `TECHNICAL.md` guide. The source
 installer owns both shell files through the existing transactional manifest.
 
 The feature branch's README uses a source-checkout installation path so users
@@ -219,3 +219,15 @@ can test the new behavior before release. Package examples here describe local
 candidate builds or explicitly published assets; feature artifacts remain local
 and hosted CI evidence only until a later authorized release. Suggestion engines
 are fetched only as pinned, private development fixtures, never package payloads.
+
+## Optional inline setup
+
+`--inline-suggestions` in the source installer installs the selected shells'
+engine requirements and writes opt-in settings in the existing managed shell
+block. ble.sh is an independently verified upstream download, kept as a shared
+user-local dependency; zsh-autosuggestions is resolved through the distribution.
+Neither engine is bundled in FZD's source/package artifacts. Debian Suggests and
+Arch optdepends advertise zsh/zsh-autosuggestions. The package payload includes
+`inline.sh`, activated only by explicit user configuration. Package staging never
+runs downloads or edits shell startup files. The default integration initializes
+fresh zsh native completion after startup without replacing an existing setup.

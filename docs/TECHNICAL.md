@@ -58,29 +58,81 @@ Completion never scans global roots or opens an interactive picker.
 Existing `lf`, `lff`, `fzd_cd`, `fzd_find` commands, aliases and executables are
 preserved, along with registered completion handlers. Use the free fallback
 names when another application owns `lf`/`lff`. Load integration after defining
-commands that should take precedence. In zsh, initialize native completion with
-`autoload -Uz compinit; compinit`; FZD can be sourced before or after compinit.
-FZD does not run compinit, change completion styles, or configure suggestion engines.
+commands that should take precedence. In interactive zsh, FZD waits until the
+first prompt, then initializes native completion if the user's startup/framework
+has not already done so. It uses upstream `compinit -i`: ownership checks remain
+active and insecure completion directories are ignored. Existing initialized
+completion is retained. Set `FZD_AUTO_COMPLETION=0` before sourcing integration to
+turn off automatic initialization while retaining an existing completion setup.
 
-Tab completion and inline ghost text are separate features:
+**Inline gray suggestions with Right-arrow acceptance:** opt in explicitly:
 
-- **Bash + [ble.sh](https://github.com/akinomyoga/ble.sh):** its programmable
-  completion source can suggest learned names inline when automatic completion
-  is enabled and not suppressed by the user's ble.sh settings.
-- **zsh + [zsh-autosuggestions](https://github.com/zsh-users/zsh-autosuggestions):**
-  the default `history` strategy suggests previous commands. To also use learned
-  completions, users may opt into `ZSH_AUTOSUGGEST_STRATEGY=(history completion)`
-  in their own zsh configuration. The upstream completion strategy requires zpty.
-- **Plain Bash/zsh:** Tab completion works; inline suggestions require an engine.
+```bash
+bash install.sh --inline-suggestions
+```
 
-FZD never installs, replaces or reconfigures these engines. Suggestions must
-extend the typed prefix; some non-prefix/case-changing matches can only appear
-on Tab. Pressing Enter on `lf imm` resolves the query without accepting a suggestion.
+This implies `--deps recommended` unless `--deps` is provided explicitly.
+The default `--shell both` configures both shells; add `--shell bash` or
+`--shell zsh` to configure one. Requirements for the selected engines are
+installed through apt/pacman/dnf. Zsh uses the distribution's `zsh` and
+`zsh-autosuggestions` packages. Bash uses upstream ble.sh: a missing installation
+is downloaded from the pinned official `v0.4.0-devel3` release asset
+`ble-0.4.0-devel3-2.tar.xz`, verified before extraction with embedded SHA256
+`bdcdcfff216495403adf82a701fe41675f64b64644dc77caabd3e015871ebd61`, and
+installed under `PREFIX/share/blesh`. No engine binary is bundled with FZD.
+Bash setup also requires ps (procps/procps-ng); downloads require curl, CA
+certificates, tar and xz. These requirements are conditional on the opt-in.
 
-The regression suite uses pinned upstream engines in private test homes and real
-PTYs. It checks that a displayed suffix is absent from the editable buffer before
-acceptance, then checks Right-arrow acceptance. Prepare fixtures with `bash
-dev/prepare-shell-compat.sh`; see [test instructions](../tests/README.md).
+Existing readable engines in standard system/user locations are reused.
+`FZD_BLESH_PATH=/path/to/ble.sh` and
+`FZD_ZSH_AUTOSUGGESTIONS_PATH=/path/to/zsh-autosuggestions.zsh` select custom
+installations. Export these variables when running the installer; the chosen
+paths are recorded safely in its marked shell block. Already loaded engines are
+not loaded again. New Bash engine loading uses gray ghost text; custom colors
+of an already loaded engine remain intact.
+
+The opt-in enables ble.sh automatic completion and removes only the options that
+disable/suppress completion-derived suggestions. It appends `completion` to
+zsh-autosuggestions' strategies, preserving the order of the user's existing
+strategies and highlight style. Engines provide their normal Right-arrow
+acceptance. These are shell-wide settings during the session; FZD does not edit
+`.blerc`, plugin files, shell-framework files, editor settings or terminal themes.
+
+An ordinary installation without the option does not install or configure an
+engine. Users who already have ble.sh/zsh-autosuggestions can keep their own
+configuration; compatibility with both is tested independently. For zsh's default
+history-only setup, opt-in adds completion-derived suggestions so learned names
+can appear before the command has ever been entered. Suggestions must extend the
+typed prefix; some case-changing/non-prefix matches appear only on Tab. Enter on
+`lf imm` resolves the partial query without accepting a suggestion.
+
+Ordinary updates retain an existing inline opt-in without repeating downloads.
+To disable only FZD's engine setup, then open a new shell:
+
+```bash
+bash install.sh --no-inline-suggestions
+```
+
+Uninstall removes FZD's managed shell block and application files. Shared engine
+installations and system packages are retained, just like other dependencies;
+user-managed engine loading outside FZD continues normally. Modified/unmanaged
+engine directories are never adopted or overwritten automatically.
+`--deps none --inline-suggestions` only configures engines already present and
+fails before installing FZD if prerequisites are missing; it never downloads an
+engine or runs a package transaction. Staging forbids inline setup.
+
+Package users can install the optional engines using their distribution/upstream
+instructions, then set `FZD_INLINE_SUGGESTIONS=1` (and custom engine paths if
+needed) before sourcing `/usr/share/fzd/integration.sh`. Packages themselves
+never change shell startup files. The source installer is the complete automatic
+setup path shown in the README.
+
+Tests use pinned upstream engines in private homes and real PTYs, including the
+exact release archive installed by the option. They verify a displayed suffix
+is absent from the editable buffer, then Right-arrow acceptance. Fresh zsh needs
+no manual compinit; framework initialization later in startup is retained.
+Prepare fixtures with `bash dev/prepare-shell-compat.sh`; see
+[test instructions](../tests/README.md).
 
 ## Install
 

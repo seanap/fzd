@@ -35,6 +35,9 @@ FZD initializes upstream zoxide learning only when not already initialized;
 existing z/zi commands and hook preferences are preserved. Native Tab completion
 uses learned directories. Inline suggestions require a user-installed engine;
 zsh-autosuggestions needs its completion strategy to suggest learned names.
+The source installer option --inline-suggestions installs and configures these
+engines explicitly. Existing engines are reused and shared dependencies retained
+on uninstall. Native zsh completion initializes after startup if necessary.
 .SH CONTROLS
 Left/Right navigate parent/child directories. Enter selects a directory or
 opens a file in the editor. Esc cancels. Type to fuzzy filter; Ctrl+F opens

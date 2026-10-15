@@ -160,7 +160,7 @@ delete_file() {
 
 owned_file() {
   case "$1" in
-  "$PREFIX/bin/fzd" | "$PREFIX/bin/fzf" | "$DATA/integration.sh" | "$DATA/integration.zsh" | "$DATA/fzd.conf.example" | "$DATA/LICENSE.txt" | "$DATA/install.sh" | "$DATA/installer/dependencies.bash" | "$DATA/installer/lifecycle.bash" | "$DATA/lib/state.bash" | "$DATA/lib/operations.bash" | "$DATA/lib/ui.bash") return 0 ;;
+  "$PREFIX/bin/fzd" | "$PREFIX/bin/fzf" | "$DATA/integration.sh" | "$DATA/integration.zsh" | "$DATA/inline.sh" | "$DATA/fzd.conf.example" | "$DATA/LICENSE.txt" | "$DATA/install.sh" | "$DATA/installer/dependencies.bash" | "$DATA/installer/lifecycle.bash" | "$DATA/installer/inline.bash" | "$DATA/lib/state.bash" | "$DATA/lib/operations.bash" | "$DATA/lib/ui.bash") return 0 ;;
   *) return 1 ;;
   esac
 }
@@ -211,6 +211,7 @@ install_owned() {
 }
 
 edit_rc() {
+  local target_shell=${3:-}
   local rc=$1 action=$2 line inside=0 count=0 found=0 newline ended_newline=1 index
   local original_newline=1 trailing_user=0
   local temporary="$TX/rc-content" block=''
@@ -261,6 +262,18 @@ edit_rc() {
     if [[ -s $temporary && $ended_newline == 0 ]]; then printf '\n' >>"$temporary"; fi
     {
       printf '# >>> fzd init >>>\n'
+      if [[ ${INLINE_SUGGESTIONS:-keep} == 1 ]]; then
+        printf 'FZD_INLINE_SUGGESTIONS=1\n'
+        [[ $target_shell != bash ]] || printf 'FZD_BLESH_PATH=%q\n' "$BLESH_PATH"
+        [[ $target_shell != zsh ]] || printf 'FZD_ZSH_AUTOSUGGESTIONS_PATH=%q\n' "$AUTOSUGGEST_PATH"
+      elif [[ ${INLINE_SUGGESTIONS:-keep} == 0 ]]; then
+        printf 'FZD_INLINE_SUGGESTIONS=0\n'
+      else
+        # Retain a previous opt-in during ordinary updates, without executing rc.
+        while IFS= read -r line; do
+          case $line in FZD_INLINE_SUGGESTIONS=* | FZD_BLESH_PATH=* | FZD_ZSH_AUTOSUGGESTIONS_PATH=*) printf '%s\n' "$line" ;; esac
+        done <<<"$block"
+      fi
       printf '_FZD_INSTALL_BIN=%q\n' "$PREFIX/bin/fzd"
       # shellcheck disable=SC2016 # Preserve an existing override in the user's shell.
       printf 'if [ -z "${FZD_CONF_FILE:-}" ]; then FZD_CONF_FILE=%q; fi\nexport FZD_CONF_FILE\n' "$CFG"

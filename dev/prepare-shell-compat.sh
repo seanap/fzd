@@ -22,4 +22,11 @@ fetch_fixture zsh-autosuggestions https://github.com/zsh-users/zsh-autosuggestio
 # ble.sh's build includes its pinned contrib submodule; use upstream's build.
 git -C "$work/blesh" submodule update --init --recursive
 make -s -C "$work/blesh" -j2
+archive=$work/ble-0.4.0-devel3-2.tar.xz
+if [[ ! -f $archive ]]; then
+  curl --fail --location --proto '=https' --proto-redir '=https' --tlsv1.2 \
+    --connect-timeout 15 --max-time 120 --retry 2 --output "$archive" \
+    https://github.com/akinomyoga/ble.sh/releases/download/v0.4.0-devel3/ble-0.4.0-devel3-2.tar.xz
+fi
+printf '%s  %s\n' bdcdcfff216495403adf82a701fe41675f64b64644dc77caabd3e015871ebd61 "$archive" | sha256sum -c -
 printf 'Prepared pinned ble.sh and zsh-autosuggestions fixtures under %s\n' "$work"

@@ -100,7 +100,7 @@ esac
 
 case $target in
 ubuntu | debian)
-  apt-get install --no-install-recommends -y zsh tmux bats bubblewrap file tree curl ca-certificates git bat fd-find libglib2.0-bin plocate procps
+  apt-get install --no-install-recommends -y zsh tmux bats bubblewrap file tree curl ca-certificates git bat fd-find libglib2.0-bin plocate procps xz-utils
   ;;
 arch)
   pacman -S --noconfirm --needed zsh tmux bats bubblewrap file tree curl git bat fd glib2 plocate procps-ng
@@ -119,6 +119,7 @@ zsh -ic '[[ $(lf) == existing ]]; whence -w fzd_cd'
 # Packaging tests run on the Git checkout separately (archives contain no .git).
 cp /usr/bin/fzd "$source_root/fzd.sh"
 cp /usr/share/fzd/integration.* "$source_root/shell/"
+cp /usr/share/fzd/inline.sh "$source_root/shell/inline.sh"
 cp /usr/share/fzd/lib/*.bash "$source_root/lib/"
 mkdir -p "$source_root/.test-work/phase-three"
 cp /fixtures/fzf-0.65.2-linux_amd64.tar.gz "$source_root/.test-work/phase-three/"
@@ -160,5 +161,19 @@ fedora)
 esac
 [[ ! -e /usr/bin/fzd && ! -e /usr/share/fzd/integration.sh ]]
 (cd /work && sha256sum -c /results/home-opt-in.sha256)
+# Optional inline setup: real native dependencies + official verified download.
+# This fixture home is separate from the package-preservation fixture above.
+if [[ $target == ubuntu || $target == debian || $target == arch ]]; then
+  inline_home=/work/inline-home
+  mkdir -p "$inline_home"
+  HOME=$inline_home ZDOTDIR=$inline_home bash install.sh --noninteractive --inline-suggestions
+  [[ -r $inline_home/.local/share/blesh/ble.sh ]]
+  grep -q '^FZD_INLINE_SUGGESTIONS=1$' "$inline_home/.bashrc"
+  grep -q '^FZD_INLINE_SUGGESTIONS=1$' "$inline_home/.zshrc"
+  HOME=$inline_home ZDOTDIR=$inline_home bash "$inline_home/.local/share/fzd/install.sh" --verify --inline-suggestions
+  HOME=$inline_home ZDOTDIR=$inline_home bash "$inline_home/.local/share/fzd/install.sh" --uninstall
+  [[ -r $inline_home/.local/share/blesh/ble.sh && ! -e $inline_home/.local/bin/fzd ]]
+  printf 'PASS: opt-in inline installer with native dependencies and pinned upstream ble.sh\n'
+fi
 command -v fzf micro flock
 printf 'PASS: %s actual userspace, lifecycle, shell startup, packaged regression suite\n' "$target" | tee /results/RESULT

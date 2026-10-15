@@ -53,6 +53,7 @@ plocate, and assert that successful locate checks did not silently fall back.
 | recovery.bats | Failed runtime creation, failed mktemp, normal cleanup, interrupted search |
 | dependencies.bats | Version/capability checks, executable aliases, package mappings, sudo and bounded package-manager transactions |
 | distributions.bats | Full installer with Ubuntu/Debian/Fedora/Arch metadata and manager stubs in a bubblewrap namespace; host read-only, network isolated |
+| inline-installer.bats | Verified engine download, conditional dependencies, existing engines, explicit opt-in, updates, disable, rollback and shared-dependency retention |
 | installer.bats | Fresh install/update/verify/uninstall, preservation, XDG/ZDOTDIR, staging, download failures, TERM/KILL recovery, installed-wrapper PTYs |
 | zoxide-navigation.bats | Dispatch, partial/multiple matching, fallback, upstream ranking/learning/preferences, hooks, conflicts and completion preservation |
 | shell-completion-terminal.bats | Native Tab, actual ble.sh/zsh-autosuggestions ghost text, acceptance, immediate partial Enter and ordinary cd in isolated PTYs |
@@ -208,3 +209,12 @@ into the user's shell. `FZD_COMPAT_ROOT` can select prepared fixtures. Hosted CI
 requires these tests to pass without skips, on both supported fzf fixtures and
 all four distribution userspaces. Tests use fresh zoxide databases through
 `_ZO_DATA_DIR`; the user's real database and shell rc files are never touched.
+
+The inline installer additionally tests official ble.sh v0.4.0-devel3-2, whose
+release archive is SHA256-verified by fixture preparation and the installer.
+Fresh Bash/zsh terminal tests source exactly the generated installation blocks;
+no manual compinit, engine sourcing or suggestion configuration is injected.
+Existing-framework tests check that completion is initialized once. Ubuntu,
+Debian and Arch validators exercise the real opt-in installer with native plugin
+dependency resolution and the official download in a disposable home. Fedora
+continues its existing runtime validation; no additional RPM work is introduced.

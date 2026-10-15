@@ -19,6 +19,7 @@ setup() {
   DATA="$PREFIX/share/fzd"
   mkdir -p "$HOME" "$TEST_BIN"
   unset FZD_CONF_FILE FZD_BIN FZD_GLOBAL_ROOTS ZDOTDIR EDITOR VISUAL
+  unset FZD_INLINE_SUGGESTIONS FZD_AUTO_COMPLETION FZD_BLESH_PATH FZD_ZSH_AUTOSUGGESTIONS_PATH
   unset FZD_STATE_DIR FZD_CACHE_DIR FZD_TMP_DIR
   unset FZF_DEFAULT_OPTS FZF_DEFAULT_OPTS_FILE
   unset FZD_FAULT FZD_FAULT_TARGET FZD_FAULT_MARKER
@@ -26,10 +27,11 @@ setup() {
   local tool
   export _ZO_DATA_DIR="$BATS_TEST_TMPDIR/zoxide"
   unset _ZO_EXCLUDE_DIRS _ZO_RESOLVE_SYMLINKS _ZO_MAXAGE
-  for tool in zoxide bash sh env cat base64 sort mktemp install sha256sum readlink truncate find file tree micro cp mv rm rmdir mkdir chmod cmp tail uname tar gzip curl sleep kill wc grep head ln touch date tr awk sed cut ls timeout basename dirname realpath flock stat; do
+  for tool in zoxide bash sh env cat base64 sort mktemp install sha256sum readlink truncate find file tree micro cp mv rm rmdir mkdir chmod cmp tail uname tar gzip xz ps curl sleep kill wc grep head ln touch date tr awk sed cut ls timeout basename dirname realpath flock stat; do
     ln -s "$(command -v "$tool")" "$TEST_BIN/$tool"
   done
   ln -s "$REAL_FZF" "$TEST_BIN/fzf"
+  [[ -z $REAL_ZSH ]] || ln -s "$REAL_ZSH" "$TEST_BIN/zsh"
   export PATH="$TEST_BIN"
 }
 

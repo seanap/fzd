@@ -14,6 +14,8 @@ optdepends=('fd: fast filesystem search' 'bat: colorized file previews'
   'file: file type detection' 'tree: directory previews'
   'glib2: recoverable Trash through gio' 'trash-cli: alternative Trash provider'
   'plocate: indexed global search' 'eza: optional directory previews')
+optdepends+=('zsh: alternative interactive shell'
+  'zsh-autosuggestions: opt-in inline suggestions in zsh')
 source=('https://github.com/seanap/fzd/releases/download/v@VERSION@/fzd-@VERSION@.tar.gz')
 sha256sums=('@SHA256@')
 

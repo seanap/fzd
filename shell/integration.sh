@@ -151,6 +151,8 @@ if ! command -v lff >/dev/null 2>&1; then
 fi
 
 if [ -n "${BASH_VERSION:-}" ]; then
+  _FZD_INTEGRATION_DIR=${BASH_SOURCE[0]%/*}
+  [ "$_FZD_INTEGRATION_DIR" != "${BASH_SOURCE[0]}" ] || _FZD_INTEGRATION_DIR=.
   function _fzd_complete {
     local fzd_candidate
     COMPREPLY=()
@@ -183,5 +185,9 @@ if [ -n "${BASH_VERSION:-}" ]; then
   esac
 elif [ -n "${ZSH_VERSION:-}" ]; then
   # Keep native zsh syntax in its own file; %x identifies this sourced script.
-  eval 'source "${${(%):-%x}:A:h}/integration.zsh"'
+  eval '_FZD_INTEGRATION_DIR="${${(%):-%x}:A:h}"; source "$_FZD_INTEGRATION_DIR/integration.zsh"'
+fi
+if [ "${FZD_INLINE_SUGGESTIONS:-0}" = 1 ]; then
+  # shellcheck source=shell/inline.sh
+  source "$_FZD_INTEGRATION_DIR/inline.sh"
 fi

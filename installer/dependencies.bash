@@ -48,6 +48,7 @@ package_for() {
   base64 | sort | mktemp | install | sha256sum | readlink | truncate | cp | mv | realpath | chmod | rm | mkdir | stat) REPLY=coreutils ;;
   flock) [[ $PM == dnf ]] && REPLY=util-linux-core || REPLY=util-linux ;;
   find) REPLY=findutils ;;
+  ps) [[ $PM == apt ]] && REPLY=procps || REPLY=procps-ng ;;
   *) REPLY=$executable ;;
   esac
 }
@@ -97,6 +98,7 @@ collect_missing() {
     have fd || have fdfind || MISSING+=(fd)
     have bat || have batcat || MISSING+=(bat)
   fi
+  if [[ ${INLINE_SUGGESTIONS:-keep} == 1 ]]; then _inline_collect_missing; fi
 }
 
 ensure_dependencies() {
