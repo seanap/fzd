@@ -297,61 +297,60 @@ build_lines() {
 _have() { command -v "$1" >/dev/null 2>&1; }
 _timeout_wrap() { local s="$1"; shift; if (( s > 0 )) && _have timeout; then timeout "${s}s" "$@"; else "$@"; fi; }
 
+_lscolors_override() {
+  # Output LS_COLORS string to stdout.
+  local base="${1-${LS_COLORS:-}}"
+
+  # If user provided hex colors, translate to SGR for LS_COLORS.
+  # LS_COLORS expects codes like: di=38;2;R;G;B; fi=38;2;R;G;B
+  # (works with GNU dircolors/ls; eza follows LS_COLORS too.)
+  local di="" fi=""
+  if [[ -n "${FZD_COLOR_DIR:-}" && "${FZD_COLOR_DIR}" =~ ^#?[0-9A-Fa-f]{6}$ ]]; then
+    local h="${FZD_COLOR_DIR#\#}"
+    local r=$((16#${h:0:2})) g=$((16#${h:2:2})) b=$((16#${h:4:2}))
+    di="di=38;2;${r};${g};${b}"
+  fi
+  if [[ -n "${FZD_COLOR_FILE:-}" && "${FZD_COLOR_FILE}" =~ ^#?[0-9A-Fa-f]{6}$ ]]; then
+    local h="${FZD_COLOR_FILE#\#}"
+    local r=$((16#${h:0:2})) g=$((16#${h:2:2})) b=$((16#${h:4:2}))
+    fi="fi=38;2;${r};${g};${b}"
+  fi
+
+  if [[ -z "$di" && -z "$fi" ]]; then printf '%s' "$base"; return; fi
+
+  # Replace whole entries, retaining separators and all unrelated bytes.
+  # An odd trailing backslash escapes a colon inside a filename pattern.
+  local palette_tail="$base" entry suffix out="" separator="" seen_di=0 seen_fi=0
+  while :; do
+    entry=${palette_tail%%:*}
+    while [[ "$palette_tail" == *:* ]]; do
+      suffix=${entry##*[^\\]}
+      (( ${#suffix} % 2 )) || break
+      palette_tail=${palette_tail#*:}
+      entry+=":${palette_tail%%:*}"
+    done
+    case "$entry" in
+      di=*) if [[ -n "$di" ]]; then entry=$di; seen_di=1; fi ;;
+      fi=*) if [[ -n "$fi" ]]; then entry=$fi; seen_fi=1; fi ;;
+    esac
+    out+="$separator$entry"
+    [[ "$palette_tail" == *:* ]] || break
+    palette_tail=${palette_tail#*:}
+    separator=:
+  done
+  [[ -n "$di" && $seen_di == 0 ]] && out+="${out:+:}$di"
+  [[ -n "$fi" && $seen_fi == 0 ]] && out+="${out:+:}$fi"
+  printf '%s' "$out"
+}
+
 _preview_dir() {
   local dir="$1" depth="${2:-2}"
 
-  # Prefer eza for previews.
-  # We want the preview to follow the same dir/file colors as the left pane when possible.
-  # eza inherits LS_COLORS; only explicit, valid FZD overrides change di/fi.
+  # Both renderers apply the same explicit dir/file colors as the left pane.
+  # Preserve each renderer's inherited palette for all other entries.
   if command -v eza >/dev/null 2>&1; then
     local IFS=','; read -ra _ex <<<"$FZD_EXCLUDES"
     local ig=(); for g in "${_ex[@]}"; do [[ -n "$g" ]] && ig+=( --ignore-glob "$g" ); done
-
-    _lscolors_override() {
-      # Output LS_COLORS string to stdout.
-      local base="${LS_COLORS:-}"
-
-      # If user provided hex colors, translate to SGR for LS_COLORS.
-      # LS_COLORS expects codes like: di=38;2;R;G;B; fi=38;2;R;G;B
-      # (works with GNU dircolors/ls; eza follows LS_COLORS too.)
-      local di="" fi=""
-      if [[ -n "${FZD_COLOR_DIR:-}" && "${FZD_COLOR_DIR}" =~ ^#?[0-9A-Fa-f]{6}$ ]]; then
-        local h="${FZD_COLOR_DIR#\#}"
-        local r=$((16#${h:0:2})) g=$((16#${h:2:2})) b=$((16#${h:4:2}))
-        di="di=38;2;${r};${g};${b}"
-      fi
-      if [[ -n "${FZD_COLOR_FILE:-}" && "${FZD_COLOR_FILE}" =~ ^#?[0-9A-Fa-f]{6}$ ]]; then
-        local h="${FZD_COLOR_FILE#\#}"
-        local r=$((16#${h:0:2})) g=$((16#${h:2:2})) b=$((16#${h:4:2}))
-        fi="fi=38;2;${r};${g};${b}"
-      fi
-
-      if [[ -z "$di" && -z "$fi" ]]; then printf '%s' "$base"; return; fi
-
-      # Replace whole entries, retaining separators and all unrelated bytes.
-      # An odd trailing backslash escapes a colon inside a filename pattern.
-      local palette_tail="$base" entry suffix out="" separator="" seen_di=0 seen_fi=0
-      while :; do
-        entry=${palette_tail%%:*}
-        while [[ "$palette_tail" == *:* ]]; do
-          suffix=${entry##*[^\\]}
-          (( ${#suffix} % 2 )) || break
-          palette_tail=${palette_tail#*:}
-          entry+=":${palette_tail%%:*}"
-        done
-        case "$entry" in
-          di=*) if [[ -n "$di" ]]; then entry=$di; seen_di=1; fi ;;
-          fi=*) if [[ -n "$fi" ]]; then entry=$fi; seen_fi=1; fi ;;
-        esac
-        out+="$separator$entry"
-        [[ "$palette_tail" == *:* ]] || break
-        palette_tail=${palette_tail#*:}
-        separator=:
-      done
-      [[ -n "$di" && $seen_di == 0 ]] && out+="${out:+:}$di"
-      [[ -n "$fi" && $seen_fi == 0 ]] && out+="${out:+:}$fi"
-      printf '%s' "$out"
-    }
 
     local lsc; lsc="$(_lscolors_override)"
     if [[ -n "$lsc" ]]; then
@@ -367,6 +366,10 @@ _preview_dir() {
   if command -v tree >/dev/null 2>&1; then
     local IFS=','; read -ra _ex <<<"$FZD_EXCLUDES"
     local patt=""; for g in "${_ex[@]}"; do [[ -n "$patt" ]] && patt+='|'; patt+="$g"; done
+    # tree gives TREE_COLORS precedence over LS_COLORS, including an empty value.
+    local palette="${TREE_COLORS-${LS_COLORS:-}}" TREE_COLORS
+    TREE_COLORS="$(_lscolors_override "$palette")"
+    export TREE_COLORS
     if [[ -n "$patt" ]]; then _timeout_wrap "$FZD_PREVIEW_TIMEOUT" tree -a -C -L "$depth" -I "$patt" -- "$dir"
     else _timeout_wrap "$FZD_PREVIEW_TIMEOUT" tree -a -C -L "$depth" -- "$dir"; fi
     return

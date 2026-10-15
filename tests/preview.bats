@@ -2,6 +2,55 @@
 load helpers/common
 setup() { setup_fixture; }
 
+stub_tree_palette() {
+  cat >"$TEST_BIN/tree" <<'SH'
+#!/bin/sh
+printf '%s' "${TREE_COLORS-${LS_COLORS-}}"
+SH
+  chmod +x "$TEST_BIN/tree"
+}
+
+@test "tree applies the list directory and file colors to its inherited palette" {
+  stub_tree_palette
+  export LS_COLORS='di=34:fi=37:ex=32:ln=36'
+  export FZD_COLOR_DIR='#f9e2af' FZD_COLOR_FILE='#cdd6f4'
+  run_palette_preview
+  [ "$output" = 'di=38;2;249;226;175:fi=38;2;205;214;244:ex=32:ln=36' ]
+}
+
+@test "tree honors TREE_COLORS precedence and preserves unrelated entries" {
+  stub_tree_palette
+  export LS_COLORS='di=34:fi=37:ex=32' TREE_COLORS='ln=35:di=36:fi=0'
+  export FZD_COLOR_DIR=010203
+  run_palette_preview
+  [ "$output" = 'ln=35:di=38;2;1;2;3:fi=0' ]
+  [ "$TREE_COLORS" = 'ln=35:di=36:fi=0' ]
+  [ "$LS_COLORS" = 'di=34:fi=37:ex=32' ]
+}
+
+@test "tree retains its palette without valid overrides and supports empty palettes" {
+  stub_tree_palette
+  export LS_COLORS='di=34:fi=37' TREE_COLORS='di=35:fi=0'
+  export FZD_COLOR_DIR=invalid FZD_COLOR_FILE='#12345g'
+  run_palette_preview
+  [ "$output" = "$TREE_COLORS" ]
+  export TREE_COLORS='' FZD_COLOR_DIR=010203 FZD_COLOR_FILE=040506
+  run_palette_preview
+  [ "$output" = 'di=38;2;1;2;3:fi=38;2;4;5;6' ]
+}
+
+@test "real tree renders configured directory and regular file colors" {
+  [[ -x "$FZD_REAL_TREE" ]] || skip 'tree unavailable'
+  ln -s "$FZD_REAL_TREE" "$TEST_BIN/tree"
+  mkdir -p "$FIXTURE_ROOT/manilla-dir"
+  printf text >"$FIXTURE_ROOT/plain-file"
+  export FZD_COLOR_DIR='#f9e2af' FZD_COLOR_FILE='#cdd6f4'
+  unset TREE_COLORS LS_COLORS NO_COLOR
+  run_palette_preview
+  [[ "$output" == *$'\033[38;2;249;226;175mmanilla-dir'* ]]
+  [[ "$output" == *$'\033[38;2;205;214;244mplain-file'* ]]
+}
+
 stub_eza_palette() {
   cat >"$TEST_BIN/eza" <<'SH'
 #!/bin/sh

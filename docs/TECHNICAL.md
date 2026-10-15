@@ -353,8 +353,9 @@ Its controls, single-item operation mode, and output protocol take precedence
 over fzf's `--expect` and multiselect settings. To request different
 label colors, set `FZD_COLOR_DIR` / `FZD_COLOR_FILE` in your FZD configuration
 to six hexadecimal digits, optionally prefixed with `#`. Invalid overrides are
-ignored. Eza previews inherit `LS_COLORS`, replacing only explicitly requested
-directory or file colors.
+ignored. Directory previews use the same explicit directory/file colors with
+both eza and tree. They inherit `LS_COLORS` (or `TREE_COLORS` for tree when set),
+replacing only explicitly requested directory or file colors.
 Third-party bat, micro, eza, or terminal themes are personal choices: configure
 those tools yourself if desired. Installation never downloads themes or changes
 their configuration. To use a vivid palette, configure `LS_COLORS` in your shell.
