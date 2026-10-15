@@ -40,6 +40,11 @@ function _fzd_require_zoxide {
   return 1
 }
 
+function _fzd_shell_learns {
+  command -v __zoxide_hook >/dev/null 2>&1 || return 1
+  [[ "${PROMPT_COMMAND[*]:-} ${__vsc_original_prompt_command[*]:-}" == *'__zoxide_hook'* ]]
+}
+
 function _fzd_jump {
   _fzd_require_zoxide || return
   [ "$#" -gt 0 ] || {
@@ -63,7 +68,7 @@ function _fzd_jump {
   # Interactive upstream hooks learn at chpwd/the next prompt. Scripts have no
   # prompt, and should still learn successful jumps immediately.
   case $- in
-  *i*) command -v __zoxide_hook >/dev/null 2>&1 && return 0 ;;
+  *i*) _fzd_shell_learns && return 0 ;;
   esac
   command zoxide add -- "$PWD" || true
 }

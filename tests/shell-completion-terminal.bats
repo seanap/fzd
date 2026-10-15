@@ -28,6 +28,7 @@ start_completion_shell() {
 PS1='FZD_PROMPT> '
 source "$FZD_REPO/shell/integration.sh"
 source "$FZD_REPO/shell/integration.sh"
+[[ ${FZD_TEST_NO_HOOK:-0} != 1 ]] || eval "$(zoxide init bash --no-cmd --hook none)"
 bind 'set show-all-if-ambiguous on'
 if [[ $FZD_TEST_ENGINE == blesh ]]; then
   source "$HOME/blesh/ble.sh" --rcfile /dev/null
@@ -43,6 +44,7 @@ source "$FZD_REPO/shell/integration.sh"
 autoload -Uz compinit
 compinit -i -D
 source "$FZD_REPO/shell/integration.sh"
+[[ ${FZD_TEST_NO_HOOK:-0} != 1 ]] || eval "$(zoxide init zsh --no-cmd --hook none)"
 if [[ $FZD_TEST_ENGINE == autosuggestions ]]; then
   ZSH_AUTOSUGGEST_STRATEGY=(completion)
   source "$FZD_COMPAT_ROOT/zsh-autosuggestions/zsh-autosuggestions.zsh"
@@ -147,6 +149,23 @@ check_inline_suggestion() {
     wait_file "$FZD_SHELL_BUFFER.hooks"
     [ "$(grep -o __zoxide_hook "$FZD_SHELL_BUFFER.hooks" | wc -l)" -eq 1 ]
     ! grep -q _fzd_init_zoxide "$FZD_SHELL_BUFFER.hooks"
+    stop_terminal
+    rm -f "$FZD_SHELL_BUFFER"
+  done
+}
+
+@test "upstream hook none stays disabled while explicit interactive FZD jumps still learn" {
+  export FZD_TEST_NO_HOOK=1
+  local shell
+  mkdir -p "$FIXTURE_ROOT/explicit-jump" "$FIXTURE_ROOT/ordinary-cd"
+  for shell in bash zsh; do
+    start_completion_shell "$shell"
+    tmux -S "$SOCKET" send-keys -l 'cd ordinary-cd; lf ../explicit-jump; zoxide query explicit-jump >"$FZD_SHELL_BUFFER"'
+    tmux -S "$SOCKET" send-keys Enter
+    wait_file "$FZD_SHELL_BUFFER"
+    [ "$(cat "$FZD_SHELL_BUFFER")" = "$FIXTURE_ROOT/explicit-jump" ]
+    run zoxide query ordinary-cd
+    [ "$status" -ne 0 ]
     stop_terminal
     rm -f "$FZD_SHELL_BUFFER"
   done

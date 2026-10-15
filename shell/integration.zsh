@@ -1,4 +1,9 @@
 # Native zsh completion and upstream zoxide initialization.
+function _fzd_shell_learns {
+  command -v __zoxide_hook >/dev/null 2>&1 || return 1
+  [[ ${precmd_functions[(Ie)__zoxide_hook]:-0} -gt 0 || ${chpwd_functions[(Ie)__zoxide_hook]:-0} -gt 0 ]]
+}
+
 function _fzd_init_zoxide {
   # shellcheck disable=SC2296,SC2154 # Native zsh arrays/options.
   precmd_functions=("${(@)precmd_functions:#_fzd_init_zoxide}")
