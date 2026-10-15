@@ -3,6 +3,7 @@ load helpers/common
 load helpers/terminal
 setup() {
   setup_terminal_fixture
+  : >"$FZD_PTY_ERROR"
   export HOME="$BATS_TEST_TMPDIR/home"
   export FZD_COMPAT_ROOT="${FZD_COMPAT_ROOT:-$FZD_REPO/.test-work/compat}"
   export FZD_SHELL_BUFFER="$BATS_TEST_TMPDIR/buffer"

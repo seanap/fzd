@@ -100,13 +100,13 @@ esac
 
 case $target in
 ubuntu | debian)
-  apt-get install --no-install-recommends -y zsh tmux bats bubblewrap file tree curl ca-certificates git bat fd-find libglib2.0-bin plocate
+  apt-get install --no-install-recommends -y zsh tmux bats bubblewrap file tree curl ca-certificates git bat fd-find libglib2.0-bin plocate procps
   ;;
 arch)
-  pacman -S --noconfirm --needed zsh tmux bats bubblewrap file tree curl git bat fd glib2 plocate
+  pacman -S --noconfirm --needed zsh tmux bats bubblewrap file tree curl git bat fd glib2 plocate procps-ng
   ;;
 fedora)
-  dnf install -y zsh tmux bats bubblewrap file tree curl git bat fd-find glib2 plocate diffutils which tar gzip xz
+  dnf install -y zsh tmux bats bubblewrap file tree curl git bat fd-find glib2 plocate diffutils which tar gzip xz procps-ng
   ;;
 esac
 printf '. /usr/share/fzd/integration.sh\n' >>"$HOME/.bashrc"
