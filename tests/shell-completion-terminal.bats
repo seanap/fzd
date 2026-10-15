@@ -249,3 +249,26 @@ RC
   run zsh -efc 'FZD_AUTO_COMPLETION=0; source "$1/shell/integration.sh"; _fzd_init_completion; ! whence compdef' _ "$FZD_REPO"
   [ "$status" -eq 0 ]
 }
+
+@test "installed inline engines preserve real FZD browsing and return to the parent shell" {
+  prepare_installed_inline
+  local shell
+  for shell in bash zsh; do
+    start_completion_shell "$shell" installed
+    tmux -S "$SOCKET" send-keys -l 'lf; printf returned >"$FZD_SHELL_BUFFER.returned"'
+    tmux -S "$SOCKET" send-keys Enter
+    wait_screen '../'
+    tmux -S "$SOCKET" send-keys -l docker
+    tmux -S "$SOCKET" send-keys Right
+    wait_screen 'immich/'
+    tmux -S "$SOCKET" send-keys -l immich
+    tmux -S "$SOCKET" send-keys Enter
+    wait_file "$FZD_SHELL_BUFFER.returned"
+    tmux -S "$SOCKET" send-keys -l 'printf "%s" "$PWD" >"$FZD_SHELL_BUFFER"'
+    tmux -S "$SOCKET" send-keys Enter
+    wait_file "$FZD_SHELL_BUFFER"
+    [ "$(cat "$FZD_SHELL_BUFFER")" = "$FIXTURE_ROOT/docker/immich" ]
+    stop_terminal
+    rm -f "$FZD_SHELL_BUFFER" "$FZD_SHELL_BUFFER.returned"
+  done
+}
