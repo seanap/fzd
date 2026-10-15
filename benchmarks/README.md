@@ -134,3 +134,19 @@ feature use. The existing codec process-budget tests continue to protect the
 candidate path. Explorer's history test also asserts that visits create no
 persistent state directory before a flush. See
 [the Explorer report](../docs/phase-three-five.md) for measured costs and limits.
+
+For integrated zoxide navigation, with other local tests/containers stopped:
+
+```bash
+bash benchmarks/navigation.sh .test-work/navigation-benchmark
+FZD_BENCH_INTEGRATION="$PWD/shell/integration.sh" \
+  bash benchmarks/terminal.sh "$PWD/fzd.sh" 1000 5
+```
+
+The first command compares warm `lf docker imm` against direct upstream
+query/cd/add, using a private database, alternating seven groups of 150 jumps,
+and Python's monotonic clock. It includes learning and amortizes shell loading.
+The second measures normal `lf` through the real shell wrapper and fzf terminal,
+including startup and directory navigation. To compare a historical checkout,
+set both the integration and executable paths to that checkout. Use the same
+fzf and otherwise idle host; PTY observations have 10 ms clock granularity.
