@@ -124,6 +124,21 @@ cp /usr/share/fzd/lib/*.bash "$source_root/lib/"
 mkdir -p "$source_root/.test-work/phase-three"
 cp /fixtures/fzf-0.65.2-linux_amd64.tar.gz "$source_root/.test-work/phase-three/"
 cd "$source_root"
+# Optional inline setup: real native dependencies + official verified download.
+# This fixture home is separate from the package-preservation fixture above.
+if [[ $target == ubuntu || $target == debian || $target == arch ]]; then
+  inline_home=/work/inline-home
+  mkdir -p "$inline_home"
+  HOME=$inline_home ZDOTDIR=$inline_home bash install.sh --noninteractive --inline-suggestions
+  [[ -r $inline_home/.local/share/blesh/ble.sh ]]
+  grep -q '^FZD_INLINE_SUGGESTIONS=1$' "$inline_home/.bashrc"
+  grep -q '^FZD_INLINE_SUGGESTIONS=1$' "$inline_home/.zshrc"
+  HOME=$inline_home ZDOTDIR=$inline_home bash "$inline_home/.local/share/fzd/install.sh" --verify --inline-suggestions
+  HOME=$inline_home ZDOTDIR=$inline_home bash "$inline_home/.local/share/fzd/install.sh" --uninstall
+  [[ -r $inline_home/.local/share/blesh/ble.sh && ! -e $inline_home/.local/bin/fzd ]]
+  printf 'PASS: opt-in inline installer with native dependencies and pinned upstream ble.sh\n'
+fi
+
 test_files=()
 for test_file in tests/*.bats; do
   [[ $test_file == tests/packaging.bats ]] || test_files+=("$test_file")
@@ -161,19 +176,5 @@ fedora)
 esac
 [[ ! -e /usr/bin/fzd && ! -e /usr/share/fzd/integration.sh ]]
 (cd /work && sha256sum -c /results/home-opt-in.sha256)
-# Optional inline setup: real native dependencies + official verified download.
-# This fixture home is separate from the package-preservation fixture above.
-if [[ $target == ubuntu || $target == debian || $target == arch ]]; then
-  inline_home=/work/inline-home
-  mkdir -p "$inline_home"
-  HOME=$inline_home ZDOTDIR=$inline_home bash install.sh --noninteractive --inline-suggestions
-  [[ -r $inline_home/.local/share/blesh/ble.sh ]]
-  grep -q '^FZD_INLINE_SUGGESTIONS=1$' "$inline_home/.bashrc"
-  grep -q '^FZD_INLINE_SUGGESTIONS=1$' "$inline_home/.zshrc"
-  HOME=$inline_home ZDOTDIR=$inline_home bash "$inline_home/.local/share/fzd/install.sh" --verify --inline-suggestions
-  HOME=$inline_home ZDOTDIR=$inline_home bash "$inline_home/.local/share/fzd/install.sh" --uninstall
-  [[ -r $inline_home/.local/share/blesh/ble.sh && ! -e $inline_home/.local/bin/fzd ]]
-  printf 'PASS: opt-in inline installer with native dependencies and pinned upstream ble.sh\n'
-fi
 command -v fzf micro flock
 printf 'PASS: %s actual userspace, lifecycle, shell startup, packaged regression suite\n' "$target" | tee /results/RESULT

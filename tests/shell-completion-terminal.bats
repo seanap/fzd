@@ -202,6 +202,14 @@ prepare_installed_inline() {
   tar -xJf "$archive" -C "$HOME/dependencies"
   export FZD_BLESH_PATH="$HOME/dependencies/ble-0.4.0-devel3/ble.sh"
   export FZD_ZSH_AUTOSUGGESTIONS_PATH="$FZD_COMPAT_ROOT/zsh-autosuggestions/zsh-autosuggestions.zsh"
+  local native_plugin
+  for native_plugin in /usr/share/zsh-autosuggestions/zsh-autosuggestions.zsh \
+    /usr/share/zsh/plugins/zsh-autosuggestions/zsh-autosuggestions.zsh; do
+    [[ ! -r $native_plugin ]] || {
+      export FZD_ZSH_AUTOSUGGESTIONS_PATH=$native_plugin
+      break
+    }
+  done
   unset FZD_BIN
   run bash "$FZD_REPO/install.sh" --inline-suggestions --deps none --noninteractive
   [ "$status" -eq 0 ]
