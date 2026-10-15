@@ -8,7 +8,8 @@ fetch_fixture() {
   local name=$1 url=$2 commit=$3
   if [[ ! -d $work/$name/.git ]]; then
     git init -q "$work/$name"
-    git -C "$work/$name" fetch -q --depth 1 "$url" "$commit"
+    git -C "$work/$name" remote add origin "$url"
+    git -C "$work/$name" fetch -q --depth 1 origin "$commit"
     git -C "$work/$name" checkout -q --detach FETCH_HEAD
   fi
   [[ $(git -C "$work/$name" rev-parse HEAD) == "$commit" ]] || {
