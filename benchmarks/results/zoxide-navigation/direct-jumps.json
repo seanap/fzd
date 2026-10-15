@@ -1,0 +1,33 @@
+{
+  "clock": "Python perf_counter_ns (monotonic)",
+  "iterations_per_group": 150,
+  "groups": 7,
+  "includes": "query, cd, learning; shell/source startup amortized",
+  "zoxide": "zoxide 0.9.3",
+  "results": {
+    "upstream_query_cd_add": {
+      "median_ms": 3.2604464733333334,
+      "groups_ms": [
+        3.2604464733333334,
+        3.2575856866666664,
+        3.4688560733333333,
+        3.1435948666666667,
+        3.55407956,
+        3.1454656066666664,
+        3.278677153333333
+      ]
+    },
+    "lf_partial_jump": {
+      "median_ms": 3.5050852133333334,
+      "groups_ms": [
+        3.6157134133333337,
+        3.6094028466666668,
+        3.3700506666666663,
+        3.422365453333333,
+        3.4916522533333336,
+        3.5050852133333334,
+        3.6187238666666666
+      ]
+    }
+  }
+}

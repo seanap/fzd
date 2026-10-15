@@ -1,0 +1,12 @@
+script,entries,run,event,milliseconds
+baseline/fzd.sh,10000,1,startup,690.000
+baseline/fzd.sh,10000,1,local-query,0.000
+baseline/fzd.sh,10000,1,right,740.000
+baseline/fzd.sh,10000,1,left,720.000
+baseline/fzd.sh,10000,1,file-query,20.000
+baseline/fzd.sh,10000,1,preview-first,120.000
+baseline/fzd.sh,10000,1,preview-change,110.000
+baseline/fzd.sh,10000,1,global-open,20.000
+baseline/fzd.sh,10000,1,global-query,210.000
+baseline/fzd.sh,10000,1,global-close,820.000
+baseline/fzd.sh,10000,1,exit,120.000

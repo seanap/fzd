@@ -161,6 +161,7 @@ the installed application.
 
 ```bash
 bash dev/prepare-fzf-test.sh
+bash dev/prepare-shell-compat.sh
 bash packaging/validate-distributions.sh .test-work/my-candidate ubuntu
 bash packaging/validate-distributions.sh .test-work/my-candidate debian
 bash packaging/validate-distributions.sh .test-work/my-candidate arch
@@ -177,7 +178,7 @@ recorded. Tags follow security updates; evidence identifies each tested image.
 Debian/Ubuntu exercise real APT/dpkg dependency resolution, revision-2 upgrades,
 verification and purge. Arch exercises makepkg/pacman. Fedora is staged-runtime
 compatibility, not RPM lifecycle validation. Installed executable/integration/
-modules are copied into the fixture source layout for the original 201 tests,
+modules are copied into the fixture source layout for the installed regression suite,
 including real tmux/fzf PTYs, isolated gio Trash, concurrency and private-tmpfs
 cross-filesystem movement. Tests run as an unprivileged container user, so Unix
 permission and sudo tests retain their meaning. Packaging tests run separately

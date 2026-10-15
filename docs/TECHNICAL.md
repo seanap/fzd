@@ -84,6 +84,10 @@ dev/prepare-shell-compat.sh`; see [test instructions](../tests/README.md).
 
 ## Install
 
+For the feature preview, use the source-checkout command in the [README](../README.md#install).
+Package examples below apply to locally built candidates or explicitly published
+assets; this feature has not been released.
+
 **Prerelease for testing: `v0.1.0-rc.2`.** Get its assets from
 [GitHub Releases](https://github.com/seanap/fzd/releases). If this candidate is
 not listed, publication is still pending. FZD is not available in the official
@@ -436,3 +440,20 @@ Distribution packages stage standard files with
 `bash install.sh --stage "$PWD/package-root" --prefix /usr`. They must not run
 the user installer in post-install scripts or edit users' homes. See the
 [packaging architecture and readiness checklist](packaging.md).
+
+## Navigation performance
+
+Measurements on the development WSL x86_64 host use upstream zoxide 0.9.3 and
+fzf 0.44.1. Three alternating real-PTY trials per revision show normal `lf`
+startup medians of 110 → 90 ms at 1,000 entries and 690 → 690 ms at 10,000 entries.
+The screen clock has 10 ms granularity; this is evidence of no measurable startup
+regression, not a claim that the new navigation is faster.
+
+Warm `lf docker imm` jumps took a median 3.51 ms, including querying and learning,
+versus 3.26 ms for direct upstream query/cd/add. Seven alternating groups of 150
+jumps use Python's monotonic clock; one-time shell/source startup is amortized.
+No tests or local containers ran during benchmarking. Explorer learning is
+batched on exit and adds no zoxide process to the redraw loop.
+
+[Retained measurements](../benchmarks/results/zoxide-navigation/README.md) include
+all groups and terminal trials, baseline revision and reproduction commands.
