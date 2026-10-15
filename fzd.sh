@@ -72,6 +72,7 @@ ppath() { printf '%s' "${1/#$HOME/~}"; }
 
 # ----------------- COMMON HELPERS -----------------
 DELIM=$'\t'
+FZD_ZOXIDE_PENDING=()
 declare -A LAST_CHILD=()   # parent_abs -> child_basename
 START_POS=""
 CUR=""
