@@ -85,7 +85,7 @@ shells() { printf '%s\n' bash "$FZD_REAL_ZSH"; }
   done < <(shells)
   run bash -ec 'lf() { :; }; complete -W custom lf; complete -W preserved lff; source "$1/shell/integration.sh"; [[ $(complete -p lf) == *custom* && $(complete -p lff) == *preserved* ]]' _ "$FZD_REPO"
   [ "$status" -eq 0 ]
-  run "$FZD_REAL_ZSH" -efc 'autoload -Uz compinit; compinit -D; compdef _files lf; compdef _files lff; source "$1/shell/integration.sh"; [[ $_comps[lf] == _files && $_comps[lff] == _files ]]' _ "$FZD_REPO"
+  run "$FZD_REAL_ZSH" -efc 'autoload -Uz compinit; compinit -i -D; compdef _files lf; compdef _files lff; source "$1/shell/integration.sh"; [[ $_comps[lf] == _files && $_comps[lff] == _files ]]' _ "$FZD_REPO"
   [ "$status" -eq 0 ]
 }
 

@@ -9,7 +9,8 @@ setup() {
   export FZD_SHELL_BUFFER="$BATS_TEST_TMPDIR/buffer"
   export FZD_BIN="$FZD_SCRIPT"
   export ZDOTDIR="$HOME"
-  mkdir -p "$HOME" "$FIXTURE_ROOT/docker/immich"
+  mkdir -p "$HOME" "$FIXTURE_ROOT/docker/immich" "$XDG_CACHE_HOME" "$XDG_RUNTIME_DIR"
+  chmod 700 "$XDG_RUNTIME_DIR"
   zoxide add -- "$FIXTURE_ROOT/docker/immich"
 }
 teardown() { stop_terminal; }
@@ -34,7 +35,7 @@ RC
 PS1='FZD_PROMPT> '
 source "$FZD_REPO/shell/integration.sh"
 autoload -Uz compinit
-compinit -D
+compinit -i -D
 source "$FZD_REPO/shell/integration.sh"
 if [[ $FZD_TEST_ENGINE == autosuggestions ]]; then
   ZSH_AUTOSUGGEST_STRATEGY=(completion)

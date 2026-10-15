@@ -160,5 +160,7 @@ for ((iteration = 1; iteration <= runs; iteration++)); do
   now
   observed=$REPLY
   record exit
-  [[ $(cat "$FZD_BENCH_STATUS") == 130 && ! -s "$FZD_BENCH_RESULT" ]]
+  expected_status=130
+  [[ -z ${FZD_BENCH_INTEGRATION:-} ]] || expected_status=0
+  [[ $(cat "$FZD_BENCH_STATUS") == "$expected_status" && ! -s "$FZD_BENCH_RESULT" ]]
 done
