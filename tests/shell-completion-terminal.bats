@@ -17,6 +17,12 @@ teardown() { stop_terminal; }
 
 start_completion_shell() {
   local shell=$1 engine=${2:-none} command
+  if [[ $engine == blesh ]]; then
+    # Upstream treats an out/ tree as a development build and caches beside it.
+    # Load a private copy so read-only mounted fixtures remain untouched.
+    mkdir -p "$HOME/blesh"
+    cp -R "$FZD_COMPAT_ROOT/blesh/out/." "$HOME/blesh/"
+  fi
   if [[ $shell == bash ]]; then
     cat >"$HOME/rc" <<'RC'
 PS1='FZD_PROMPT> '
@@ -24,7 +30,7 @@ source "$FZD_REPO/shell/integration.sh"
 source "$FZD_REPO/shell/integration.sh"
 bind 'set show-all-if-ambiguous on'
 if [[ $FZD_TEST_ENGINE == blesh ]]; then
-  source "$FZD_COMPAT_ROOT/blesh/out/ble.sh" --rcfile /dev/null
+  source "$HOME/blesh/ble.sh" --rcfile /dev/null
   bleopt complete_auto_delay=50
 fi
 bind -x '"\C-x\C-b": printf "%s" "$READLINE_LINE" >"$FZD_SHELL_BUFFER"'
@@ -132,6 +138,15 @@ check_inline_suggestion() {
     tmux -S "$SOCKET" send-keys Enter
     wait_file "$FZD_SHELL_BUFFER"
     [ "$(cat "$FZD_SHELL_BUFFER")" = "$FIXTURE_ROOT/elsewhere" ]
+    if [[ $shell == bash ]]; then
+      tmux -S "$SOCKET" send-keys -l 'printf "%s\n" "${PROMPT_COMMAND[@]}" >"$FZD_SHELL_BUFFER.hooks"'
+    else
+      tmux -S "$SOCKET" send-keys -l 'printf "%s\n" "${precmd_functions[@]}" "${chpwd_functions[@]}" >"$FZD_SHELL_BUFFER.hooks"'
+    fi
+    tmux -S "$SOCKET" send-keys Enter
+    wait_file "$FZD_SHELL_BUFFER.hooks"
+    [ "$(grep -o __zoxide_hook "$FZD_SHELL_BUFFER.hooks" | wc -l)" -eq 1 ]
+    ! grep -q _fzd_init_zoxide "$FZD_SHELL_BUFFER.hooks"
     stop_terminal
     rm -f "$FZD_SHELL_BUFFER"
   done
