@@ -173,6 +173,11 @@ _remove_temp() {
 }
 _cleanup() {
   _restore_screen
+  # One upstream database transaction per session, outside the redraw loop.
+  local zoxide_offset
+  for ((zoxide_offset=0; zoxide_offset<${#FZD_ZOXIDE_PENDING[@]}; zoxide_offset+=128)); do
+    command zoxide add -- "${FZD_ZOXIDE_PENDING[@]:zoxide_offset:128}" || true
+  done
   if [[ ${FZD_STATE_HELD:-0} == 1 ]]; then _state_unlock; fi
   if declare -F _operations_cleanup >/dev/null; then _operations_cleanup; fi
   if ((${#RECENT_PENDING[@]})); then
@@ -635,6 +640,7 @@ _run_global_overlay() {
   [[ "$backend" == "auto" ]] && { if [[ -n "$have_loc" ]]; then backend="locate"; else backend="cache"; fi; }
 
   local CTRL SRC self_command control_command
+  local query=${1:-}
   self_command=$(_shell_quote "$FZD_SELF")
   if [[ "$backend" == "locate" || "$backend" == "live" ]]; then
     _make_temp || return 0; CTRL=$REPLY
@@ -646,10 +652,12 @@ _run_global_overlay() {
       --ansi --height=100% --layout=reverse --border --no-mouse --no-multi --no-expect \
       --delimiter "$DELIM" --with-nth=2.. \
       --prompt "global:${FZD_GLOBAL_ROOT%/}/ > " \
+      --query="$query" \
       --disabled \
       --preview "$self_command --_preview {1}" \
       --preview-window=right,60%:wrap \
       --bind "change:reload:$self_command --_global_list --q {q} || true" \
+      --bind "start:reload:$self_command --_global_list --q {q} || true" \
       --bind "esc:abort" \
       --bind "f1:execute($self_command --_help global)" \
       "${EXPLORER_BINDS[@]}" \
@@ -673,6 +681,7 @@ _run_global_overlay() {
       --ansi --height=100% --layout=reverse --border --no-mouse --no-multi --no-expect \
       --delimiter "$DELIM" --with-nth=2.. \
       --prompt "global:${FZD_GLOBAL_ROOT%/}/ > " \
+      --query="$query" \
       --preview "$self_command --_preview {1}" \
       --preview-window=right,60%:wrap \
       --bind "esc:abort" \
@@ -730,6 +739,7 @@ _shell_quote() {
 # ----------------- SESSION HISTORY (no disk I/O during navigation) -----------------
 _recent_queue() {
   local path=$1 previous queued=("$1")
+  FZD_ZOXIDE_PENDING+=("$path")
   for previous in "${RECENT_PENDING[@]}"; do
     [[ "$previous" == "$path" ]] || queued+=("$previous")
     ((${#queued[@]} < 25)) || break
@@ -816,7 +826,13 @@ main() {
   CUR="$(get_cwd "$PWD"; printf '.')"; CUR=${CUR%.}
   [[ "$CUR" == / ]] || CUR=${CUR%/}
   _history_init
+  FZD_ZOXIDE_PENDING+=("$CUR")
   dbg "cwd=$CUR"
+
+  if [[ ${1:-} == --global ]]; then
+    _run_global_overlay "${2:-}"
+    _history_visit
+  fi
 
   local HIST_FILE="$FZD_STATE_DIR/query-history"
 
@@ -936,6 +952,7 @@ _fzd_entry() {
   export LC_ALL=C
   FZD_TEMP_FILES=()
   RECENT_PENDING=()
+  FZD_ZOXIDE_PENDING=()
   FZD_SCREEN_OPTS=(); FZD_SCREEN_ACTIVE=0; FZD_SCREEN_RESTORE=''
   trap _cleanup EXIT
   trap 'exit 130' INT
@@ -952,6 +969,24 @@ _fzd_entry() {
       _global_list "$@"; return
       ;;
     --_preview) _preview "${2:-}"; return ;;
+  esac
+  command -v zoxide >/dev/null 2>&1 || { printf 'fzd: zoxide is required; install it with your distribution package manager\n' >&2; return 1; }
+  case "${1:-}" in
+    --help|-h)
+      printf '%s\n' 'Usage: fzd [DIRECTORY] | --global [QUERY]' \
+        'Use shell integration: lf explores, lf name remembers, lff name finds.'
+      return 0 ;;
+    --_help) ;;
+    --global) (($# <= 2)) || { printf 'fzd: quote the global query\n' >&2; return 1; } ;;
+    '') ;;
+    *)
+      if (($# == 1)) && [[ -d $1 ]]; then
+        cd -- "$1" || return
+        shift
+      else
+        printf 'fzd: expected a directory or --global [QUERY]; use lf for zoxide jumps\n' >&2
+        return 1
+      fi ;;
   esac
   FZF_BIN="$(type -P fzf 2>/dev/null || command -v fzf || true)"
   [[ -x "$FZF_BIN" ]] || { echo "fzd: ERROR: fzf not found" >&2; return 1; }

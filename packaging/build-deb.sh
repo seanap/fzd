@@ -24,11 +24,12 @@ install -Dm644 "$source_root/packaging/debian/copyright" "$stage/usr/share/doc/f
 rm -r -- "$stage/usr/share/licenses"
 install -Dm644 "$source_root/README.md" "$stage/usr/share/doc/fzd/README.md"
 install -Dm644 "$source_root/docs/packaging.md" "$stage/usr/share/doc/fzd/packaging.md"
+install -Dm644 "$source_root/docs/TECHNICAL.md" "$stage/usr/share/doc/fzd/TECHNICAL.md"
 install -Dm644 "$source_root/packaging/fzd.1" "$stage/usr/share/man/man1/fzd.1"
 printf 'fzd (%s) unstable; urgency=medium\n\n  * Release candidate built from immutable source.\n\n -- Sean Patrick <17012946+seanap@users.noreply.github.com>  %s\n' \
   "$deb_version" "$(date -u -R -d "@$epoch")" >"$stage/usr/share/doc/fzd/changelog.Debian"
 gzip -n -9 "$stage/usr/share/man/man1/fzd.1" "$stage/usr/share/doc/fzd/README.md" \
-  "$stage/usr/share/doc/fzd/packaging.md" "$stage/usr/share/doc/fzd/changelog.Debian"
+  "$stage/usr/share/doc/fzd/packaging.md" "$stage/usr/share/doc/fzd/TECHNICAL.md" "$stage/usr/share/doc/fzd/changelog.Debian"
 mkdir -p "$stage/DEBIAN"
 sed "s/@VERSION@/$deb_version/g" "$source_root/packaging/debian/control.in" >"$stage/DEBIAN/control"
 printf 'Installed-Size: %s\n' "$(du -sk "$stage/usr" | cut -f1)" >>"$stage/DEBIAN/control"

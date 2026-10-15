@@ -154,3 +154,20 @@ SH
   [ "$(cat "$FZD_PTY_RESULT")" = "$FIXTURE_ROOT" ]
   [ "$(tmux -S "$SOCKET" display-message -p -t fzd:0.0 '#{alternate_on}')" -eq 0 ]
 }
+
+@test "seeded global discovery produces results without typing on live cache and locate" {
+  local backend
+  mkdir -p "$FIXTURE_ROOT/needle-seeded"
+  for backend in live cache locate; do
+    [[ $backend != locate ]] || private_locate
+    export FZD_GLOBAL_BACKEND=$backend FZD_PTY_GLOBAL_QUERY=needle-seeded
+    start_terminal 'global:/ > needle-seeded'
+    wait_screen 'needle-seeded/'
+    tmux -S "$SOCKET" send-keys Enter
+    wait_file "$FZD_PTY_STATUS"
+    [ "$(cat "$FZD_PTY_STATUS")" -eq 0 ]
+    [ "$(cat "$FZD_PTY_RESULT")" = "$FIXTURE_ROOT/needle-seeded" ]
+    stop_terminal
+    rm -f "$FZD_PTY_STATUS" "$FZD_PTY_RESULT"
+  done
+}

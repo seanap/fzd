@@ -10,6 +10,7 @@ setup() {
 
 extract_init() {
   cat "$FZD_REPO/shell/integration.sh" >"$BATS_TEST_TMPDIR/init"
+  cat "$FZD_REPO/shell/integration.zsh" >"$BATS_TEST_TMPDIR/integration.zsh"
   [ -s "$BATS_TEST_TMPDIR/init" ]
 }
 

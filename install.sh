@@ -35,7 +35,8 @@ Usage: bash install.sh [options]
   -h, --help
 
 Update: git pull --ff-only, then repeat installation from the checkout.
-After installation: open a new shell and run lf (or fzd_cd if lf already exists).
+After installation: lf explores; lf name remembers; lff name finds.
+Use fzd_cd/fzd_find when lf/lff already exist. Open a new shell first.
 The installer never changes third-party themes, EDITOR, or LS_COLORS.
 USAGE
 }
@@ -119,6 +120,7 @@ if [[ -n $STAGE ]]; then
   [[ -f $SCRIPT_DIR/fzd.sh ]] || die 'Package staging requires the source checkout'
   install -Dm755 "$SCRIPT_DIR/fzd.sh" "$STAGE$PREFIX/bin/fzd"
   install -Dm644 "$SCRIPT_DIR/shell/integration.sh" "$STAGE$PREFIX/share/fzd/integration.sh"
+  install -Dm644 "$SCRIPT_DIR/shell/integration.zsh" "$STAGE$PREFIX/share/fzd/integration.zsh"
   for module in "$SCRIPT_DIR/lib/"*.bash; do
     install -Dm644 "$module" "$STAGE$PREFIX/share/fzd/lib/${module##*/}"
   done
@@ -172,6 +174,7 @@ begin_transaction
 [[ -z $FZF_VERSION ]] || download_fzf
 install_owned "$SCRIPT_DIR/fzd.sh" "$PREFIX/bin/fzd" 755
 install_owned "$SCRIPT_DIR/shell/integration.sh" "$DATA/integration.sh" 644
+install_owned "$SCRIPT_DIR/shell/integration.zsh" "$DATA/integration.zsh" 644
 for module in "$SCRIPT_DIR/lib/"*.bash; do
   bash -n "$module"
   install_owned "$module" "$DATA/lib/${module##*/}" 644
@@ -205,5 +208,5 @@ write_file "$TX/manifest" "$MANIFEST" 600
 : >"$TX/committed"
 COMMITTED=1
 log "Installed $PREFIX/bin/fzd. Configuration preserved at $CFG."
-log "Open a new shell: lf (if free), or fzd_cd. Verify/uninstall: bash $(printf %q "$DATA/install.sh") --verify / --uninstall"
+log "Open a new shell: lf / lf name / lff name (or fzd_cd/fzd_find). Verify/uninstall: bash $(printf %q "$DATA/install.sh") --verify / --uninstall"
 log "Original files and transaction journal: $DATA/backups"

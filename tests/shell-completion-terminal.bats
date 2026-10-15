@@ -1,0 +1,136 @@
+#!/usr/bin/env bats
+load helpers/common
+load helpers/terminal
+setup() {
+  setup_terminal_fixture
+  export HOME="$BATS_TEST_TMPDIR/home"
+  export FZD_COMPAT_ROOT="${FZD_COMPAT_ROOT:-$FZD_REPO/.test-work/compat}"
+  export FZD_SHELL_BUFFER="$BATS_TEST_TMPDIR/buffer"
+  export FZD_BIN="$FZD_SCRIPT"
+  export ZDOTDIR="$HOME"
+  mkdir -p "$HOME" "$FIXTURE_ROOT/docker/immich"
+  zoxide add -- "$FIXTURE_ROOT/docker/immich"
+}
+teardown() { stop_terminal; }
+
+start_completion_shell() {
+  local shell=$1 engine=${2:-none} command
+  if [[ $shell == bash ]]; then
+    cat >"$HOME/rc" <<'RC'
+PS1='FZD_PROMPT> '
+source "$FZD_REPO/shell/integration.sh"
+source "$FZD_REPO/shell/integration.sh"
+bind 'set show-all-if-ambiguous on'
+if [[ $FZD_TEST_ENGINE == blesh ]]; then
+  source "$FZD_COMPAT_ROOT/blesh/out/ble.sh" --rcfile /dev/null
+  bleopt complete_auto_delay=50
+fi
+bind -x '"\C-x\C-b": printf "%s" "$READLINE_LINE" >"$FZD_SHELL_BUFFER"'
+RC
+    printf -v command 'exec bash --noprofile --rcfile %q -i' "$HOME/rc"
+  else
+    cat >"$HOME/.zshrc" <<'RC'
+PS1='FZD_PROMPT> '
+source "$FZD_REPO/shell/integration.sh"
+autoload -Uz compinit
+compinit -D
+source "$FZD_REPO/shell/integration.sh"
+if [[ $FZD_TEST_ENGINE == autosuggestions ]]; then
+  ZSH_AUTOSUGGEST_STRATEGY=(completion)
+  source "$FZD_COMPAT_ROOT/zsh-autosuggestions/zsh-autosuggestions.zsh"
+fi
+_fzd_test_buffer() { printf '%s' "$BUFFER" >"$FZD_SHELL_BUFFER"; }
+zle -N _fzd_test_buffer
+bindkey '^X^B' _fzd_test_buffer
+RC
+    printf -v command 'exec zsh -d -i'
+  fi
+  export FZD_REPO FZD_TEST_ENGINE=$engine
+  tmux -S "$SOCKET" -f /dev/null new-session -d -x 120 -y 32 -s fzd -c "$FIXTURE_ROOT" "$command"
+  wait_screen FZD_PROMPT
+}
+
+capture_buffer() {
+  rm -f "$FZD_SHELL_BUFFER"
+  tmux -S "$SOCKET" send-keys C-x C-b
+  wait_file "$FZD_SHELL_BUFFER"
+}
+
+@test "native Bash and zsh Tab complete learned names and preserve escaped local paths" {
+  local shell
+  mkdir -p "$FIXTURE_ROOT/local space"
+  for shell in bash zsh; do
+    start_completion_shell "$shell"
+    tmux -S "$SOCKET" send-keys -l 'lf imm'
+    tmux -S "$SOCKET" send-keys Tab
+    wait_screen 'lf immich'
+    capture_buffer
+    [[ $(cat "$FZD_SHELL_BUFFER") == 'lf immich'* ]]
+    tmux -S "$SOCKET" send-keys C-u
+    tmux -S "$SOCKET" send-keys -l 'lf local'
+    tmux -S "$SOCKET" send-keys Tab
+    wait_screen 'local\ space'
+    capture_buffer
+    [[ $(cat "$FZD_SHELL_BUFFER") == *'local\ space'* ]]
+    stop_terminal
+  done
+}
+
+check_inline_suggestion() {
+  local shell=$1 engine=$2
+  start_completion_shell "$shell" "$engine"
+  tmux -S "$SOCKET" send-keys -l 'lf imm'
+  wait_screen 'lf immich'
+  # The suffix must be displayed while still absent from the editable buffer.
+  capture_buffer
+  [ "$(cat "$FZD_SHELL_BUFFER")" = 'lf imm' ]
+  # Inspecting the buffer can cancel an engine's current suggestion. Retype
+  # its final character to request a fresh suggestion before accepting it.
+  tmux -S "$SOCKET" send-keys BSpace
+  tmux -S "$SOCKET" send-keys -l m
+  wait_screen 'lf immich'
+  tmux -S "$SOCKET" send-keys Right
+  capture_buffer
+  [[ $(cat "$FZD_SHELL_BUFFER") == 'lf immich'* ]]
+  tmux -S "$SOCKET" capture-pane -e -p -t fzd:0.0 >"$BATS_TEST_TMPDIR/accepted-screen.txt"
+}
+
+@test "ble.sh displays a learned directory as ghost text and Right accepts it" {
+  [[ -f $FZD_COMPAT_ROOT/blesh/out/ble.sh ]] || skip 'run bash dev/prepare-shell-compat.sh'
+  check_inline_suggestion bash blesh
+}
+
+@test "zsh-autosuggestions completion strategy displays ghost text and Right accepts it" {
+  [[ -f $FZD_COMPAT_ROOT/zsh-autosuggestions/zsh-autosuggestions.zsh ]] || skip 'run bash dev/prepare-shell-compat.sh'
+  check_inline_suggestion zsh autosuggestions
+}
+
+@test "Enter on an uncompleted partial query jumps in both real interactive shells" {
+  local shell
+  for shell in bash zsh; do
+    start_completion_shell "$shell"
+    tmux -S "$SOCKET" send-keys -l 'lf imm'
+    tmux -S "$SOCKET" send-keys Enter
+    tmux -S "$SOCKET" send-keys -l 'printf "%s" "$PWD" >"$FZD_SHELL_BUFFER"'
+    tmux -S "$SOCKET" send-keys Enter
+    wait_file "$FZD_SHELL_BUFFER"
+    [ "$(cat "$FZD_SHELL_BUFFER")" = "$FIXTURE_ROOT/docker/immich" ]
+    stop_terminal
+    rm -f "$FZD_SHELL_BUFFER"
+  done
+}
+
+@test "ordinary interactive cd is learned with only one upstream hook after repeated sourcing" {
+  local shell
+  for shell in bash zsh; do
+    start_completion_shell "$shell"
+    tmux -S "$SOCKET" send-keys -l 'mkdir -p elsewhere; cd elsewhere'
+    tmux -S "$SOCKET" send-keys Enter
+    tmux -S "$SOCKET" send-keys -l 'zoxide query elsewhere >"$FZD_SHELL_BUFFER"'
+    tmux -S "$SOCKET" send-keys Enter
+    wait_file "$FZD_SHELL_BUFFER"
+    [ "$(cat "$FZD_SHELL_BUFFER")" = "$FIXTURE_ROOT/elsewhere" ]
+    stop_terminal
+    rm -f "$FZD_SHELL_BUFFER"
+  done
+}

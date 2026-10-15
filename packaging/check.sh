@@ -7,6 +7,7 @@ scripts=(lib/*.bash tests/run.sh tests/helpers/*.bash install.sh installer/*.bas
   shell/integration.sh tests/helpers/installer-mv-stub tests/helpers/fzf-stub
   tests/helpers/backend-stub tests/helpers/pty-session benchmarks/*.sh dev/*.sh packaging/*.sh)
 bash -n fzd.sh
+zsh -n shell/integration.zsh
 shellcheck fzd.sh "${scripts[@]}"
 shfmt -d -i 2 "${scripts[@]}"
 shfmt -d -i 2 -ln bats tests/*.bats

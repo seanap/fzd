@@ -363,7 +363,7 @@ STUB
   cp "$REPO/lib/"*.bash "$source/lib/"
   cp "$REPO/install.sh" "$REPO/fzd.sh" "$REPO/fzd.conf.example" "$REPO/LICENSE.txt" "$source/"
   cp "$REPO/installer/"*.bash "$source/installer/"
-  cp "$REPO/shell/integration.sh" "$source/shell/"
+  cp "$REPO/shell/"* "$source/shell/"
   printf '\n# fixture update\n' >>"$source/fzd.sh"
   run bash "$source/install.sh" --noninteractive
   [ "$status" -eq 0 ]

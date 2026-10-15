@@ -24,6 +24,7 @@ export FZD_CONF_FILE="$work/config/fzd.conf" FZD_TMP_DIR="$work/runtime/fzd" FZD
 export FZD_GLOBAL_BACKEND="$backend" FZD_PREVIEW_DEPTH=2 FZD_PREVIEW_TIMEOUT=2 FZD_PREVIEW_MAX_LINES=200
 export FZD_GLOBAL_MINLEN=2 FZD_GLOBAL_MAXDEPTH=6 FZD_GLOBAL_FULLPATH=0 FZD_EXCLUDES=.git,node_modules FZD_GLOBAL_XEXCLUDES=proc,sys,dev,run
 export BASH_ENV=/dev/null FZD_BENCH_SCRIPT="$script"
+export _ZO_DATA_DIR="$work/zoxide"
 unset FZF_DEFAULT_OPTS FZF_DEFAULT_OPTS_FILE FZD_GLOBAL_ROOTS FZD_LOCATE_DBS FZD_COLOR_DIR FZD_COLOR_FILE
 socket=""
 cleanup() { if [[ -n "$socket" ]]; then tmux -S "$socket" kill-server 2>/dev/null || true; fi; }

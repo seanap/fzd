@@ -13,9 +13,9 @@ setup_file() {
 }
 
 @test "Debian payload includes all Explorer modules and opt-in integration" {
-  for path in bin/fzd share/fzd/integration.sh share/fzd/fzd.conf.example \
+  for path in bin/fzd share/fzd/integration.sh share/fzd/integration.zsh share/fzd/fzd.conf.example \
     share/fzd/lib/state.bash share/fzd/lib/operations.bash share/fzd/lib/ui.bash \
-    share/doc/fzd/copyright share/doc/fzd/README.md.gz share/man/man1/fzd.1.gz; do
+    share/doc/fzd/copyright share/doc/fzd/README.md.gz share/doc/fzd/TECHNICAL.md.gz share/man/man1/fzd.1.gz; do
     [ -f "$PACKAGE_FIXTURE/root/usr/$path" ]
   done
   [ -x "$PACKAGE_FIXTURE/root/usr/bin/fzd" ]
@@ -36,7 +36,7 @@ setup_file() {
 @test "Debian dependencies explicitly cover interpreter fzf flock GNU tools and default editor" {
   run dpkg-deb -f "$PACKAGE_DEB" Depends
   [ "$status" -eq 0 ]
-  for requirement in 'bash (>= 4.4)' 'fzf (>= 0.44.0)' coreutils findutils util-linux grep sed micro; do
+  for requirement in 'bash (>= 4.4)' 'fzf (>= 0.44.0)' 'zoxide (>= 0.9.0)' coreutils findutils util-linux grep sed micro; do
     [[ "$output" == *"$requirement"* ]]
   done
   [ "$(dpkg-deb -f "$PACKAGE_DEB" Architecture)" = all ]
@@ -138,7 +138,7 @@ setup_file() {
 @test "Current release installation documentation matches the generated Debian filename" {
   local version document
   IFS= read -r version <"$PACKAGE_REPO/VERSION"
-  for document in README.md docs/packaging.md "docs/releases/v$version.md"; do
+  for document in docs/TECHNICAL.md docs/packaging.md "docs/releases/v$version.md"; do
     grep -Fx "sudo apt install ./${PACKAGE_DEB##*/}" "$PACKAGE_REPO/$document"
   done
   diff "$PACKAGE_REPO/README.md" <(gzip -dc "$PACKAGE_FIXTURE/root/usr/share/doc/fzd/README.md.gz")

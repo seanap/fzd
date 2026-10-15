@@ -41,7 +41,7 @@ ubuntu | debian)
   if [[ $release_version == *-rc.* ]]; then
     dpkg --compare-versions "${release_version/-/'~'}-1" lt "${release_version%-rc.*}"
   fi
-  dpkg-query -W bash fzf coreutils findutils util-linux micro fzd
+  dpkg-query -W bash fzf zoxide coreutils findutils util-linux micro fzd
   dpkg -V fzd
   ;;
 arch)
@@ -65,15 +65,15 @@ arch)
   printf 'PASS: Arch package byte reproducibility with pinned source epoch\n'
   # Installing FZD before comparison would change .BUILDINFO's installed set.
   pacman -U --noconfirm /work/arch/fzd-*-any.pkg.tar.zst
-  pacman -Q bash fzf coreutils findutils util-linux micro fzd
+  pacman -Q bash fzf zoxide coreutils findutils util-linux micro fzd
   pacman -Qkk fzd
   ;;
 fedora)
-  dnf install -y bash fzf coreutils findutils util-linux-core grep sed gawk micro
+  dnf install -y bash fzf zoxide coreutils findutils util-linux-core grep sed gawk micro
   # Compatibility assessment only: this phase does not supply an RPM recipe.
   bash "$source_root/install.sh" --stage /work/stage --prefix /usr
   cp -a /work/stage/usr/. /usr/
-  rpm -q bash fzf coreutils findutils util-linux-core micro
+  rpm -q bash fzf zoxide coreutils findutils util-linux-core micro
   ;;
 esac
 (cd /work && sha256sum -c /results/home-before.sha256)
@@ -118,7 +118,7 @@ zsh -ic '[[ $(lf) == existing ]]; whence -w fzd_cd'
 # Exercise the exact installed executable/data through the existing 201 tests.
 # Packaging tests run on the Git checkout separately (archives contain no .git).
 cp /usr/bin/fzd "$source_root/fzd.sh"
-cp /usr/share/fzd/integration.sh "$source_root/shell/integration.sh"
+cp /usr/share/fzd/integration.* "$source_root/shell/"
 cp /usr/share/fzd/lib/*.bash "$source_root/lib/"
 mkdir -p "$source_root/.test-work/phase-three"
 cp /fixtures/fzf-0.65.2-linux_amd64.tar.gz "$source_root/.test-work/phase-three/"
@@ -133,7 +133,7 @@ chown -R validator:validator "$source_root" /results
 # In particular, Ubuntu's AppArmor user-namespace policy also covers containers.
 runuser -u validator -- bwrap --unshare-user --unshare-pid --unshare-net --die-with-parent \
   --ro-bind / / --proc /proc --dev /dev -- true
-if ! runuser -u validator -- env HOME=/work FZD_TEST_SCRIPT=/usr/bin/fzd \
+if ! runuser -u validator -- env HOME=/work FZD_TEST_SCRIPT=/usr/bin/fzd FZD_COMPAT_ROOT=/fixtures/compat \
   bash tests/run.sh "${test_files[@]}" --print-output-on-failure --no-tempdir-cleanup >/results/tests.tap; then
   tar -czf /results/failed-fixtures.tar.gz -C "$source_root/.test-work/tmp" .
   exit 1

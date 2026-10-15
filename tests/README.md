@@ -8,7 +8,8 @@ source selection, checksums and byte reproducibility.
 To run runtime and terminal checks against an installed or extracted payload:
 
 ```bash
-FZD_TEST_SCRIPT=/usr/bin/fzd bash tests/run.sh
+FZD_TEST_SCRIPT=/usr/bin/fzd bash dev/prepare-shell-compat.sh
+bash tests/run.sh
 ```
 
 Installer fixtures still use private prefixes; they never install into /usr.
@@ -23,7 +24,7 @@ From the Linux checkout:
 bash tests/run.sh
 ```
 
-Use Bash 4.4 or later, Bats-core 1.5 or later, and GNU utilities. Real backend
+Use upstream zoxide >= 0.9.0, Bash 4.4 or later, Bats-core 1.5 or later, and GNU utilities. Real backend
 tests additionally use fd/fdfind and plocate. Terminal tests use tmux and fzf;
 shell integration tests use zsh when available. Missing optional tools produce
 explicit skips. The phase-one environment uses Bash 5.2 and Bats 1.10.
@@ -53,6 +54,8 @@ plocate, and assert that successful locate checks did not silently fall back.
 | dependencies.bats | Version/capability checks, executable aliases, package mappings, sudo and bounded package-manager transactions |
 | distributions.bats | Full installer with Ubuntu/Debian/Fedora/Arch metadata and manager stubs in a bubblewrap namespace; host read-only, network isolated |
 | installer.bats | Fresh install/update/verify/uninstall, preservation, XDG/ZDOTDIR, staging, download failures, TERM/KILL recovery, installed-wrapper PTYs |
+| zoxide-navigation.bats | Dispatch, partial/multiple matching, fallback, upstream ranking/learning/preferences, hooks, conflicts and completion preservation |
+| shell-completion-terminal.bats | Native Tab, actual ble.sh/zsh-autosuggestions ghost text, acceptance, immediate partial Enter and ordinary cd in isolated PTYs |
 | shell-integration.bats | Shared Bash/zsh integration, all non-NUL filename bytes, trailing newlines, cancellations, aliases and editor/color preservation |
 | terminal.bats | Real fzf controls/backends, editor arguments, resize, signals, delayed actions and screen restoration |
 | explorer-state.bats | Bounded browser history, persistent MRU, concurrency, atomic failures, invalid records, final Enter recording |
@@ -197,3 +200,11 @@ Phase Two adds reproducible component and real-terminal matrices at 10, 100,
 1,000 and 10,000 entries. See [../benchmarks/README.md](../benchmarks/README.md).
 The terminal harness uses a monotonic Linux uptime clock with 10 ms resolution;
 discarded wall-clock trials are explicitly separated from valid results.
+
+Suggestion-engine fixtures are pinned to upstream ble.sh `d81fd54` (including its
+contrib submodule) and zsh-autosuggestions `85919cd`. Preparation needs Git, Make,
+and GNU Awk. They remain in ignored `.test-work/compat` and are never installed
+into the user's shell. `FZD_COMPAT_ROOT` can select prepared fixtures. Hosted CI
+requires these tests to pass without skips, on both supported fzf fixtures and
+all four distribution userspaces. Tests use fresh zoxide databases through
+`_ZO_DATA_DIR`; the user's real database and shell rc files are never touched.

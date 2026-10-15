@@ -111,3 +111,42 @@ load helpers/installer
     ln -s "$original" "$TEST_BIN/$tool"
   done
 }
+
+@test "zoxide is required before installation and maps to each supported distribution package" {
+  rm "$TEST_BIN/zoxide"
+  install_fzd --deps none
+  [ "$status" -ne 0 ]
+  [[ "$output" == *'Missing prerequisites: zoxide'* ]]
+  [ ! -e "$PREFIX/bin/fzd" ]
+  run bash -ec 'source "$1/installer/dependencies.bash"; for PM in apt pacman dnf; do package_for zoxide; [[ $REPLY == zoxide ]]; done' _ "$REPO"
+  [ "$status" -eq 0 ]
+}
+
+@test "source installer installs missing upstream zoxide through the native package manager" {
+  local real_zoxide
+  real_zoxide=$(readlink -f "$TEST_BIN/zoxide")
+  export FZD_TEST_ZOXIDE=$real_zoxide
+  rm "$TEST_BIN/zoxide"
+  stub_managers
+  local manager
+  for manager in apt-get pacman dnf; do
+    # Replace the stub's exit with a simulated successful package transaction.
+    sed -i '/^exit /d' "$TEST_BIN/$manager"
+    printf 'for arg; do [[ $arg != zoxide ]] || ln -s "$FZD_TEST_ZOXIDE" "$TEST_BIN/zoxide"; done\n' >>"$TEST_BIN/$manager"
+  done
+  install_fzd --deps required
+  assert_installed
+  grep -q '<zoxide>' "$CALLS"
+  install_fzd --verify
+  [ "$status" -eq 0 ]
+}
+
+@test "unsupported zoxide version is rejected before application files change" {
+  rm "$TEST_BIN/zoxide"
+  printf '#!/bin/sh\nprintf "zoxide 0.8.0\\n"\n' >"$TEST_BIN/zoxide"
+  chmod +x "$TEST_BIN/zoxide"
+  install_fzd --deps none
+  [ "$status" -ne 0 ]
+  [[ "$output" == *'zoxide >= 0.9.0 is required'* ]]
+  [ ! -e "$PREFIX/bin/fzd" ]
+}

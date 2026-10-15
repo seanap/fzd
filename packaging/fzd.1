@@ -5,6 +5,10 @@ fzd \- fast keyboard-driven terminal file explorer
 .B fzd_cd
 .br
 .B lf
+.RI [ keywords ...| directory ]
+.br
+.B lff
+.RI [ query ...]
 .br
 .B fzd
 .SH DESCRIPTION
@@ -19,8 +23,18 @@ Add this line to your Bash or zsh startup file, then open a new shell:
 .PP
 Run fzd_cd, or lf if that name was free when integration was sourced.
 Selecting a directory changes the calling shell's directory.
+With keywords, lf jumps directly using upstream zoxide, falling back to global
+discovery when no match exists. Existing directory arguments change directory
+directly. lff always opens global discovery, optionally with a seeded query;
+fzd_find is the alternative when lff is already in use.
 Raw fzd prints the selected directory instead.
 Installation never changes users' startup files or configuration.
+.PP
+Zoxide is required. Explorer visits are learned on exit. In interactive shells,
+FZD initializes upstream zoxide learning only when not already initialized;
+existing z/zi commands and hook preferences are preserved. Native Tab completion
+uses learned directories. Inline suggestions require a user-installed engine;
+zsh-autosuggestions needs its completion strategy to suggest learned names.
 .SH CONTROLS
 Left/Right navigate parent/child directories. Enter selects a directory or
 opens a file in the editor. Esc cancels. Type to fuzzy filter; Ctrl+F opens
@@ -46,7 +60,7 @@ F8 requires gio (libglib2.0-bin on Debian/Ubuntu, glib2 on Arch/Fedora) or
 trash-put (trash-cli). Permanent deletion is never substituted.
 Restore through your desktop's Trash or the installed Trash tool.
 .SH FILES
-/usr/share/doc/fzd/README.md (possibly compressed) documents controls,
+/usr/share/doc/fzd/TECHNICAL.md (possibly compressed) documents controls,
 configuration, unusual filenames and terminal shortcut limitations.
 .SH BUGS
 Report problems at https://github.com/seanap/fzd/issues.

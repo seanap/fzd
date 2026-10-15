@@ -2,7 +2,11 @@
 set -uo pipefail
 : >"$FZD_PTY_ERROR"
 # fzf paints on stderr; keep it attached to the real terminal.
-bash "$FZD_SCRIPT" >"$FZD_PTY_RESULT"
+if [[ ${FZD_PTY_GLOBAL_QUERY+x} ]]; then
+  bash "$FZD_SCRIPT" --global "$FZD_PTY_GLOBAL_QUERY" >"$FZD_PTY_RESULT"
+else
+  bash "$FZD_SCRIPT" >"$FZD_PTY_RESULT"
+fi
 rc=$?
 printf '%s\n' "$rc" >"$FZD_PTY_STATUS"
 # Leave the private pane available for failure screenshots until teardown.

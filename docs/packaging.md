@@ -139,7 +139,7 @@ is installed.
 
 Upgrade with a newer `.deb` through APT or a rebuilt Arch recipe. Remove with
 `sudo apt remove fzd` / `sudo apt purge fzd` or `sudo pacman -R fzd`. Remove your
-source line after uninstalling, or use the guarded form in the README. User
+source line after uninstalling, or use the guarded form in TECHNICAL.md. User
 configuration/state remain; package managers own only /usr payload files.
 
 For source-to-package transitions, uninstall the user-local source copy first,
@@ -204,3 +204,17 @@ Separate approval is required for public releases, signing/APT repositories,
 Debian source packages, AUR submission, Homebrew, Pacstall, Fedora RPM/COPR and
 ARM64 validation. All future recipes must stage the same payload without home
 edits or invoking the user installer.
+
+## Zoxide navigation feature
+
+Zoxide >= 0.9.0 is a required upstream dependency in Debian and Arch metadata,
+and in the source installer. Fedora staging validation installs its native
+zoxide package. No zoxide executable or database is bundled. Packages include
+both shell integration files and the detailed `TECHNICAL.md` guide. The source
+installer owns both shell files through the existing transactional manifest.
+
+The feature branch's README uses a source-checkout installation path so users
+can test the new behavior before release. Package examples here describe local
+candidate builds or explicitly published assets; feature artifacts remain local
+and hosted CI evidence only until a later authorized release. Suggestion engines
+are fetched only as pinned, private development fixtures, never package payloads.

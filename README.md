@@ -4,370 +4,107 @@
   <img src="https://i.imgur.com/InGa0TZ.png" alt="FZD — a terminal file explorer and fuzzy finder">
 </p>
 
-<p align="center"><strong>Explore like Windows. Work like Linux.</strong></p>
+<p align="center"><strong>Find your way.</strong></p>
 
-A small Bash file explorer built around fzf. Browse with the arrow keys, fuzzy
-filter as you type, preview files and directories, and press **Ctrl+F** to search
-globally. Copy, move, rename, create folders, and use Linux Trash from the
-keyboard. Selecting a directory returns to your shell in that directory.
+Discover unfamiliar directories. Remember the places that matter. Get back to work.
+
+FZD is a small, keyboard-driven file explorer for Linux, built with Bash,
+[fzf](https://github.com/junegunn/fzf), and [zoxide](https://github.com/ajeetdsouza/zoxide).
+Browse with previews, search across your filesystem, and return to your shell
+right where you need to be.
 
 <p align="center">
   <img src="share/demo/fzd_demo.gif" alt="Animated demonstration of FZD terminal navigation">
   <br>
-  <sub>This demo shows an earlier version of FZD. An updated demo is coming.</sub>
+  <sub>The original FZD demo; the navigation commands below extend this experience.</sub>
 </p>
+
+## Explore. Remember. Find.
+
+```bash
+lf                 # Explore from here
+lf immich          # Jump to the best matching place you've visited
+lff immich         # Discover it through global search
+```
+
+**`lf` explores, `lf name` remembers, and `lff name` finds.**
+
+You don't need the whole name: `lf imm` works. Add context with
+`lf docker immich`. Zoxide handles the matching and ranking; if it hasn't learned
+a match yet, FZD opens discovery with your query ready to go.
+
+Already know the path? `lf /srv/docker/immich` takes you there directly.
+Use `lff` on its own to start a fresh global search.
+
+## Why FZD exists
+
+After years of using Linux, running Docker containers, and self-hosting services,
+I still found myself asking: where did that project put its files?
+AI-generated projects added even more unfamiliar directory structures to explore.
+
+I built FZD to find my bearings without memorizing paths or repeatedly typing
+`cd` and `ls`. Look around, understand what's there, and get back to the actual
+work. Once you've found a useful place, zoxide helps you get there again.
 
 ## Install
 
-**Prerelease for testing: `v0.1.0-rc.2`.** Get its assets from
-[GitHub Releases](https://github.com/seanap/fzd/releases). If this candidate is
-not listed, publication is still pending. FZD is not available in the official
-Ubuntu or Debian repositories.
-
-Tested on Linux x86_64: Ubuntu 24.04, Debian 13 and current Arch Linux. Fedora 44
-has staged-runtime validation, not an RPM package. ARM64 is not yet validated.
-
-For Ubuntu/Debian, download `fzd-0.1.0-rc.2-debian-all.deb`, `SHA256SUMS` and `SOURCE`
-into a clean directory. Verify the checksum and source revision, then install
-with APT so dependencies are resolved:
+**Development preview:** these features are on `feature/zoxide-navigation` while
+under review. Run as your normal user on Ubuntu/Debian, Arch, or Fedora:
 
 ```bash
-sha256sum --ignore-missing -c SHA256SUMS
-cat SOURCE
-sudo apt install ./fzd-0.1.0-rc.2-debian-all.deb
-```
-
-For Arch, download `PKGBUILD` from the same release into a clean directory and
-run `makepkg -si` as your normal user. It fetches the exact custom release archive
-and verifies its pinned checksum. Fully update Arch before building; avoid
-partial upgrades. Use this recipe directly unless an AUR listing is explicitly
-announced; do not assume the package is available in AUR.
-
-`SOURCE` identifies the immutable Git commit used to build the release.
-Checksums provide integrity checking, not an independent cryptographic signature.
-
-Packages leave your home and shell startup files untouched.
-Add this line to `~/.bashrc` or
-`${ZDOTDIR:-$HOME}/.zshrc`, then open a new terminal (or run the line now):
-
-```bash
-. /usr/share/fzd/integration.sh
-```
-
-Run **`fzd_cd`**, or **`lf`** when that name is available. Existing `lf` commands
-are preserved. Defaults work without copying a configuration file. Package
-details and reproducible builds are in [Packaging](docs/packaging.md).
-
-### From source
-
-Use Linux with Bash 4.4+ and GNU utilities. Bash and zsh are supported as
-interactive shells. Ubuntu/Debian, Fedora, and Arch dependency managers are
-supported. The source installer is separate from package installation; it owns
-only its user-local files. Other Linux systems can use the manual installation
-below. See [Packaging](docs/packaging.md) for build and validation details.
-
-Download the custom `fzd-0.1.0-rc.2.tar.gz`, `SHA256SUMS` and `SOURCE` from the
-same release. GitHub's automatically generated source links are different archives.
-Extract the custom archive and install as your normal user:
-
-```bash
-sha256sum --ignore-missing -c SHA256SUMS
-cat SOURCE
-tar -xzf fzd-0.1.0-rc.2.tar.gz
-cd fzd-0.1.0-rc.2
+git clone --branch feature/zoxide-navigation https://github.com/seanap/fzd.git
+cd fzd
 bash install.sh --deps recommended
 ```
 
-The installer prints the missing packages before installing them. It requests
-sudo only for those packages, then installs FZD under `~/.local` and adds a small,
-marked block to your Bash/zsh startup files. Open a **new terminal** and run:
+Open a **new terminal**, then run `lf`. The installer resolves missing dependencies
+through your distribution's package manager, installs FZD under `~/.local`, and
+adds Bash/zsh integration. Sudo is requested only for missing system packages.
+You need Git to clone the repository.
 
-```bash
-lf
-```
+<details>
+<summary>Packages, manual installation, updates and removal</summary>
 
-If you already have an `lf` command, function, or alias, FZD preserves it. Use
-`fzd_cd` instead. Raw `fzd` prints the chosen directory; the shell function is
-what changes your shell's directory.
+Debian and Arch build instructions, checksum verification, alternative prefixes,
+automation, and uninstall commands live in the [technical guide](docs/TECHNICAL.md#install)
+and [packaging guide](docs/packaging.md). Release candidates are published only
+when announced on [GitHub Releases](https://github.com/seanap/fzd/releases).
+AUR publication is pending.
 
-No editor settings, terminal themes, `LS_COLORS`, or locate databases are changed.
-Original files are backed up before replacement. Existing FZD configuration is
-preserved. Upgrading from the old installer may require `--adopt`: this explicitly
-replaces unmanaged FZD program files and retains their originals in backups.
-It does not authorize changing other applications' settings.
+</details>
 
-## Controls
+## Make yourself at home
 
 | Key | Action |
 | --- | --- |
-| Left | Parent directory; highlight the child you came from |
-| Right | Enter the highlighted directory |
-| Enter | Directory: return to the shell there. File: open the editor, then resume |
-| Esc | Cancel; keep the shell's current directory |
-| Ctrl+F | Global search; Esc returns to local navigation |
-| Type | Fuzzy filter the current directory |
-| Alt+Left / Alt+Right | Back / Forward through this session's directory history |
-| Alt+H | Recent directories; Enter visits, Esc returns |
-| Ctrl+C / Alt+C | Copy the highlighted item into FZD's internal clipboard |
-| Ctrl+X / Alt+X | Cut the highlighted item; source stays in place until Paste |
-| Ctrl+V / Alt+V | Paste into the directory being browsed |
-| Ctrl+R / F2 | Rename the highlighted item |
-| Ctrl+N / F7 | Create a directory |
-| F8 | Move to Linux Trash after confirmation; requires a Trash tool |
-| F1 | Contextual help; F1 or Esc closes it |
-| Ctrl+G | Exit FZD; Ctrl+C now copies while browsing |
+| Left / Right | Parent / highlighted directory |
+| Enter | Return to the shell there, or edit a file |
+| Type | Filter the current directory |
+| Ctrl+F | Global discovery |
+| Alt+Left / Alt+Right | Back / Forward |
+| Ctrl+C / X / V | Copy / Cut / Paste |
+| F8 | Move to Trash after confirmation |
+| F1 | All controls and contextual help |
+| Esc | Cancel |
 
-Global search also supports Copy/Cut on the highlighted result, then returns to
-the directory view. F1 explains the controls available in each view. Delete
-continues to edit the fuzzy query.
+Previews, rename, new folders, recent directories, and safe file operations are
+built in. Your editor, terminal styling, and existing shell commands stay yours.
+If another tool already owns `lf` or `lff`, use `fzd_cd` or `fzd_find` instead.
 
-Some terminal emulators intercept Ctrl+C/V or Alt+arrow keys. Use the Alt+C/X/V
-fallbacks or adjust the emulator's key assignments to deliver the shortcuts to
-FZD. The clipboard belongs to FZD and is separate from the desktop clipboard.
+## Finish the thought
 
-## File operations and history
+Press **Tab** to complete learned names and local directories in Bash or zsh.
+With a compatible suggestion engine, `lf imm` can display `lf immich` inline.
+You can also press Enter immediately and let zoxide resolve the partial name.
 
-Copy or Cut one highlighted item, navigate to a destination, then Paste. Copy
-preserves directory trees, permissions where supported, and symbolic links.
-Cut moves only after Paste succeeds, including across filesystems. Existing
-destinations cancel Paste or Rename; the clipboard remains available for retry.
-Choose another directory or rename the source before retrying. Copy remains
-available for repeated pastes; a completed Cut clears the clipboard.
+FZD works with user-installed ble.sh and zsh-autosuggestions; inline behavior
+depends on their settings. Zsh-autosuggestions needs its optional completion
+strategy for suggestions from learned directories. [Setup and tested behavior](docs/TECHNICAL.md#tab-completion-and-inline-suggestions).
 
-Rename starts with the current name. Enter confirms; Esc cancels. Names with
-control characters or invalid UTF-8 bytes use visible escapes in the prompt:
-`\n` for newline, `\t` for tab, `\r` for carriage return, `\e` for Escape,
-`\xHH` for a byte, and `\\` for a literal backslash. Existing names are
-prepopulated automatically; spaces and ordinary Unicode can be typed directly.
-The newly created or renamed item remains highlighted.
+## Go deeper
 
-F8 offers **Cancel** first. Choose **Move to Trash** to confirm. Restore items
-through your desktop's Trash or the installed Trash tool. Install `gio` or
-`trash-cli` to enable this feature; on Ubuntu/Debian, `gio` is provided by
-`libglib2.0-bin`. FZD reports unavailable or unsupported Trash operations and
-never substitutes permanent deletion. Large copies and cross-filesystem moves
-run in the foreground; Ctrl+C during an active operation interrupts it and exits
-FZD.
+[Configuration, compatibility and troubleshooting](docs/TECHNICAL.md) ·
+[Tests](tests/README.md) · [Benchmarks](benchmarks/README.md) ·
+[Report an issue](https://github.com/seanap/fzd/issues)
 
-Back/Forward keeps up to 100 visits in memory and restores highlighted items
-where possible. A new visit after Back replaces the forward branch. Up to 25
-unique recent directories and the clipboard persist under
-`${XDG_STATE_HOME:-$HOME/.local/state}/fzd/explorer/` (or your configured
-`FZD_STATE_DIR`). Missing recent directories are skipped. These features use no
-filesystem index or background process. Uninstallation preserves this state.
-
-## Prerequisites and dependency choices
-
-| Level | Tools |
-| --- | --- |
-| Required | Bash 4.4+, fzf >= 0.44.0 with the tested bindings, GNU coreutils, findutils, flock (util-linux), standard Linux text utilities, and an editor |
-| Recommended | fd/fdfind, bat/batcat, file, tree |
-| Optional | gio or trash-put for Trash, plocate/locate with an existing index, eza and a compatible icon font, hexdump, tput |
-| Optional download | curl, CA certificates, tar, gzip |
-
-`--deps none` (the default) checks prerequisites without package transactions.
-`--deps required` installs only missing required tools. `--deps recommended`
-also installs the preview and search tools above. Ubuntu/Debian use packages
-`fd-find` and `bat`, whose executables may be `fdfind` and `batcat`.
-
-Set `EDITOR` or `VISUAL` to a **single executable name or path** to use your editor.
-Arguments inside these variables are not supported. If the selected executable
-is unavailable, FZD falls back to micro; the installer ensures a usable fallback
-without changing your shell's editor variables.
-
-Ubuntu 24.04's fzf 0.44.1 works, including child highlighting; an upgrade is not
-required. Installation checks both the version and required action bindings.
-The old README's blanket requirement for fzf 0.50 was incorrect.
-
-For older distro fzf packages, prefer an updated distribution package. An
-explicit, checksum-verified user-local download is also available. This tested
-example is **Linux x86_64 only**, using a pinned official release:
-
-```bash
-bash install.sh --deps recommended --fzf-version 0.65.2 \
-  --fzf-sha256 5eb8efc0e94aa559f84ea83eeba99bea7dce818e63f92b4b62e60663220f1c14
-```
-
-See the [official fzf release](https://github.com/junegunn/fzf/releases/tag/v0.65.2)
-and its checksum file. For Linux arm64 the same version's archive digest is
-`097347160595bf03a426d2abe0a17e14ca060540ddfc0ea45c0a9be62bb29a2b`;
-that architecture has not been executed in this environment. Other releases
-require their own published archive digest. Downloads use HTTPS and are checked
-before extraction or execution. SHA256 verifies the supplied archive digest;
-it is not an independent publisher signature. No “latest” release is selected
-implicitly, and an existing unmanaged `~/.local/bin/fzf` requires `--adopt`.
-A different fzf release can have different upstream styling defaults (for
-example, its selection marker). FZD continues to inherit your configured fzf
-styling; compatible existing installations are kept.
-
-## Configuration and appearance
-
-Edit `${XDG_CONFIG_HOME:-$HOME/.config}/fzd/fzd.conf`. `FZD_CONF_FILE` overrides
-this location. The installer records custom configuration paths in its shell
-block while respecting an override already present in your shell. Configuration
-is trusted **Bash code**, read by FZD rather than by zsh or the shell integration.
-Installation checks syntax without executing it.
-
-```bash
-FZD_GLOBAL_BACKEND=auto           # auto | locate | cache | live
-FZD_GLOBAL_ROOTS=("$HOME" "/srv/media with spaces")
-FZD_GLOBAL_MINLEN=2
-FZD_GLOBAL_MAXDEPTH=6
-FZD_GLOBAL_MAXRESULTS=5000
-FZD_EXCLUDES=".git,node_modules,.cache,.venv,dist,build"
-```
-
-`auto` prefers locate, otherwise a fresh fd/find snapshot. `cache` filters that
-snapshot with fzf; `live` and `locate` reload literal case-insensitive queries.
-An unavailable or failed locate backend falls back to fd/find. No system index
-is built automatically. Prefer Linux roots under WSL; scanning Windows mounts
-can be slower. `FZD_GLOBAL_PATHS` remains supported; use `FZD_GLOBAL_ROOTS` for
-paths containing whitespace. A legacy `~/.fzd/fzd.conf` is copied only when the
-current configuration does not exist, leaving the original intact.
-
-The [example configuration](fzd.conf.example) documents exclusions, result
-limits, preview depth/time/line limits, colors, and an optional locate database.
-FZD retains its existing colors and inherits fzf appearance/search options.
-Its controls, single-item operation mode, and output protocol take precedence
-over fzf's `--expect` and multiselect settings. To request different
-label colors, set `FZD_COLOR_DIR` / `FZD_COLOR_FILE` in your FZD configuration
-to six hexadecimal digits, optionally prefixed with `#`. Invalid overrides are
-ignored. Eza previews inherit `LS_COLORS`, replacing only explicitly requested
-directory or file colors.
-Third-party bat, micro, eza, or terminal themes are personal choices: configure
-those tools yourself if desired. Installation never downloads themes or changes
-their configuration. To use a vivid palette, configure `LS_COLORS` in your shell.
-
-## Manual installation and automation
-
-With prerequisites already installed:
-
-```bash
-bash install.sh --noninteractive --deps none
-```
-
-This mode never prompts for sudo input. To permit automated package installation,
-use `--deps required` or `--deps recommended` and provide root or an existing
-noninteractive sudo authorization. Package-manager failures stop installation.
-Arch package databases are not refreshed automatically: update the system
-normally rather than creating a partial upgrade.
-
-Useful options:
-
-```bash
-bash install.sh --shell bash          # bash only; default is both
-bash install.sh --shell zsh           # zsh only; respects exported ZDOTDIR
-bash install.sh --prefix "$HOME/apps/fzd" --shell none --no-config
-```
-
-With `--shell none`, add this yourself to your chosen shell startup file, adapting
-the prefix if needed:
-
-```bash
-_FZD_INSTALL_BIN="$HOME/apps/fzd/bin/fzd"
-export PATH="$HOME/apps/fzd/bin:$PATH"
-. "$HOME/apps/fzd/share/fzd/integration.sh"
-```
-
-The function uses that exact executable. The PATH line also exposes an optional
-user-local fzf bootstrap. To choose another executable later, set `FZD_BIN`.
-For a custom zsh startup directory, export `ZDOTDIR` before installation, e.g.
-`ZDOTDIR="$HOME/my-zsh" bash install.sh --shell zsh`. A shell-local, unexported
-variable cannot be discovered by a child installer. Symlinked shell startup files
-retain their links; the regular target is backed up and edited.
-
-## Update, verify, and uninstall
-
-**Packages:** install a newer `.deb` with `sudo apt install ./NEW-PACKAGE.deb`;
-remove it with `sudo apt remove fzd` (or `sudo apt purge fzd`). Arch users build
-the newer recipe with `makepkg -si` and remove with `sudo pacman -R fzd`.
-Your configuration, clipboard, recents and explicitly added shell integration
-line remain yours. Remove that one source line when uninstalling. Dependencies
-are shared; FZD never removes them itself. You can guard the source line with
-`[ ! -r /usr/share/fzd/integration.sh ] || . /usr/share/fzd/integration.sh`
-to avoid startup errors after removal.
-
-**Source to package:** first uninstall the user-local copy with its lifecycle
-command below; this preserves preferences. Install the package and add the
-package integration line. Open a new terminal so the old `_FZD_INSTALL_BIN` is
-cleared. An old `~/.local/bin/fzd`, `FZD_BIN`, or custom PATH entry can otherwise
-select the old executable; check `command -v fzd`. Never use the source
-uninstaller to remove `/usr` package files.
-
-**Source installations:**
-
-For an archive installation, extract the newer approved source archive and repeat
-the same installation options. From a Git checkout, update and reinstall:
-
-```bash
-git pull --ff-only
-bash install.sh --deps recommended
-```
-
-Custom configurations are not merged or overwritten. Modified program files
-stop an update unless you explicitly use `--adopt`; originals are retained.
-Use the same `--prefix` when updating a custom-prefix installation.
-Installation prefixes must be absolute, without `..` components or `:` (PATH's
-separator). These restrictions do not apply to files and directories you browse.
-
-The installed lifecycle tool works even if the checkout has been removed:
-
-```bash
-bash "$HOME/.local/share/fzd/install.sh" --verify
-bash "$HOME/.local/share/fzd/install.sh" --uninstall
-```
-
-Adapt the prefix for a custom installation. Verification checks owned-file
-hashes, dependency capabilities, and Bash configuration syntax; it does not
-execute configuration or launch an interactive session. Uninstall removes
-unchanged FZD-owned files and its shell integration blocks. It preserves modified
-files, configuration, state/cache, retained backups, and all dependencies.
-The optional downloaded user-local fzf is preserved too, since other tools may use it.
-Open a new terminal afterward to clear previously loaded functions.
-
-## Troubleshooting
-
-- **Command missing after install:** open a new terminal. If `lf` was already
-  present, run `fzd_cd`. Packages require the opt-in source line above; verify
-  installation with `dpkg -V fzd` or `pacman -Qkk fzd`. Confirm that your shell reads the configured rc
-  file; pass exported `ZDOTDIR` when using a custom zsh setup.
-- **Missing tools / sudo authentication:** install the reported packages, then
-  retry. Interactive dependency installation uses normal sudo authentication;
-  noninteractive mode needs existing authorization and fails with guidance.
-- **Old fzf:** use the verified pinned example above or a compatible distro
-  package. FZD does not silently replace a shared system executable.
-- **Invalid configuration:** correct the reported Bash syntax error. Existing
-  settings remain untouched. Runtime search validation also reports invalid
-  backend names or numeric settings; `--verify` checks syntax only.
-- **Interrupted installation / lock:** ensure no installer is running, then run
-  `bash install.sh --recover` from the checkout, with your original `--prefix`
-  and custom XDG/ZDOTDIR environment. Recovery refuses a live owner. Ordinary
-  errors and signals roll back file changes automatically; SIGKILL requires this
-  explicit step. Dependency transactions are separate and are not rolled back.
-- **Backups:** originals and NUL-delimited transaction journals are retained in
-  `PREFIX/share/fzd/backups/.transaction.*`. Inspect these before manually
-  restoring files. Backups and empty installation directories are intentionally
-  retained after uninstall. Sudden storage/power failures are not a tested
-  durability guarantee.
-- **Global search slow / empty:** check roots, exclusions and permissions. Use
-  `FZD_GLOBAL_BACKEND=live` to bypass a stale locate database. Database maintenance
-  belongs to your distribution; FZD never invokes sudo updatedb.
-- **Explorer state busy:** another FZD instance may be completing a file
-  operation. Retry when it finishes. Invalid state is reported without replacing
-  it; close FZD and move the affected state file aside before retrying.
-- **Trash failed:** confirm that `gio` or `trash-put` is installed and that the
-  filesystem supports its Trash implementation. Mount permissions and removable
-  or network filesystems can prevent trashing; FZD reports the backend error.
-
-## Development and packaging
-
-Run `bash tests/run.sh`; see [test instructions](tests/README.md) and
-[benchmarks](benchmarks/README.md). Installer tests use disposable homes and
-controlled package-manager commands.
-See the [Explorer engineering report](docs/phase-three-five.md) for architecture,
-safety behavior, validation and performance comparisons.
-
-Distribution packages stage standard files with
-`bash install.sh --stage "$PWD/package-root" --prefix /usr`. They must not run
-the user installer in post-install scripts or edit users' homes. See the
-[packaging architecture and readiness checklist](docs/packaging.md).
+FZD is open source under the [MIT license](LICENSE.txt).

@@ -25,6 +25,11 @@ if [[ $runtime == podman && ${FZD_CONTAINER_LOCAL_STORAGE:-0} == 1 ]]; then
 fi
 result="$repo/.test-work/phase-four-a/$target"
 fixture="$repo/.test-work/phase-three/fzf-0.65.2-linux_amd64.tar.gz"
+compat="$repo/.test-work/compat"
+[[ -f $compat/blesh/out/ble.sh && -f $compat/zsh-autosuggestions/zsh-autosuggestions.zsh ]] || {
+  printf 'Prepare suggestion fixtures first: bash dev/prepare-shell-compat.sh\n' >&2
+  exit 2
+}
 [[ -f $fixture && $(uname -m) == x86_64 ]] || {
   printf 'Prepare the x86_64 fixture first: bash dev/prepare-fzf-test.sh\n' >&2
   exit 2
@@ -43,4 +48,5 @@ mkdir -p "$result"
   --security-opt seccomp=unconfined --security-opt apparmor=unconfined \
   -v "$artifacts:/artifacts:ro" -v "$repo/packaging:/validation:ro" \
   -v "$fixture:/fixtures/fzf-0.65.2-linux_amd64.tar.gz:ro" -v "$result:/results" \
+  -v "$compat:/fixtures/compat:ro" \
   "$image" bash /validation/validate-container.sh "$target" 2>&1 | tee "$result/validation.log"
