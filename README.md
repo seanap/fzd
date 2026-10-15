@@ -68,8 +68,8 @@ unchanged, or use `--shell bash` / `--shell zsh` to configure one shell.
 
 Debian and Arch build instructions, checksum verification, alternative prefixes,
 automation, and uninstall commands live in the [technical guide](docs/TECHNICAL.md#install)
-and [packaging guide](docs/packaging.md). Release candidates are published only
-when announced on [GitHub Releases](https://github.com/seanap/fzd/releases).
+and [packaging guide](docs/packaging.md). Download release packages and checksums
+from [GitHub Releases](https://github.com/seanap/fzd/releases/latest).
 AUR publication is pending.
 
 </details>

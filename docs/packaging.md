@@ -1,4 +1,4 @@
-# Packaging and release candidates
+# Packaging and releases
 
 Packages use `install.sh --stage`; they never run the source installer on
 installation, upgrade or removal. No maintainer scripts, automatic home edits,
@@ -26,19 +26,19 @@ versions with validation evidence.
 
 Outputs: source archive, architecture-independent `.deb`, generated `PKGBUILD`,
 `SOURCE` provenance record and `SHA256SUMS`. SHA256 detects mismatches; it is not
-a publisher signature. This release candidate uses checksums and Git commit
+a publisher signature. This release uses checksums and Git commit
 provenance; it does not claim an independent cryptographic signature.
 
 ## Versioning
 
-`VERSION` is MAJOR.MINOR.PATCH, optionally `-rc.N`. The current candidate is
-`0.1.0-rc.2`; the build creates no tag. The public `v0.1.0-rc.1` tag is retained
-unchanged; its draft release remains unpublished after a filename compatibility failure.
+`VERSION` is MAJOR.MINOR.PATCH, optionally `-rc.N`. The current release is
+`2.0.0`, following the previous public stable release `v1.6`. The build creates
+no tag. Existing tags and the historical `v0.1.0-rc.1` draft remain unchanged.
 
 | Upstream | Debian | Arch |
 | --- | --- | --- |
-| `0.1.0-rc.2` | `0.1.0~rc.2-1` | `0.1.0rc.2-1` |
-| `0.1.0` | `0.1.0-1` | `0.1.0-1` |
+| `2.0.0` | `2.0.0-1` | `2.0.0-1` |
+| `2.1.0-rc.1` (example) | `2.1.0~rc.1-1` | `2.1.0rc.1-1` |
 
 Prereleases sort below the final release. Packaging-only rebuilds increment the
 distribution revision; application releases increment VERSION. The Debian builder
@@ -46,10 +46,10 @@ accepts FZD_DEB_REVISION=2 for upgrade tests. Arch uses pkgrel. Never replace a
 published archive at the same version. Checksums identify the exact source commit.
 
 Downloadable Debian files use `fzd-VERSION-debian-all.deb`, independently of the
-internal Debian version and packaging revision. For this candidate the filename
-is `fzd-0.1.0-rc.2-debian-all.deb`, while `dpkg-deb -f FILE Version` returns
-`0.1.0~rc.2-1`. Debian's tilde keeps the prerelease below `0.1.0`; GitHub normalizes
-tildes in asset names, so tildes must never appear in downloadable filenames.
+internal Debian version and packaging revision. The stable filename is
+`fzd-2.0.0-debian-all.deb`, while `dpkg-deb -f FILE Version` returns `2.0.0-1`.
+For prereleases, Debian's tilde keeps the candidate below the final version;
+GitHub normalizes tildes in asset names, so downloadable filenames never use them.
 The builders emit the final filename directly and generate matching manifest
 entries; do not rename files after building. Release filenames are restricted
 to ASCII letters, digits, periods, underscores and hyphens, starting and ending
@@ -79,6 +79,7 @@ install manifests/lifecycle scripts are excluded from packages.
 | Purpose | Debian/Ubuntu | Arch | Fedora compatibility |
 | --- | --- | --- | --- |
 | Bash >=4.4, fzf >=0.44 | bash, fzf | bash, fzf | bash, fzf |
+| Zoxide >=0.9 | zoxide | zoxide | zoxide |
 | GNU tools | coreutils, findutils, grep, sed, mawk or gawk | coreutils, findutils, grep, sed, gawk | Same with gawk |
 | flock | util-linux | util-linux | util-linux-core |
 | Default editor | micro | micro | micro |
@@ -95,15 +96,15 @@ Permanent deletion is never substituted.
 
 ## Install, integrate, update and remove
 
-Download `fzd-0.1.0-rc.2-debian-all.deb`, `SHA256SUMS` and `SOURCE` from the
-`v0.1.0-rc.2` entry on [GitHub Releases](https://github.com/seanap/fzd/releases).
-If that entry is absent, publication is pending. FZD is not in the official
-Ubuntu/Debian repositories; APT installs the downloaded file and its dependencies.
+Download `fzd-2.0.0-debian-all.deb`, `SHA256SUMS` and `SOURCE` from the
+`v2.0.0` entry on [GitHub Releases](https://github.com/seanap/fzd/releases).
+FZD is not in the official Ubuntu/Debian repositories; APT installs the
+downloaded file and its dependencies.
 
 ```bash
 sha256sum --ignore-missing -c SHA256SUMS
 cat SOURCE
-sudo apt install ./fzd-0.1.0-rc.2-debian-all.deb
+sudo apt install ./fzd-2.0.0-debian-all.deb
 ```
 
 On fully updated Arch, download `PKGBUILD` from the same release into a clean
@@ -214,11 +215,10 @@ zoxide package. No zoxide executable or database is bundled. Packages include
 the shell integration files and the detailed `TECHNICAL.md` guide. The source
 installer owns both shell files through the existing transactional manifest.
 
-The feature branch's README uses a source-checkout installation path so users
-can test the new behavior before release. Package examples here describe local
-candidate builds or explicitly published assets; feature artifacts remain local
-and hosted CI evidence only until a later authorized release. Suggestion engines
-are fetched only as pinned, private development fixtures, never package payloads.
+The README uses a source-checkout installation path with an explicit option
+for inline suggestions. Published packages and the matching source archive are
+available on GitHub Releases. Suggestion engines are independent upstream
+dependencies, never FZD package payloads. CI uses pinned, private engine fixtures.
 
 ## Optional inline setup
 

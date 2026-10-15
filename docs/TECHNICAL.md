@@ -136,26 +136,24 @@ Prepare fixtures with `bash dev/prepare-shell-compat.sh`; see
 
 ## Install
 
-For the feature preview, use the source-checkout command in the [README](../README.md#install).
-Package examples below apply to locally built candidates or explicitly published
-assets; this feature has not been released.
+For a source installation with optional inline suggestions, use the
+[source-checkout command in the README](../README.md#install).
 
-**Prerelease for testing: `v0.1.0-rc.2`.** Get its assets from
-[GitHub Releases](https://github.com/seanap/fzd/releases). If this candidate is
-not listed, publication is still pending. FZD is not available in the official
-Ubuntu or Debian repositories.
+**Current release: `v2.0.0`.** Get its packages, source archive and checksums from
+[GitHub Releases](https://github.com/seanap/fzd/releases/tag/v2.0.0). FZD is not
+available in the official Ubuntu or Debian repositories.
 
 Tested on Linux x86_64: Ubuntu 24.04, Debian 13 and current Arch Linux. Fedora 44
 has staged-runtime validation, not an RPM package. ARM64 is not yet validated.
 
-For Ubuntu/Debian, download `fzd-0.1.0-rc.2-debian-all.deb`, `SHA256SUMS` and `SOURCE`
+For Ubuntu/Debian, download `fzd-2.0.0-debian-all.deb`, `SHA256SUMS` and `SOURCE`
 into a clean directory. Verify the checksum and source revision, then install
 with APT so dependencies are resolved:
 
 ```bash
 sha256sum --ignore-missing -c SHA256SUMS
 cat SOURCE
-sudo apt install ./fzd-0.1.0-rc.2-debian-all.deb
+sudo apt install ./fzd-2.0.0-debian-all.deb
 ```
 
 For Arch, download `PKGBUILD` from the same release into a clean directory and
@@ -187,15 +185,15 @@ supported. The source installer is separate from package installation; it owns
 only its user-local files. Other Linux systems can use the manual installation
 below. See [Packaging](packaging.md) for build and validation details.
 
-Download the custom `fzd-0.1.0-rc.2.tar.gz`, `SHA256SUMS` and `SOURCE` from the
+Download the custom `fzd-2.0.0.tar.gz`, `SHA256SUMS` and `SOURCE` from the
 same release. GitHub's automatically generated source links are different archives.
 Extract the custom archive and install as your normal user:
 
 ```bash
 sha256sum --ignore-missing -c SHA256SUMS
 cat SOURCE
-tar -xzf fzd-0.1.0-rc.2.tar.gz
-cd fzd-0.1.0-rc.2
+tar -xzf fzd-2.0.0.tar.gz
+cd fzd-2.0.0
 bash install.sh --deps recommended
 ```
 
