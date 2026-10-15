@@ -45,6 +45,7 @@ SH
   mkdir -p "$FIXTURE_ROOT/manilla-dir"
   printf text >"$FIXTURE_ROOT/plain-file"
   export FZD_COLOR_DIR='#f9e2af' FZD_COLOR_FILE='#cdd6f4'
+  export TERM=xterm-256color
   unset TREE_COLORS LS_COLORS NO_COLOR
   run_palette_preview
   [[ "$output" == *$'\033[38;2;249;226;175mmanilla-dir'* ]]

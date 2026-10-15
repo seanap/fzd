@@ -48,11 +48,10 @@ work. Once you've found a useful place, zoxide helps you get there again.
 
 ## Install
 
-**Development preview:** these features are on `feature/zoxide-navigation` while
-under review. Run as your normal user on Ubuntu/Debian, Arch, or Fedora:
+Run as your normal user on Ubuntu/Debian, Arch, or Fedora:
 
 ```bash
-git clone --branch feature/zoxide-navigation https://github.com/seanap/fzd.git
+git clone https://github.com/seanap/fzd.git
 cd fzd
 bash install.sh --deps recommended --inline-suggestions
 ```
