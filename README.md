@@ -1,12 +1,12 @@
 # FZD
 
 <p align="center">
-  <img src="https://i.imgur.com/InGa0TZ.png" alt="FZD — a terminal file explorer and fuzzy finder">
+  <img src="https://i.imgur.com/BIzuhmK.png" alt="FZD — a terminal file explorer and fuzzy finder">
 </p>
 
-<p align="center"><strong>Find your way.</strong></p>
+<p align="center"><strong>Intuitive Linux File Explorer TUI</strong></p>
 
-Discover unfamiliar directories. Remember the places that matter. Get back to work.
+Browse directories with arrow keys from the terminal. Autocomplete common locations. Instantaneous Global Search.
 
 FZD is a small, keyboard-driven file explorer for Linux, built with Bash,
 [fzf](https://github.com/junegunn/fzf), and [zoxide](https://github.com/ajeetdsouza/zoxide).
@@ -16,21 +16,18 @@ right where you need to be.
 <p align="center">
   <img src="share/demo/fzd_demo.gif" alt="Animated demonstration of FZD terminal navigation">
   <br>
-  <sub>The original FZD demo; the navigation commands below extend this experience.</sub>
 </p>
 
-## Explore. Remember. Find.
+## Usage
 
 ```bash
-lf                 # Explore from here
-lf immich          # Jump to the best matching place you've visited
-lff immich         # Discover it through global search
+lf                 # Opens Current dir, preview full tree
+lf immich          # Jump to the best matching place you've already visited
+lff immich         # Global search shortcut
 ```
 
-**`lf` explores, `lf name` remembers, and `lff name` finds.**
-
 You don't need the whole name: `lf imm` works. Add context with
-`lf docker immich`. Zoxide handles the matching and ranking; if it hasn't learned
+`lf docker immich`. Full matching and ranking of common loactions; if it hasn't learned
 a match yet, FZD opens discovery with your query ready to go.
 
 Already know the path? `lf /srv/docker/immich` takes you there directly.
@@ -38,17 +35,15 @@ Use `lff` on its own to start a fresh global search.
 
 ## Why FZD exists
 
-After years of using Linux, running Docker containers, and self-hosting services,
+After years of using Linux,
 I still found myself asking: where did that project put its files?
-AI-generated projects added even more unfamiliar directory structures to explore.
 
 I built FZD to find my bearings without memorizing paths or repeatedly typing
-`cd` and `ls`. Look around, understand what's there, and get back to the actual
-work. Once you've found a useful place, zoxide helps you get there again.
+`cd` and `ls`. Browse the directory tree. Quickly edit a config with `Micro`. Search your whole system, instantly, powered by `plocate`. All using pure Bash.
 
 ## Install
 
-Run as your normal user on Ubuntu/Debian, Arch, or Fedora:
+Supports Ubuntu/Debian, Arch, or Fedora, and runs on Bash or zsh:
 
 ```bash
 git clone https://github.com/seanap/fzd.git
@@ -56,12 +51,12 @@ cd fzd
 bash install.sh --deps recommended --inline-suggestions
 ```
 
-Open a **new terminal**, then run `lf`. The installer resolves missing dependencies
-through your distribution's package manager, installs FZD under `~/.local`, and
-adds Bash/zsh integration with gray inline suggestions. Press **Right** to accept
-a suggestion. Sudo is requested only for missing system packages. You need Git
-to clone the repository. Leave off `--inline-suggestions` to keep engine setup
-unchanged, or use `--shell bash` / `--shell zsh` to configure one shell.
+Installs FZD under `~/.local`,
+Adds gray inline autosuggestions. Press **Right** to accept. 
+Leave off `--inline-suggestions` to keep existing autocomplete engine setup unchanged.
+Use `--shell bash` / `--shell zsh` to configure one shell.
+
+Open a **new terminal**, then run `lf`. 
 
 <details>
 <summary>Packages, manual installation, updates and removal</summary>
@@ -89,14 +84,9 @@ AUR publication is pending.
 | Esc | Cancel |
 
 Previews, rename, new folders, recent directories, and safe file operations are
-built in. Your editor, terminal styling, and existing shell commands stay yours.
-If another tool already owns `lf` or `lff`, use `fzd_cd` or `fzd_find` instead.
+built in.
 
 ## Finish the thought
-
-Type `lf imm` and accept the gray suggestion with **Right**, or press Enter
-immediately and let zoxide resolve the partial name. Native **Tab** completion
-also works in Bash and fresh zsh sessions.
 
 The installer’s explicit `--inline-suggestions` option installs and configures
 ble.sh for Bash and zsh-autosuggestions for zsh. Existing engines are reused.
