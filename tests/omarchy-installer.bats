@@ -77,7 +77,7 @@ SH
 }
 
 @test "Enhanced dependency collection selects display provider and excludes headless clipboard and Lazygit" {
-  run bash -c 'source "$1/installer/dependencies.bash"; ENHANCED=1; unset WAYLAND_DISPLAY DISPLAY; collect_recommended; [[ " ${MISSING[*]} " == *" chafa "* && " ${MISSING[*]} " == *" glow "* && " ${MISSING[*]} " != *" xclip "* && " ${MISSING[*]} " != *lazygit* ]]; WAYLAND_DISPLAY=wayland-1; collect_recommended; [[ " ${MISSING[*]} " == *" wl-copy "* ]]; unset WAYLAND_DISPLAY; DISPLAY=:0; collect_recommended; [[ " ${MISSING[*]} " == *" xclip "* ]]; for PM in apt pacman dnf; do package_for wl-copy; [[ $REPLY == wl-clipboard ]]; done' _ "$REPO"
+  run bash -euc 'source "$1/installer/dependencies.bash"; ENHANCED=1; unset WAYLAND_DISPLAY DISPLAY; collect_recommended; [[ " ${MISSING[*]} " == *" chafa "* && " ${MISSING[*]} " == *" glow "* && " ${MISSING[*]} " != *" xclip "* && " ${MISSING[*]} " != *lazygit* ]]; WAYLAND_DISPLAY=wayland-1; collect_recommended; [[ " ${MISSING[*]} " == *" wl-copy "* ]]; unset WAYLAND_DISPLAY; DISPLAY=:0; collect_recommended; [[ " ${MISSING[*]} " == *" xclip "* ]]; for PM in apt pacman dnf; do package_for wl-copy; [[ $REPLY == wl-clipboard ]]; done' _ "$REPO"
   [ "$status" -eq 0 ]
 }
 

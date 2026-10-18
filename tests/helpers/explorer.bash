@@ -4,10 +4,7 @@ setup_explorer_fixture() {
   local bwrap
   bwrap=$(command -v bwrap || true)
   setup_fixture
-  local tool
-  for tool in readlink; do
-    ln -s "/usr/bin/$tool" "$UTILITY_BIN/$tool"
-  done
+  ln -s /usr/bin/readlink "$UTILITY_BIN/readlink"
   export FZD_TEST_HELPER="$FZD_REPO/tests/helpers/explorer.bash"
   export FZD_TEST_ROOT="$FIXTURE_ROOT" FZD_TEST_REPO="$FZD_REPO" FZD_SCRIPT
   export FZD_TEST_BWRAP=$bwrap

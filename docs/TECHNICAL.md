@@ -148,7 +148,7 @@ The current checkout provides two choices:
 | Mode | Command | Behavior |
 | --- | --- | --- |
 | Simple (default) | `bash install.sh` | Required tools plus recommended eza, fd, bat, tree and file; shell integration and native Tab completion |
-| Enhanced (opt-in) | `bash install.sh --enhanced` | Simple plus compatible inline engines and optional user font setup |
+| Enhanced (opt-in) | `bash install.sh --enhanced` | Simple plus Chafa, Glow, a display clipboard provider, compatible inline engines and optional user font setup |
 
 Simple creates no fonts, terminal appearance changes, shell-wide suggestion engine,
 or locate index. On updates it preserves an existing Enhanced inline preference.
@@ -156,7 +156,9 @@ Only `--no-inline-suggestions` explicitly disables FZD's managed engine setup.
 Enhanced respects inline preferences set earlier in shell startup; an explicit
 `FZD_INLINE_SUGGESTIONS=0` there continues to win. User-edited integration files
 are preserved even with explicit flags, with guidance to apply changes manually.
-No mode installs plocate or runs updatedb. Existing system indexes remain usable.
+Both modes require plocate and reuse an existing installation. Neither mode runs
+updatedb or changes exclusions/timers. Some distro packages index during setup;
+see [the explicit authorization requirement](#plocate-readiness-and-package-indexing).
 
 Missing recommended packages are attempted through the native package manager.
 If a repository lacks eza (or another recommendation), core installation succeeds
@@ -314,9 +316,9 @@ filesystem index or background process. Uninstallation preserves this state.
 
 | Level | Tools |
 | --- | --- |
-| Required | Bash 4.4+, fzf >= 0.44.0 with the tested bindings, zoxide >= 0.9.0, GNU coreutils, findutils, flock (util-linux), standard Linux text utilities, and an editor |
+| Required | Bash 4.4+, fzf >= 0.44.0 with the tested bindings, zoxide >= 0.9.0, plocate, GNU coreutils, findutils, flock (util-linux), standard Linux text utilities, and an editor |
 | Recommended | eza, fd/fdfind, bat/batcat, file, tree |
-| Optional | gio or trash-put for Trash, plocate/locate with an existing index, a compatible icon font, hexdump, tput |
+| Optional | Chafa, Glow, display clipboard provider, separately installed Lazygit, gio or trash-put for Trash, a compatible icon font, hexdump, tput |
 | Optional download | curl, CA certificates, tar, gzip |
 
 `--deps none` checks required prerequisites without package transactions.
@@ -324,10 +326,16 @@ filesystem index or background process. Uninstallation preserves this state.
 also installs the preview and search tools above. Ubuntu/Debian use packages
 `fd-find` and `bat`, whose executables may be `fdfind` and `batcat`.
 
-Set `EDITOR` or `VISUAL` to a **single executable name or path** to use your editor.
-Arguments inside these variables are not supported. If the selected executable
-is unavailable, FZD falls back to micro; the installer ensures a usable fallback
-without changing your shell's editor variables.
+`EDITOR` takes precedence over `VISUAL`; when both are empty the fallback is
+micro. Conventional arguments, single/double quotes and escaped whitespace are
+supported, for example `EDITOR="omarchy-launch-editor --inline"` or
+`EDITOR='nvim -f'`. Expansions, pipelines, redirects and command substitution are
+rejected; FZD never evaluates an editor command as shell code. Use a wrapper
+executable for more complex commands. An unavailable or invalid command falls
+back to micro without rewriting editor preferences. File paths are separate
+arguments, including spaces, quotes and newlines. Standard editors get a `--`
+separator; Omarchy's wrapper supplies its own. The selected editor is resolved
+when opening a file, so Omarchy editor changes need no reinstall.
 
 Ubuntu 24.04's fzf 0.44.1 works, including child highlighting; an upgrade is not
 required. Installation checks both the version and required action bindings.
@@ -652,3 +660,132 @@ batched on exit and adds no zoxide process to the redraw loop.
 
 [Retained measurements](../benchmarks/results/zoxide-navigation/README.md) include
 all groups and terminal trials, baseline revision and reproduction commands.
+
+
+## Omarchy integration
+
+Omarchy is detected conditionally through `omarchy-theme-color` and its current
+palette. The current upstream location is
+`~/.local/state/omarchy/current/theme/colors.toml`; FZD also checks the XDG state
+location and older config location. `FZD_OMARCHY_THEME_FILE=/absolute/colors.toml`
+can select another palette. `FZD_OMARCHY_THEME=0` disables the adapter.
+
+FZD queries `omarchy-theme-color --file ... --all` once per session, with a bounded
+timeout. Only known keys with valid six-digit hex colors are accepted. A validated
+snapshot is passed to preview helpers, so redraws do not repeatedly run theme
+utilities. A theme change applies to the next session; no config rewrite, hooks,
+daemons, or polling are involved.
+
+Color precedence is explicit FZD overrides, current Omarchy palette, inherited
+terminal/fzf appearance, then the existing fallback. Set `FZD_COLOR_DIR` and
+`FZD_COLOR_FILE` for entry/preview colors; an explicit empty value suppresses their
+automatic color. `FZD_COLOR_BORDER`, `FZD_COLOR_HIGHLIGHT`, `FZD_COLOR_FG` and
+`FZD_COLOR_BG` override individual fzf roles. If `FZF_DEFAULT_OPTS` or
+`FZF_DEFAULT_OPTS_FILE` contains `--color`/`--no-color`, FZD leaves that fzf palette
+alone unless an explicit FZD role override is set. The inherited LS_COLORS,
+EZA_COLORS and TREE_COLORS keep their unrelated entries. Explicit FZD colors in
+existing configurations are preserved during upgrade. New example configs leave
+colors commented out so inheritance works immediately.
+
+FZD leaves Omarchy's `cd`, `z`, `ff`, `ls`, prompt, key bindings and completions
+intact. Native Tab completion remains available without installing suggestions.
+Package-owned Omarchy startup scripts cannot be selected as installation targets,
+even through a user symlink. User `.bashrc` keeps its minimal managed source entry.
+
+Sources checked for this implementation: current upstream
+[editor wrapper](https://github.com/omacom/omarchy/blob/master/bin/omarchy-launch-editor),
+[theme utility](https://github.com/omacom/omarchy/blob/master/bin/omarchy-theme-color),
+[Bash initialization](https://github.com/omacom/omarchy/blob/master/default/bash/init),
+[aliases](https://github.com/omacom/omarchy/blob/master/default/bash/aliases), and
+[TUI installer](https://github.com/omacom/omarchy/blob/master/bin/omarchy-tui-install).
+Tests retain exact source fixtures and hashes; those tests are not native Omarchy
+validation.
+
+### Optional Omarchy launcher
+
+```bash
+bash install.sh --enhanced --omarchy-launcher float  # or tile
+```
+
+Registration is off by default, noninteractive, and conditional on Omarchy's
+utilities. The installer invokes `omarchy-tui-install` in a private staged home,
+then transactionally publishes its output to
+`$XDG_DATA_HOME/applications/FZD.desktop`. It uses the terminal icon and Omarchy's
+`TUI.float`/`TUI.tile` classes; no global shortcut is assigned. Existing unmanaged,
+modified or symlinked entries are preserved, including with `--adopt`. Ordinary
+updates retain existing registration; uninstall removes an unchanged owned entry.
+
+The launcher opens Bash with a dedicated rc driver, reads the user's selected
+Bash startup file normally at runtime, runs FZD's directory-return wrapper, and
+leaves an interactive prompt in the chosen directory. Cancellation retains the
+starting directory. It does not launch raw `fzd`, which cannot change its parent
+shell. This launcher currently supports Bash; zsh users keep using `lf` from their
+terminal. Other shell integration remains fully supported. Package installation
+never registers a per-user launcher.
+
+## Capability previews and contextual actions
+
+These capabilities depend on installed tools, never an installation-mode marker:
+
+| Capability | Behavior |
+| --- | --- |
+| Directory | eza with forced captured icons and ANSI color, then tree/ls if absent; `FZD_ICONS=0` disables glyphs |
+| Raster image | Chafa symbols, bounded to the preview pane, no animation or terminal probing; falls back to file information |
+| Markdown | Glow for text Markdown extensions up to 1 MiB, pane width and no pager; then bat/head |
+| Alt+Y | Absolute highlighted path to wl-copy under Wayland, xclip/xsel under X11; exact bytes with no appended newline |
+| Alt+G | Lazygit in the highlighted directory or file parent when inside a Git working tree; returns to the current query/session |
+
+Ctrl+C/Ctrl+X/Ctrl+V retain FZD's file copy/cut/paste semantics. F1 lists both new
+actions. Clipboard success/failure appears in the border; headless sessions need
+no provider. Lazygit is never auto-installed. Git repository detection runs only
+when Alt+G is pressed, with no per-redraw status scans or background work.
+
+Chafa uses `--format=symbols --polite=on --animate=off`, disabling probes with
+`--probe=off` when supported (older distro versions predate that option), avoiding
+terminal-specific pixel protocols and tmux passthrough. This is portable across
+Foot, Alacritty, Ghostty and Kitty, but native GUI rendering on these terminals
+still needs platform validation. Unsupported Chafa versions or failed renderers
+fall back cleanly. SVG is left to existing file/text handling. Glow preserves
+user style/configuration; no hard-coded light/dark theme is forced. Renderer
+output is buffered until success so failures/timeouts do not mix partial output
+with fallback text. Preview timeout and size limits remain in force. See the
+[Chafa manual](https://hpjansson.org/chafa/man/) and
+[Glow documentation](https://github.com/charmbracelet/glow#usage).
+
+Enhanced attempts missing Chafa/Glow and an appropriate clipboard provider through
+the native package manager. On repositories lacking a package (notably Glow on
+some Debian/Ubuntu releases), it reports the missing optional tool and preserves
+the core install; it never adds a third-party repository. Install that utility
+through its upstream instructions to activate the feature. Headless installs skip
+clipboard packages. Existing fonts and suggestions are reused as described above.
+
+## Plocate readiness and package indexing
+
+Plocate is required by the source installer and Debian/Arch package metadata.
+Existing installations are reused. A bounded `plocate --count --limit 1 -- /`
+probe checks whether an accessible populated index is available, respecting an
+exported `FZD_LOCATE_DBS`. Missing/empty/unreadable indexes produce guidance,
+without failing an otherwise usable installation. Runtime discovery retains its
+existing locate-first behavior and filesystem fallbacks for failures or manual
+installations. No global search redesign is involved.
+
+**Debian/Ubuntu first-install limitation:** their plocate package may invoke
+`updatedb` directly in `postinst`, outside service-start controls. When plocate
+is missing, FZD stops before an APT transaction rather than authorizing indexing
+implicitly. Review `/etc/updatedb.conf` and your distribution's scheduled indexing,
+then either install plocate yourself or explicitly authorize package setup:
+
+```bash
+bash install.sh --enhanced --allow-package-indexing
+```
+
+This advanced flag authorizes distro package setup, not changes to exclusion
+rules or a separate FZD-triggered updatedb. FZD never changes timers, services,
+indexing exclusions, or invokes updatedb itself. On other supported package
+managers, normal distro-managed setup is retained. An installed but unpopulated
+index needs user-directed initialization (usually `sudo updatedb`, after review)
+or the existing distribution schedule. A completely automatic first installation
+on affected APT systems is incompatible with the no-implicit-indexing guarantee;
+the installer reports this explicitly and does not prompt or partially install
+FZD. Package-manager installation of the Debian artifact follows distro dependency
+setup policy independently of the source installer.

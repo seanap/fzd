@@ -12,16 +12,16 @@ setup() {
   touch "$path"
   printf '#!/bin/sh\nexit 0\n' >"$TEST_BIN/vim"
   chmod +x "$TEST_BIN/vim"
-  run bash -c 'source "$1/fzd.sh"; source "$1/lib/command.bash"; _terminal_run() { printf "%s\0" "$@" >"$FZD_TEST_LOG"; }; EDITOR="vim -f \"a b\""; _open_in_editor "$2"' _ "$FZD_REPO" "$path"
+  run bash -euc 'source "$1/fzd.sh"; source "$1/lib/command.bash"; _terminal_run() { printf "%s\0" "$@" >"$FZD_TEST_LOG"; }; EDITOR="vim -f \"a b\""; _open_in_editor "$2"' _ "$FZD_REPO" "$path"
   [ "$status" -eq 0 ]
-  run bash -c 'mapfile -d "" -t args <"$FZD_TEST_LOG"; [[ ${args[0]} == vim && ${args[1]} == -f && ${args[2]} == "a b" && ${args[3]} == -- && ${args[4]} == "$1" ]]' _ "$path"
+  run bash -euc 'mapfile -d "" -t args <"$FZD_TEST_LOG"; [[ ${args[0]} == vim && ${args[1]} == -f && ${args[2]} == "a b" && ${args[3]} == -- && ${args[4]} == "$1" ]]' _ "$path"
   [ "$status" -eq 0 ]
 }
 
 @test "unsafe editor expressions are rejected without execution and fallback respects precedence" {
   printf '#!/bin/sh\nexit 0\n' >"$TEST_BIN/micro"
   chmod +x "$TEST_BIN/micro"
-  run bash -c 'source "$1/lib/command.bash"; for value in "vim; touch $2/pwn" "vim \$(touch $2/pwn)" "vim | sh" "vim \"unfinished"; do ! _fzd_command_parse "$value" || exit 1; done; EDITOR=missing; VISUAL="micro -x"; _fzd_editor_command; [[ ${FZD_COMMAND[*]} == micro ]]; EDITOR=""; _fzd_editor_command; [[ ${FZD_COMMAND[*]} == "micro -x" ]]' _ "$FZD_REPO" "$FIXTURE_ROOT"
+  run bash -euc 'source "$1/lib/command.bash"; for value in "vim; touch $2/pwn" "vim \$(touch $2/pwn)" "vim | sh" "vim \"unfinished"; do ! _fzd_command_parse "$value" || exit 1; done; EDITOR=missing; VISUAL="micro -x"; _fzd_editor_command; [[ ${FZD_COMMAND[*]} == micro ]]; EDITOR=""; _fzd_editor_command; [[ ${FZD_COMMAND[*]} == "micro -x" ]]' _ "$FZD_REPO" "$FIXTURE_ROOT"
   [ "$status" -eq 0 ]
   [ ! -e "$FIXTURE_ROOT/pwn" ]
 }
@@ -35,7 +35,7 @@ setup() {
   touch "$FIXTURE_ROOT/a file"
   for tool in nvim vim; do
     printf '%s\n' "$tool" >"$HOME/.local/state/omarchy/defaults/editor"
-    run bash -c 'source "$1/fzd.sh"; _terminal_run() { "$@"; }; EDITOR="omarchy-launch-editor --inline"; _open_in_editor "$2"; mapfile -d "" -t a <"$FZD_TEST_LOG"; [[ ${#a[@]} == 3 && ${a[0]} == "$3" && ${a[1]} == -- && ${a[2]} == "$2" ]]' _ "$FZD_REPO" "$FIXTURE_ROOT/a file" "$tool"
+    run bash -euc 'source "$1/fzd.sh"; _terminal_run() { "$@"; }; EDITOR="omarchy-launch-editor --inline"; _open_in_editor "$2"; mapfile -d "" -t a <"$FZD_TEST_LOG"; [[ ${#a[@]} == 3 && ${a[0]} == "$3" && ${a[1]} == -- && ${a[2]} == "$2" ]]' _ "$FZD_REPO" "$FIXTURE_ROOT/a file" "$tool"
     [ "$status" -eq 0 ]
   done
 }
@@ -50,7 +50,7 @@ theme_fixture() {
 @test "current light and dark Omarchy palettes apply once and explicit colors win" {
   for theme in tokyo-night catppuccin-latte; do
     theme_fixture "$theme"
-    run bash -c 'source "$1/fzd.sh"; source "$1/lib/theme.bash"; _fzd_theme_init; [[ ${#FZD_THEME_OPTS[@]} -gt 5 && $FZD_COLOR_DIR == "$2" ]]; before=$FZD_THEME_SNAPSHOT; omarchy-theme-color() { return 99; }; _fzd_theme_init --_preview; [[ $before == "$FZD_THEME_SNAPSHOT" ]]; FZD_COLOR_DIR=""; FZD_COLOR_BORDER="#010203"; _fzd_theme_init --_preview; [[ $FZD_COLOR_DIR == "" && ${FZD_THEME_OPTS[-1]} == --color=border:#010203 ]]' _ "$FZD_REPO" "$([[ $theme == tokyo-night ]] && echo '#7aa2f7' || echo '#1e66f5')"
+    run bash -euc 'source "$1/fzd.sh"; source "$1/lib/theme.bash"; _fzd_theme_init; [[ ${#FZD_THEME_OPTS[@]} -gt 5 && $FZD_COLOR_DIR == "$2" ]]; before=$FZD_THEME_SNAPSHOT; omarchy-theme-color() { return 99; }; _fzd_theme_init --_preview; [[ $before == "$FZD_THEME_SNAPSHOT" ]]; FZD_COLOR_DIR=""; FZD_COLOR_BORDER="#010203"; _fzd_theme_init --_preview; [[ $FZD_COLOR_DIR == "" && ${FZD_THEME_OPTS[-1]} == --color=border:#010203 ]]' _ "$FZD_REPO" "$([[ $theme == tokyo-night ]] && echo '#7aa2f7' || echo '#1e66f5')"
     [ "$status" -eq 0 ]
   done
 }
@@ -58,7 +58,7 @@ theme_fixture() {
 @test "inherited fzf colors and opt out preserve user palettes without parsing shell code" {
   theme_fixture tokyo-night
   export FZF_DEFAULT_OPTS='--color=bg:#123456'
-  run bash -c 'source "$1/fzd.sh"; source "$1/lib/theme.bash"; _fzd_theme_init; [[ ${#FZD_THEME_OPTS[@]} == 0 ]]; unset FZF_DEFAULT_OPTS; printf "%s" "--color=light" >"$2"; FZF_DEFAULT_OPTS_FILE=$2; _fzd_theme_init; [[ ${#FZD_THEME_OPTS[@]} == 0 ]]; unset FZD_COLOR_DIR FZD_COLOR_FILE; FZD_OMARCHY_THEME=0; _fzd_theme_init; [[ ! ${FZD_COLOR_DIR+x} && -z $FZD_THEME_SNAPSHOT ]]' _ "$FZD_REPO" "$BATS_TEST_TMPDIR/fzfopts"
+  run bash -euc 'source "$1/fzd.sh"; source "$1/lib/theme.bash"; _fzd_theme_init; [[ ${#FZD_THEME_OPTS[@]} == 0 ]]; unset FZF_DEFAULT_OPTS; printf "%s" "--color=light" >"$2"; FZF_DEFAULT_OPTS_FILE=$2; _fzd_theme_init; [[ ${#FZD_THEME_OPTS[@]} == 0 ]]; unset FZD_COLOR_DIR FZD_COLOR_FILE; FZD_OMARCHY_THEME=0; _fzd_theme_init; [[ ! ${FZD_COLOR_DIR+x} && -z $FZD_THEME_SNAPSHOT ]]' _ "$FZD_REPO" "$BATS_TEST_TMPDIR/fzfopts"
   [ "$status" -eq 0 ]
 }
 
@@ -70,7 +70,7 @@ theme_fixture() {
   local path="$FIXTURE_ROOT/strange ' \""$'\n'
   touch "$path"
   for display in wayland xclip xsel; do
-    run bash -c 'source "$1/fzd.sh"; source "$1/lib/integrations.bash"; unset DISPLAY WAYLAND_DISPLAY; if [[ $3 == wayland ]]; then WAYLAND_DISPLAY=wayland-1; else DISPLAY=:0; fi; _copy_absolute_path "$2"; [[ $FZD_STATUS == "Path copied" ]]; printf "%s" "$2" | cmp - "$FZD_TEST_LOG"; CLIP_STATUS=1; export CLIP_STATUS; _copy_absolute_path "$2"; [[ $FZD_STATUS == "Clipboard copy failed" ]]; unset WAYLAND_DISPLAY DISPLAY; _copy_absolute_path "$2"; [[ $FZD_STATUS == "No clipboard provider for this display" ]]' _ "$FZD_REPO" "$path" "$display"
+    run bash -euc 'source "$1/fzd.sh"; source "$1/lib/integrations.bash"; unset DISPLAY WAYLAND_DISPLAY; if [[ $3 == wayland ]]; then WAYLAND_DISPLAY=wayland-1; else DISPLAY=:0; fi; _copy_absolute_path "$2"; [[ $FZD_STATUS == "Path copied" ]]; printf "%s" "$2" | cmp - "$FZD_TEST_LOG"; CLIP_STATUS=1; export CLIP_STATUS; _copy_absolute_path "$2"; [[ $FZD_STATUS == "Clipboard copy failed" ]]; unset WAYLAND_DISPLAY DISPLAY; _copy_absolute_path "$2"; [[ $FZD_STATUS == "No clipboard provider for this display" ]]' _ "$FZD_REPO" "$path" "$display"
     [ "$status" -eq 0 ]
     if [[ $display == xclip ]]; then rm "$TEST_BIN/xclip"; fi
   done
@@ -81,7 +81,7 @@ theme_fixture() {
   printf '#!/bin/sh\nexit 0\n' >"$TEST_BIN/lazygit"
   chmod +x "$TEST_BIN/git" "$TEST_BIN/lazygit"
   touch "$FIXTURE_ROOT/file"
-  run bash -c 'source "$1/fzd.sh"; source "$1/lib/integrations.bash"; original=$PWD; _terminal_run() { [[ $1 == lazygit && $PWD == "$2" ]]; }; _launch_lazygit "$2/file"; [[ $PWD == "$original" && $FZD_STATUS == "Returned from Lazygit" ]]; GIT_INSIDE=false; export GIT_INSIDE; _launch_lazygit "$2"; [[ $FZD_STATUS == "Selection is outside a Git working tree" ]]' _ "$FZD_REPO" "$FIXTURE_ROOT"
+  run bash -euc 'source "$1/fzd.sh"; source "$1/lib/integrations.bash"; original=$PWD; expected_directory=$2; _terminal_run() { [[ $1 == lazygit && $PWD == "$expected_directory" ]]; }; _launch_lazygit "$2/file"; [[ $PWD == "$original" && $FZD_STATUS == "Returned from Lazygit" ]]; GIT_INSIDE=false; export GIT_INSIDE; _launch_lazygit "$2"; [[ $FZD_STATUS == "Selection is outside a Git working tree" ]]' _ "$FZD_REPO" "$FIXTURE_ROOT"
   [ "$status" -eq 0 ]
   [ "$(wc -l <"$FZD_TEST_LOG")" -eq 2 ]
 }
@@ -92,13 +92,13 @@ theme_fixture() {
   chmod +x "$TEST_BIN/file" "$TEST_BIN/chafa"
   touch "$FIXTURE_ROOT/image.png"
   export FZF_PREVIEW_COLUMNS=110 FZF_PREVIEW_LINES=30
-  run bash -c 'source "$1/fzd.sh"; FZD_PREVIEW_TIMEOUT=1; _preview_file "$2"' _ "$FZD_REPO" "$FIXTURE_ROOT/image.png"
+  run bash -euc 'source "$1/fzd.sh"; FZD_PREVIEW_TIMEOUT=1; _preview_file "$2"' _ "$FZD_REPO" "$FIXTURE_ROOT/image.png"
   [ "$status" -eq 0 ]
   [ "$output" = rendered ]
   grep -q -- '--size=110x30' "$FZD_TEST_LOG"
   grep -q -- '--format=symbols' "$FZD_TEST_LOG"
   export RENDER_STATUS=1
-  run bash -c 'source "$1/fzd.sh"; FZD_PREVIEW_TIMEOUT=1; _preview_file "$2"' _ "$FZD_REPO" "$FIXTURE_ROOT/image.png"
+  run bash -euc 'source "$1/fzd.sh"; FZD_PREVIEW_TIMEOUT=1; _preview_file "$2"' _ "$FZD_REPO" "$FIXTURE_ROOT/image.png"
   [ "$status" -eq 0 ]
   [[ "$output" != *rendered* ]]
 }
@@ -108,14 +108,14 @@ theme_fixture() {
   printf '#!/bin/sh\nprintf "%%s\\n" "$@" >"$FZD_TEST_LOG"\necho markdown\nif [ "${RENDER_SLEEP:-0}" = 1 ]; then sleep 3; fi\nexit "${RENDER_STATUS:-0}"\n' >"$TEST_BIN/glow"
   chmod +x "$TEST_BIN/glow"
   export FZF_PREVIEW_COLUMNS=90
-  run bash -c 'source "$1/fzd.sh"; FZD_PREVIEW_TIMEOUT=1; FZD_PREVIEW_MAX_LINES=200; _preview_file "$2"' _ "$FZD_REPO" "$FIXTURE_ROOT/README.md"
+  run bash -euc 'source "$1/fzd.sh"; FZD_PREVIEW_TIMEOUT=1; FZD_PREVIEW_MAX_LINES=200; _preview_file "$2"' _ "$FZD_REPO" "$FIXTURE_ROOT/README.md"
   [ "$status" -eq 0 ]
   [ "$output" = markdown ]
   ! grep -q style "$FZD_TEST_LOG"
   grep -q -- '--pager=false' "$FZD_TEST_LOG"
   for variable in RENDER_STATUS RENDER_SLEEP; do
     export "$variable=1"
-    run bash -c 'source "$1/fzd.sh"; FZD_PREVIEW_TIMEOUT=1; FZD_PREVIEW_MAX_LINES=200; _preview_file "$2"' _ "$FZD_REPO" "$FIXTURE_ROOT/README.md"
+    run bash -euc 'source "$1/fzd.sh"; FZD_PREVIEW_TIMEOUT=1; FZD_PREVIEW_MAX_LINES=200; _preview_file "$2"' _ "$FZD_REPO" "$FIXTURE_ROOT/README.md"
     [ "$status" -eq 0 ]
     [[ "$output" == *'# Heading'* ]]
     [[ "$output" != *markdown* ]]
@@ -149,7 +149,7 @@ theme_fixture() {
   ln -s "$FZD_REAL_CHAFA" "$TEST_BIN/chafa"
   # A 1x1 PNG, no external image libraries needed by the fixture.
   printf '%s' iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+a1ZkAAAAASUVORK5CYII= | base64 -d >"$FIXTURE_ROOT/tiny.png"
-  run bash -c 'source "$1/fzd.sh"; FZD_PREVIEW_TIMEOUT=2; _preview_file "$2"' _ "$FZD_REPO" "$FIXTURE_ROOT/tiny.png"
+  run bash -euc 'source "$1/fzd.sh"; FZD_PREVIEW_TIMEOUT=2; _preview_file "$2"' _ "$FZD_REPO" "$FIXTURE_ROOT/tiny.png"
   [ "$status" -eq 0 ]
   [[ "$output" != *'PNG image data'* ]]
   [ -n "$output" ]

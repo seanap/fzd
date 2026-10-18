@@ -9,7 +9,8 @@
 Discover unfamiliar directories. Remember the places that matter. Get back to work.
 
 FZD is a small, keyboard-driven file explorer for Linux, built with Bash,
-[fzf](https://github.com/junegunn/fzf), and [zoxide](https://github.com/ajeetdsouza/zoxide).
+[fzf](https://github.com/junegunn/fzf), [zoxide](https://github.com/ajeetdsouza/zoxide),
+and [plocate](https://plocate.sesse.net/).
 Browse with previews, search across your filesystem, and return to your shell
 right where you need to be.
 
@@ -48,7 +49,7 @@ work. Once you've found a useful place, zoxide helps you get there again.
 
 ## Install
 
-Run as your normal user on Ubuntu/Debian, Arch, or Fedora:
+Run as your normal user on Omarchy, ordinary Arch, Ubuntu/Debian, Fedora, or WSL:
 
 ```bash
 git clone https://github.com/seanap/fzd.git
@@ -56,15 +57,21 @@ cd fzd
 bash install.sh --enhanced
 ```
 
-`--enhanced` adds optional inline autosuggestions and Nerd Font conveniences.
-Plain `bash install.sh` provides the standard **Simple** experience: required
-and recommended tools, previews, shell integration, and native **Tab** completion.
+`--enhanced` adds optional image/Markdown preview tools, clipboard support,
+inline autosuggestions, and Nerd Font conveniences. Plain `bash install.sh`
+provides the full standard experience with plocate, recommended preview tools,
+shell integration, and native **Tab** completion. Both run the same application;
+installed capabilities work automatically in either mode.
 
 Open a **new terminal**, then run `lf`. Both modes reuse existing tools and
 preserve your shell customizations. FZD lives under `~/.local`, with its shell
 setup in `~/.config/fzd/shell.bash` or `shell.zsh`. Missing system packages need
 root or cached sudo authorization (`sudo -v`). Enhanced provides terminal font
 selection guidance; on WSL, fonts must be installed and selected on Windows.
+
+On Ubuntu/Debian, installing a missing plocate package may initialize its index.
+FZD stops before that transaction unless you explicitly authorize package indexing;
+see the [installation guidance](docs/TECHNICAL.md#plocate-readiness-and-package-indexing).
 
 <details>
 <summary>Packages, manual installation, updates and removal</summary>
@@ -76,6 +83,19 @@ from [GitHub Releases](https://github.com/seanap/fzd/releases/latest).
 AUR publication is pending.
 
 </details>
+
+## At home on Omarchy
+
+FZD follows the current Omarchy palette each time it starts and opens files with
+Omarchy's selected editor, including subsequent editor changes. It reuses existing
+zoxide, fzf, fonts, aliases, and shell setup. An optional Enhanced launcher opens
+an interactive terminal that stays in the directory you choose.
+
+Images render with Chafa; Markdown renders with Glow when installed. **Alt+Y**
+copies the selected absolute path to your system clipboard. **Alt+G** opens the
+selected Git working tree in Lazygit and returns to your browsing session.
+Lazygit is detected when present and is never installed automatically.
+See [Omarchy integration](docs/TECHNICAL.md#omarchy-integration) for setup details.
 
 ## Make yourself at home
 

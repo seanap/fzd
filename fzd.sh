@@ -454,13 +454,19 @@ _preview_file() {
   else
     head -c 4096 -- "$file" | tr -d '\000' | grep -q $'\n' && is_text=1
   fi
-  local width=${FZF_PREVIEW_COLUMNS:-80} height=${FZF_PREVIEW_LINES:-24} rendered
+  local width=${FZF_PREVIEW_COLUMNS:-80} height=${FZF_PREVIEW_LINES:-24} rendered chafa_help
+  local -a chafa_probe=()
   [[ $width =~ ^[1-9][0-9]{0,2}$ ]] && ((width <= 500)) || width=80
   [[ $height =~ ^[1-9][0-9]{0,2}$ ]] && ((height <= 200)) || height=24
   case $mime in
     image/png|image/jpeg|image/gif|image/webp|image/bmp|image/tiff|image/avif|image/x-icon|image/vnd.microsoft.icon)
-      if _have chafa && rendered=$(_timeout_wrap "$FZD_PREVIEW_TIMEOUT" chafa --format=symbols --polite=on --animate=off --probe=off --size="${width}x${height}" -- "$file" 2>/dev/null); then
-        printf '%s\n' "$rendered"; return 0
+      if _have chafa; then
+        # Older distro releases predate probing and do not accept --probe.
+        chafa_help=$(_timeout_wrap 1 chafa --help 2>/dev/null) || chafa_help=''
+        [[ $chafa_help != *--probe* ]] || chafa_probe=(--probe=off)
+        if rendered=$(_timeout_wrap "$FZD_PREVIEW_TIMEOUT" chafa --format=symbols --polite=on --animate=off "${chafa_probe[@]}" --size="${width}x${height}" -- "$file" 2>/dev/null); then
+          printf '%s\n' "$rendered"; return 0
+        fi
       fi ;;
   esac
   if (( is_text )); then
