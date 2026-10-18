@@ -4,6 +4,7 @@
 Usage: python3 benchmarks/install-experience.py BASELINE_CHECKOUT OUTPUT [TRIALS]
 Run sequentially on an otherwise idle host. Results include shell integration,
 initial list readiness, and captured text preview changes; not font rendering.
+Set FZD_BENCH_OMARCHY=1 to include the current upstream theme utility fixture.
 """
 import fcntl
 import json
@@ -12,6 +13,7 @@ from pathlib import Path
 import pty
 import re
 import select
+import shutil
 import signal
 import statistics
 import struct
@@ -41,6 +43,19 @@ def observe(checkout, root, private, log):
                FZF_DEFAULT_OPTS="", FZF_DEFAULT_OPTS_FILE="/dev/null",
                FZD_BENCH_SOURCE=str(checkout / "shell/integration.sh"),
                FZD_BIN=str(checkout / "fzd.sh"))
+    # Optional current-upstream fixture measures the real adapter/utility cost.
+    # This remains a compatibility workload, not a native Omarchy benchmark.
+    if os.environ.get("FZD_BENCH_OMARCHY") == "1":
+        theme = private / ".local/state/omarchy/current/theme"
+        theme.mkdir(parents=True)
+        shutil.copyfile(REPO / "tests/fixtures/omarchy/tokyo-night.toml",
+                        theme / "colors.toml")
+        tools = private / "tools"
+        tools.mkdir()
+        utility = tools / "omarchy-theme-color"
+        shutil.copyfile(REPO / "tests/fixtures/omarchy/omarchy-theme-color", utility)
+        utility.chmod(0o755)
+        env["PATH"] = str(tools) + ":" + env["PATH"]
     script = ('source "$FZD_BENCH_SOURCE"; lf; '
               'result=$?; printf "\\nFZD_PTY_FINISHED:%s\\n" "$result"; exit "$result"')
     started = time.perf_counter_ns()
