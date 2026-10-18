@@ -18,6 +18,7 @@ record() {
 }
 
 begin_transaction() {
+  local path
   RECORDED_RC=()
   RECORDED_SHELL=()
   PENDING_PATHS=()
@@ -30,6 +31,7 @@ begin_transaction() {
   : >"$TX/journal"
   : >"$TX/manifest"
   printf '%s\0' "$CFG" >"$TX/rc-targets"
+  for path in "${SHELL_PATHS[@]}"; do printf '%s\0' "$path" >>"$TX/rc-targets"; done
   printf '%s\0' "$TX" >"$LOCK/transaction"
   COMMITTED=0
   trap finish_transaction EXIT

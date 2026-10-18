@@ -421,3 +421,34 @@ STUB
   assert_installed
   [ "$(stat -c %a "$XDG_CONFIG_HOME/fzd")" = 750 ]
 }
+
+@test "failed uninstall rolls back shell files at historic XDG locations outside HOME" {
+  export XDG_CONFIG_HOME="$BATS_TEST_TMPDIR/external-old"
+  install_fzd
+  assert_installed
+  local old=$XDG_CONFIG_HOME
+  export XDG_CONFIG_HOME="$BATS_TEST_TMPDIR/external-new"
+  install_fzd
+  assert_installed
+  cp "$HOME/.bashrc" "$HOME/before-rc"
+  cp "$old/fzd/shell.bash" "$HOME/before-old"
+  cp "$XDG_CONFIG_HOME/fzd/shell.bash" "$HOME/before-new"
+  export FZD_REAL_CP
+  FZD_REAL_CP=$(readlink -f "$TEST_BIN/cp")
+  export FZD_FAIL_SOURCE="$DATA/install.manifest"
+  rm "$TEST_BIN/cp"
+  cat >"$TEST_BIN/cp" <<'SH'
+#!/bin/bash
+for arg; do [[ $arg != "$FZD_FAIL_SOURCE" ]] || exit 73; done
+exec "$FZD_REAL_CP" "$@"
+SH
+  chmod +x "$TEST_BIN/cp"
+  install_fzd --uninstall
+  [ "$status" -eq 73 ]
+  cmp "$HOME/before-old" "$old/fzd/shell.bash"
+  cmp "$HOME/before-new" "$XDG_CONFIG_HOME/fzd/shell.bash"
+  cmp "$HOME/before-rc" "$HOME/.bashrc"
+  [ ! -e "$DATA/.install-lock" ]
+  install_fzd --verify
+  [ "$status" -eq 0 ]
+}
