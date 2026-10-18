@@ -20,6 +20,9 @@ right where you need to be.
 
 ## Usage
 
+<img width="1440" height="535" alt="01_three_commands" src="https://github.com/user-attachments/assets/a311fe78-90fa-44f2-966c-f1f8dc2ced20" />
+
+
 ```bash
 lf                 # Opens Current dir, preview full tree
 lf immich          # Jump to the best matching place you've already visited
@@ -41,6 +44,9 @@ I still found myself asking: where did that project put its files?
 I built FZD to find my bearings without memorizing paths or repeatedly typing
 `cd` and `ls`. Browse the directory tree. Quickly edit a config with `Micro`. Search your whole system, instantly, powered by `plocate`. All using pure Bash.
 
+<img width="1440" height="611" alt="05_smart_previews" src="https://github.com/user-attachments/assets/a3798f0a-5ddb-487a-b03b-fdc0654f1bf0" />
+
+
 ## Install
 
 Supports Ubuntu/Debian, Arch, or Fedora, and runs on Bash or zsh:
@@ -50,6 +56,9 @@ git clone https://github.com/seanap/fzd.git
 cd fzd
 bash install.sh --deps recommended --inline-suggestions
 ```
+
+<img width="1440" height="620" alt="03_installation_tiers" src="https://github.com/user-attachments/assets/11e2182f-773e-4d48-b794-f2dcc043a6f3" />
+
 
 Installs FZD under `~/.local`,
 Adds gray inline autosuggestions. Press **Right** to accept. 
