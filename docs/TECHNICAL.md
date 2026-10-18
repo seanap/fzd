@@ -170,24 +170,21 @@ existing engines; optional fonts can be downloaded if font tools already exist.
 The legacy `--inline-suggestions`, `--noninteractive`, `--no-updatedb` and all
 lifecycle, prefix, shell, staging and verified-fzf flags remain supported.
 
-The following release commands describe **published v2.0.0**, whose installer
-predates the two mode interface. Use the current checkout for the behavior above.
-
-**Current release: `v2.0.0`.** Get its packages, source archive and checksums from
-[GitHub Releases](https://github.com/seanap/fzd/releases/tag/v2.0.0). FZD is not
+**Release: `v2.1.0`.** Get its packages, source archive and checksums from
+[GitHub Releases](https://github.com/seanap/fzd/releases/tag/v2.1.0). FZD is not
 available in the official Ubuntu or Debian repositories.
 
 Tested on Linux x86_64: Ubuntu 24.04, Debian 13 and current Arch Linux. Fedora 44
 has staged-runtime validation, not an RPM package. ARM64 is not yet validated.
 
-For Ubuntu/Debian, download `fzd-2.0.0-debian-all.deb`, `SHA256SUMS` and `SOURCE`
+For Ubuntu/Debian, download `fzd-2.1.0-debian-all.deb`, `SHA256SUMS` and `SOURCE`
 into a clean directory. Verify the checksum and source revision, then install
 with APT so dependencies are resolved:
 
 ```bash
 sha256sum --ignore-missing -c SHA256SUMS
 cat SOURCE
-sudo apt install ./fzd-2.0.0-debian-all.deb
+sudo apt install ./fzd-2.1.0-debian-all.deb
 ```
 
 For Arch, download `PKGBUILD` from the same release into a clean directory and
@@ -219,16 +216,16 @@ supported. The source installer is separate from package installation; it owns
 only its user-local files. Other Linux systems can use the manual installation
 below. See [Packaging](packaging.md) for build and validation details.
 
-Download the custom `fzd-2.0.0.tar.gz`, `SHA256SUMS` and `SOURCE` from the
+Download the custom `fzd-2.1.0.tar.gz`, `SHA256SUMS` and `SOURCE` from the
 same release. GitHub's automatically generated source links are different archives.
 Extract the custom archive and install as your normal user:
 
 ```bash
 sha256sum --ignore-missing -c SHA256SUMS
 cat SOURCE
-tar -xzf fzd-2.0.0.tar.gz
-cd fzd-2.0.0
-bash install.sh --deps recommended
+tar -xzf fzd-2.1.0.tar.gz
+cd fzd-2.1.0
+bash install.sh
 ```
 
 The installer prints missing packages before installing them. Package operations

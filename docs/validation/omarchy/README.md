@@ -1,5 +1,25 @@
 # Omarchy integration implementation and validation
 
+## Hosted validation follow-up
+
+After the feature branch was pushed from the host, [workflow run
+39155029473](https://github.com/seanap/fzd/actions/runs/39155029473) passed all
+six jobs for `588580a8334921de6d650ac077f9049b357755cb`: complete regression
+suites with fzf 0.44.1 and 0.65.2, static checks, deterministic builds and
+Ubuntu, Debian, Arch and Fedora userspace validation. Job IDs and conclusions
+are retained in `hosted-ci.json`. This closes the automated validation gap
+described in the original local report below; the original failure logs remain
+unaltered. Distribution containers are not native desktop validation.
+
+The user subsequently authorized merging and a new release. Release preparation
+updates VERSION to 2.1.0, reconciles main's README changes while keeping the
+current banner/GIF, and refreshes package instructions and release notes.
+The publication procedure requires hosted CI success on the final revision;
+success on the earlier implementation revision alone cannot publish it.
+Native Omarchy appearance and GUI/font limitations below remain applicable.
+
+## Original local implementation report
+
 Implemented on `feature/omarchy-integration`, building on the existing two-tier
 installation work at `28a483a`. The complete validated revision is `4c85d58`
 (runtime finalized at `b74e477`, installer policy at `49a17c6`, followed by test
