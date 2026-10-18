@@ -113,7 +113,8 @@ _fzd_init() {
   : "${FZD_PREVIEW_TIMEOUT:=2}"
 
   FZD_THEME_OPTS=()
-  if [[ -n ${FZD_OMARCHY_THEME_FILE:-}${FZD_THEME_SNAPSHOT:-}${FZD_COLOR_BORDER:-}${FZD_COLOR_HIGHLIGHT:-}${FZD_COLOR_FG:-}${FZD_COLOR_BG:-} ]] || _have omarchy-theme-color; then
+  if [[ -n ${FZD_OMARCHY_THEME_FILE:-}${FZD_THEME_SNAPSHOT:-}${FZD_COLOR_BORDER:-}${FZD_COLOR_HIGHLIGHT:-}${FZD_COLOR_FG:-}${FZD_COLOR_BG:-} ]] ||
+    [[ -f $XDG_STATE_HOME/omarchy/current/theme/colors.toml || -f $HOME/.local/state/omarchy/current/theme/colors.toml || -f $XDG_CONFIG_HOME/omarchy/current/theme/colors.toml ]]; then
     if _explorer_load theme; then _fzd_theme_init "${1:-}"; fi
   fi
   c_dir=""; c_file=""

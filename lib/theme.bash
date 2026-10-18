@@ -5,8 +5,8 @@ _fzd_theme_init() {
   local -A colors=()
   FZD_THEME_OPTS=()
   if [[ $mode != 0 ]]; then
-    if [[ ${1:-} == --_preview && -n ${FZD_THEME_SNAPSHOT:-} ]]; then
-      palette=$FZD_THEME_SNAPSHOT
+    if [[ ${1:-} == --_preview && ${FZD_THEME_READY:-0} == 1 ]]; then
+      palette=${FZD_THEME_SNAPSHOT:-}
     else
       if [[ -z $path ]]; then
         for path in "$XDG_STATE_HOME/omarchy/current/theme/colors.toml" "$HOME/.local/state/omarchy/current/theme/colors.toml" "$XDG_CONFIG_HOME/omarchy/current/theme/colors.toml"; do
@@ -26,7 +26,7 @@ _fzd_theme_init() {
     colors[$key]=$value
     FZD_THEME_SNAPSHOT+="$key"$'\t'"$value"$'\n'
   done <<<"$palette"
-  export FZD_THEME_SNAPSHOT
+  export FZD_THEME_READY=1 FZD_THEME_SNAPSHOT
   # Explicit empty overrides intentionally suppress automatic entry colors.
   [[ ${FZD_COLOR_DIR+x} || ! ${colors[blue]+x} ]] || FZD_COLOR_DIR=${colors[blue]}
   [[ ${FZD_COLOR_FILE+x} || ! ${colors[foreground]+x} ]] || FZD_COLOR_FILE=${colors[foreground]}
