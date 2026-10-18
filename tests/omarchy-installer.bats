@@ -31,14 +31,17 @@ omarchy_tools() {
   [[ "$output" == *'Missing prerequisites: plocate'* ]]
 }
 
-@test "apt first plocate install refuses hidden package indexing unless explicitly authorized" {
+@test "native first plocate installs require authorization for package-managed indexing" {
   rm "$TEST_BIN/plocate"
   stub_managers
-  # Function-level apt fixture: no native package transaction is performed.
-  run bash -c 'set -euo pipefail; source "$1/installer/dependencies.bash"; die() { echo "$*"; exit 1; }; detect_pm() { PM=apt; }; DEPS=required; FZF_VERSION=""; ensure_dependencies' _ "$REPO"
-  [ "$status" -ne 0 ]
-  [[ "$output" == *'--allow-package-indexing'* ]]
-  [ ! -e "$CALLS" ]
+  # Function-level manager fixtures; no native package transaction is performed.
+  local manager
+  for manager in apt dnf pacman; do
+    run bash -c 'set -euo pipefail; source "$1/installer/dependencies.bash"; die() { echo "$*"; exit 1; }; test_pm=$2; detect_pm() { PM=$test_pm; }; DEPS=required; FZF_VERSION=""; ensure_dependencies' _ "$REPO" "$manager"
+    [ "$status" -ne 0 ]
+    [[ "$output" == *'--allow-package-indexing'* ]]
+    [ ! -e "$CALLS" ]
+  done
 }
 
 @test "required plocate installs through mapped package transactions when indexing is authorized" {

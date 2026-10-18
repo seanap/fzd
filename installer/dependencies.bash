@@ -164,10 +164,10 @@ ensure_dependencies() {
       package_for "$tool"
       packages+=("$REPLY")
     done
-    # Debian/Ubuntu's plocate postinst may call updatedb directly, outside
-    # policy-rc.d. Never hide an expensive first index inside a package install.
-    if [[ $PM == apt && ${ALLOW_PACKAGE_INDEXING:-0} != 1 ]] && ! have plocate; then
-      die 'The distro plocate package may initialize a system index on first install. Review /etc/updatedb.conf, then install plocate yourself or explicitly authorize its package setup with --allow-package-indexing. No FZD files were changed.'
+    # APT can run updatedb directly, Fedora starts its service, and Arch ships
+    # an enabled timer. Never hide first-time indexing inside package setup.
+    if [[ ${ALLOW_PACKAGE_INDEXING:-0} != 1 ]] && ! have plocate; then
+      die 'The distro plocate package may initialize an index or enable its indexing schedule. Review /etc/updatedb.conf, then install plocate yourself or explicitly authorize package setup with --allow-package-indexing. No FZD files were changed.'
     fi
     install_packages "${packages[@]}"
     collect_missing

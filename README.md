@@ -68,8 +68,8 @@ setup in `~/.config/fzd/shell.bash` or `shell.zsh`. Missing system packages need
 root or cached sudo authorization (`sudo -v`). Enhanced provides terminal font
 selection guidance; on WSL, fonts must be installed and selected on Windows.
 
-On Ubuntu/Debian, installing a missing plocate package may initialize its index.
-FZD stops before that transaction unless you explicitly authorize package indexing;
+Installing a missing plocate package can start indexing or enable its schedule.
+FZD stops before that transaction unless you explicitly authorize package setup;
 see the [installation guidance](docs/TECHNICAL.md#plocate-readiness-and-package-indexing).
 
 <details>

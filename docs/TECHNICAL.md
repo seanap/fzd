@@ -769,10 +769,10 @@ without failing an otherwise usable installation. Runtime discovery retains its
 existing locate-first behavior and filesystem fallbacks for failures or manual
 installations. No global search redesign is involved.
 
-**Debian/Ubuntu first-install limitation:** their plocate package may invoke
-`updatedb` directly in `postinst`, outside service-start controls. When plocate
-is missing, FZD stops before an APT transaction rather than authorizing indexing
-implicitly. Review `/etc/updatedb.conf` and your distribution's scheduled indexing,
+**First-install package limitation:** Debian/Ubuntu can invoke `updatedb` directly
+in `postinst`; Fedora starts the indexing service after installation; Arch ships
+a timer enabled by its package. When plocate is missing, FZD stops before the
+package transaction rather than authorizing indexing implicitly. Review `/etc/updatedb.conf` and your distribution's scheduled indexing,
 then either install plocate yourself or explicitly authorize package setup:
 
 ```bash
@@ -781,11 +781,20 @@ bash install.sh --enhanced --allow-package-indexing
 
 This advanced flag authorizes distro package setup, not changes to exclusion
 rules or a separate FZD-triggered updatedb. FZD never changes timers, services,
-indexing exclusions, or invokes updatedb itself. On other supported package
-managers, normal distro-managed setup is retained. An installed but unpopulated
+indexing exclusions, or invokes updatedb itself. After explicit authorization, native distribution setup and schedules are
+retained. An installed but unpopulated
 index needs user-directed initialization (usually `sudo updatedb`, after review)
 or the existing distribution schedule. A completely automatic first installation
-on affected APT systems is incompatible with the no-implicit-indexing guarantee;
+with these native packages is incompatible with the no-implicit-indexing guarantee;
 the installer reports this explicitly and does not prompt or partially install
-FZD. Package-manager installation of the Debian artifact follows distro dependency
+FZD. Package-manager installation of the Debian/Arch artifacts follows distro dependency
 setup policy independently of the source installer.
+
+
+Indexing side effects were checked against the Ubuntu 24.04 plocate package
+postinst and current official
+[Arch PKGBUILD](https://gitlab.archlinux.org/archlinux/packaging/packages/plocate/-/blob/main/PKGBUILD)
+and [Fedora 44 spec](https://src.fedoraproject.org/rpms/plocate/blob/f44/f/plocate.spec).
+The authorization guard covers all supported native package managers, including
+schedules enabled during package setup. An existing plocate needs no authorization
+flag and FZD leaves its indexing policy intact.
