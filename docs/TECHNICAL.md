@@ -231,7 +231,8 @@ bash install.sh --deps recommended
 
 The installer prints missing packages before installing them. Package operations
 use root or cached sudo authorization (`sudo -v` before installation); ordinary
-installs never prompt. It installs FZD under `~/.local`, creates user-editable
+installs never prompt. Package transactions do not read installer input; Debian
+keeps existing modified conffiles. It installs FZD under `~/.local`, creates user-editable
 XDG shell configuration, and adds a three-line marked source entry to each
 selected shell startup file. Open a **new terminal** and run:
 

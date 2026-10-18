@@ -150,3 +150,12 @@ load helpers/installer
   [[ "$output" == *'zoxide >= 0.9.0 is required'* ]]
   [ ! -e "$PREFIX/bin/fzd" ]
 }
+
+@test "apt transactions are noninteractive and retain existing modified conffiles" {
+  stub_managers
+  sed -i '/^exit /i [[ ${DEBIAN_FRONTEND:-} == noninteractive ]] || exit 42' "$TEST_BIN/apt-get"
+  dependency_shell apt
+  [ "$status" -eq 0 ]
+  grep -q '<Dpkg::Options::=--force-confdef>' "$CALLS"
+  grep -q '<Dpkg::Options::=--force-confold>' "$CALLS"
+}

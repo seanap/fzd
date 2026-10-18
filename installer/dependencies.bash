@@ -78,11 +78,12 @@ install_packages() {
   fi
   case "$PM" in
   apt)
-    "${privilege[@]}" apt-get update || die 'apt metadata refresh failed'
-    "${privilege[@]}" apt-get install --no-install-recommends -y "${packages[@]}" || die 'apt installation failed'
+    "${privilege[@]}" env DEBIAN_FRONTEND=noninteractive apt-get update </dev/null || die 'apt metadata refresh failed'
+    "${privilege[@]}" env DEBIAN_FRONTEND=noninteractive apt-get install --no-install-recommends -y "${packages[@]}" \
+      -o Dpkg::Options::=--force-confdef -o Dpkg::Options::=--force-confold </dev/null || die 'apt installation failed'
     ;;
-  pacman) "${privilege[@]}" pacman -S --needed --noconfirm "${packages[@]}" || die 'pacman installation failed (refresh/upgrade the system separately)' ;;
-  dnf) "${privilege[@]}" dnf install -y "${packages[@]}" || die 'dnf installation failed' ;;
+  pacman) "${privilege[@]}" pacman -S --needed --noconfirm "${packages[@]}" </dev/null || die 'pacman installation failed (refresh/upgrade the system separately)' ;;
+  dnf) "${privilege[@]}" dnf install -y "${packages[@]}" </dev/null || die 'dnf installation failed' ;;
   esac
 }
 
