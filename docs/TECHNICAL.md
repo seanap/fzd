@@ -621,6 +621,10 @@ Open a new terminal afterward to clear previously loaded functions.
 
 ## Development and packaging
 
+See the [Simple/Enhanced implementation and validation report](validation/simple-enhanced/README.md)
+for the current checkout, complete local results, performance samples and pending
+hosted/native checks.
+
 Run `bash tests/run.sh`; see [test instructions](../tests/README.md) and
 [benchmarks](../benchmarks/README.md). Installer tests use disposable homes and
 controlled package-manager commands.

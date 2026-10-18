@@ -1,0 +1,26 @@
+1..25
+ok 1 plain Simple install uses present recommended tools and only minimal startup entries
+ok 2 Simple installs missing eza through the native package manager without replacing aliases
+ok 3 unavailable recommended packages leave a usable core installation and fallback guidance
+ok 4 default required package installation fails without prompting when sudo is unauthorized
+ok 5 clean Enhanced reuses existing engines and a compatible native font without executing custom code
+ok 6 font detection recognizes Nerd families and verified alternative glyph coverage
+ok 7 WSL Enhanced reports Windows font setup and never attempts Linux font installation
+ok 8 WSL kernel detection works without WSL environment variables
+ok 9 optional native font download failure keeps the core installation verified and cleans private downloads
+ok 10 font checksum mismatch discards download without overwriting fonts or rolling back FZD
+ok 11 font publication uses XDG data user scope and never clobbers a concurrent or existing destination
+ok 12 existing font destinations including symlinks are preserved
+ok 13 custom startup paths and ZDOTDIR preserve aliases hooks and shell preferences
+ok 14 edited shell configuration stays user-owned through update explicit preference changes and uninstall
+ok 15 preexisting user shell files are neither executed nor claimed for removal
+ok 16 v2 managed blocks migrate once retaining inline settings without evaluating them
+ok 17 unsafe installer overrides fail before writes while relative XDG homes use defaults
+ok 18 Enhanced package staging is forbidden and Simple staging never creates home files
+ok 19 shell config symlinks and foreign installation blocks never get overwritten
+ok 20 custom engine paths are quoted safely for both generated shell files and never evaluated during install
+ok 21 changing XDG config locations keeps all owned source entries recoverable on uninstall
+ok 22 optional font tooling package failures preserve a verified core install
+ok 23 font download termination cleans its private archive directory
+ok 24 new XDG configuration directories are private and existing directory modes stay unchanged
+ok 25 failed uninstall rolls back shell files at historic XDG locations outside HOME
