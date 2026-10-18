@@ -34,7 +34,7 @@ setup_fixture() {
   : >"$FZD_STUB_RESULTS"
   export _ZO_DATA_DIR="$BATS_TEST_TMPDIR/zoxide"
   unset _ZO_EXCLUDE_DIRS _ZO_RESOLVE_SYMLINKS _ZO_MAXAGE
-  for utility in zoxide bash sh env base64 tr find head sort awk sed grep cut dirname basename mktemp mkdir rm mv realpath flock sleep cat ls file timeout ln wc chmod tail stat rmdir; do
+  for utility in zoxide bash sh env base64 tr find head sort awk sed grep cut dirname basename mktemp mkdir rm mv realpath flock sleep cat ls file timeout ln wc chmod tail stat rmdir cp cmp touch; do
     ln -s "$(command -v "$utility")" "$UTILITY_BIN/$utility"
   done
   ln -s "$FZD_REPO/tests/helpers/fzf-stub" "$TEST_BIN/fzf"

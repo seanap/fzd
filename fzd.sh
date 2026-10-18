@@ -112,6 +112,10 @@ _fzd_init() {
   : "${FZD_PREVIEW_MAX_LINES:=200}"
   : "${FZD_PREVIEW_TIMEOUT:=2}"
 
+  FZD_THEME_OPTS=()
+  if [[ -n ${FZD_OMARCHY_THEME_FILE:-}${FZD_THEME_SNAPSHOT:-}${FZD_COLOR_BORDER:-}${FZD_COLOR_HIGHLIGHT:-}${FZD_COLOR_FG:-}${FZD_COLOR_BG:-} ]] || _have omarchy-theme-color; then
+    if _explorer_load theme; then _fzd_theme_init "${1:-}"; fi
+  fi
   c_dir=""; c_file=""
   if [[ -n "${FZD_COLOR_DIR:-}" ]]; then c_dir="$(hex_to_ansi "$FZD_COLOR_DIR")"; fi
   if [[ -n "${FZD_COLOR_FILE:-}" ]]; then c_file="$(hex_to_ansi "$FZD_COLOR_FILE")"; fi
@@ -356,7 +360,7 @@ build_lines() {
 
 # ----------------- PREVIEW (early exit; no debug) -----------------
 _have() { command -v "$1" >/dev/null 2>&1; }
-_timeout_wrap() { local s="$1"; shift; if (( s > 0 )) && _have timeout; then timeout "${s}s" "$@"; else "$@"; fi; }
+_timeout_wrap() { local s="$1"; shift; if (( s > 0 )) && _have timeout; then timeout --kill-after=1 "${s}s" "$@"; else "$@"; fi; }
 
 _lscolors_override() {
   # Output LS_COLORS string to stdout.
@@ -450,7 +454,23 @@ _preview_file() {
   else
     head -c 4096 -- "$file" | tr -d '\000' | grep -q $'\n' && is_text=1
   fi
+  local width=${FZF_PREVIEW_COLUMNS:-80} height=${FZF_PREVIEW_LINES:-24} rendered
+  [[ $width =~ ^[1-9][0-9]{0,2}$ ]] && ((width <= 500)) || width=80
+  [[ $height =~ ^[1-9][0-9]{0,2}$ ]] && ((height <= 200)) || height=24
+  case $mime in
+    image/png|image/jpeg|image/gif|image/webp|image/bmp|image/tiff|image/avif|image/x-icon|image/vnd.microsoft.icon)
+      if _have chafa && rendered=$(_timeout_wrap "$FZD_PREVIEW_TIMEOUT" chafa --format=symbols --polite=on --animate=off --probe=off --size="${width}x${height}" -- "$file" 2>/dev/null); then
+        printf '%s\n' "$rendered"; return 0
+      fi ;;
+  esac
   if (( is_text )); then
+    case ${file,,} in *.md|*.markdown|*.mdown|*.mkd)
+      if _have glow && [[ $(stat -c %s -- "$file" 2>/dev/null) =~ ^[0-9]+$ ]] &&
+        (( $(stat -c %s -- "$file") <= 1048576 )) &&
+        rendered=$(_timeout_wrap "$FZD_PREVIEW_TIMEOUT" glow --width "$width" --pager=false -- "$file" 2>/dev/null); then
+        printf '%s\n' "$rendered"; return 0
+      fi ;;
+    esac
     local batbin=""; command -v bat >/dev/null 2>&1 && batbin="bat"; [[ -z "$batbin" ]] && command -v batcat >/dev/null 2>&1 && batbin="batcat"
     if [[ -n "$batbin" ]]; then
       _timeout_wrap "$FZD_PREVIEW_TIMEOUT" "$batbin" --color=always --pager=never --line-range ":$FZD_PREVIEW_MAX_LINES" -- "$file"
@@ -473,11 +493,19 @@ _preview() {
   return 0
 }
 
+_terminal_run() {
+  _restore_screen
+  "$@" </dev/tty >/dev/tty 2>&1
+}
+
 _open_in_editor() {
   local file="$1"
   [[ -f "$file" ]] || return 0
-  _restore_screen
-  "$EDITOR_CMD" -- "$file" </dev/tty >/dev/tty 2>&1 || true
+  _explorer_load command || return 0
+  if ! _fzd_editor_command; then FZD_STATUS='Configured editor unavailable; install micro or set EDITOR'; return 0; fi
+  # Omarchy's wrapper adds its own separator before dispatching to the editor.
+  if [[ ${FZD_COMMAND[0]##*/} != omarchy-launch-editor && ${FZD_COMMAND[-1]} != -- ]]; then FZD_COMMAND+=(--); fi
+  _terminal_run "${FZD_COMMAND[@]}" "$file" || true
 }
 
 # ----------------- GLOBAL OVERLAY -----------------
@@ -697,6 +725,14 @@ _global_list() {
 }
 
 _run_global_overlay() {
+  local FZD_GLOBAL_RESUME=1 FZD_GLOBAL_QUERY=${1:-}
+  while ((FZD_GLOBAL_RESUME)); do
+    FZD_GLOBAL_RESUME=0
+    _global_overlay_once "$FZD_GLOBAL_QUERY"
+  done
+}
+
+_global_overlay_once() {
   dbg "GLOBAL overlay start (backend=${FZD_GLOBAL_BACKEND:-auto})"
   local backend="${FZD_GLOBAL_BACKEND:-auto}"
   _global_prepare || return 0
@@ -708,7 +744,8 @@ _run_global_overlay() {
   # auto-pick: prefer locate, else cache
   [[ "$backend" == "auto" ]] && { if [[ -n "$have_loc" ]]; then backend="locate"; else backend="cache"; fi; }
 
-  local CTRL SRC self_command control_command
+  local CTRL SRC query_file self_command control_command
+  _make_temp || return 0; query_file=$REPLY
   local query=${1:-}
   self_command=$(_shell_quote "$FZD_SELF")
   if [[ "$backend" == "locate" || "$backend" == "live" ]]; then
@@ -717,9 +754,10 @@ _run_global_overlay() {
     _explorer_bindings "$control_command" global
     FZD_SCREEN_ACTIVE=${#FZD_SCREEN_OPTS[@]}
     "$FZF_BIN" \
-      "${FZD_SCREEN_OPTS[@]}" \
+      "${FZD_SCREEN_OPTS[@]}" "${FZD_THEME_OPTS[@]}" \
       --ansi --height=100% --layout=reverse --border --no-mouse --no-multi --no-expect \
       --delimiter "$DELIM" --with-nth=2.. \
+      --border-label="${FZD_STATUS:-FZD}" \
       --prompt "global:${FZD_GLOBAL_ROOT%/}/ > " \
       --query="$query" \
       --disabled \
@@ -733,7 +771,7 @@ _run_global_overlay() {
       --bind "enter:execute-silent(echo A:G_ENTER:{1} > $control_command)+abort" \
       --bind "left:execute-silent(echo A:G_LEFT:{1} > $control_command)+abort" \
       --bind "right:execute-silent(echo A:G_RIGHT:{1} > $control_command)+abort" \
-      </dev/null >/dev/null || true
+      </dev/null >"$query_file" || true
 
   elif [[ "$backend" == "cache" ]]; then
     _make_temp || return 0; CTRL=$REPLY
@@ -746,9 +784,10 @@ _run_global_overlay() {
     fi
     FZD_SCREEN_ACTIVE=${#FZD_SCREEN_OPTS[@]}
     "$FZF_BIN" \
-      "${FZD_SCREEN_OPTS[@]}" \
+      "${FZD_SCREEN_OPTS[@]}" "${FZD_THEME_OPTS[@]}" \
       --ansi --height=100% --layout=reverse --border --no-mouse --no-multi --no-expect \
       --delimiter "$DELIM" --with-nth=2.. \
+      --border-label="${FZD_STATUS:-FZD}" \
       --prompt "global:${FZD_GLOBAL_ROOT%/}/ > " \
       --query="$query" \
       --preview "$self_command --_preview {1}" \
@@ -759,7 +798,7 @@ _run_global_overlay() {
       --bind "enter:execute-silent(echo A:G_ENTER:{1} > $control_command)+abort" \
       --bind "left:execute-silent(echo A:G_LEFT:{1} > $control_command)+abort" \
       --bind "right:execute-silent(echo A:G_RIGHT:{1} > $control_command)+abort" \
-      < "$SRC" >/dev/null || true
+      < "$SRC" >"$query_file" || true
     _remove_temp "$SRC"
 
   fi
@@ -768,12 +807,17 @@ _run_global_overlay() {
   local tag='' raw_b64='' action='' sel_path
   IFS=: read -r tag action raw_b64 < "$CTRL" || true
   [[ "$tag" == A ]] || action=''
-  _remove_temp "$CTRL"
+  IFS= read -r FZD_GLOBAL_QUERY <"$query_file" || true
+  _remove_temp "$CTRL" "$query_file"
 
   [[ -z "${action:-}" ]] && { dbg "GLOBAL overlay cancelled"; return; }
   _decode_path "$raw_b64"; sel_path=$REPLY
 
   case "$action" in
+    COPY_PATH|LAZYGIT)
+      if _explorer_load integrations; then _integration_action "$action" "$sel_path"; fi
+      FZD_GLOBAL_RESUME=1
+      ;;
     COPY|CUT)
       if _explorer_load state && _explorer_load operations; then
         _explorer_action "$action" "$sel_path" global || true
@@ -854,7 +898,7 @@ _history_step() {
 }
 _explorer_load() {
   local module=${1:-state} flag script=${FZD_SELF:-${BASH_SOURCE[0]}} directory candidate
-  case "$module" in state|operations|ui) ;; *) return 1 ;; esac
+  case "$module" in state|operations|ui|command|theme|integrations) ;; *) return 1 ;; esac
   flag=FZD_MODULE_$module
   [[ ${!flag:-0} == 1 ]] && return 0
   # Resolve only on first feature use, including launches through symlinks.
@@ -879,7 +923,7 @@ _explorer_load() {
 _explorer_bindings() {
   local control=$1 scope=${2:-local} pair key action
   EXPLORER_BINDS=()
-  local pairs=('ctrl-c:COPY' 'alt-c:COPY' 'ctrl-x:CUT' 'alt-x:CUT')
+  local pairs=('ctrl-c:COPY' 'alt-c:COPY' 'ctrl-x:CUT' 'alt-x:CUT' 'alt-y:COPY_PATH' 'alt-g:LAZYGIT')
   if [[ $scope == local ]]; then
     pairs+=('alt-left:BACK' 'alt-right:FORWARD' 'alt-h:RECENTS' 'f1:HELP' 'ctrl-v:PASTE' 'alt-v:PASTE'
       'ctrl-r:RENAME' 'f2:RENAME' 'f7:MKDIR' 'ctrl-n:MKDIR' 'f8:TRASH')
@@ -929,7 +973,7 @@ main() {
     FZD_SCREEN_ACTIVE=${#FZD_SCREEN_OPTS[@]}
     mapfile -t FZF_OUT < <(
       printf '%s\n' "${LINES[@]}" | "$FZF_BIN" \
-        "${FZD_SCREEN_OPTS[@]}" \
+        "${FZD_SCREEN_OPTS[@]}" "${FZD_THEME_OPTS[@]}" \
         --ansi --height=100% --layout=reverse --border --no-mouse --no-multi --no-expect \
         --delimiter "$DELIM" --with-nth=2.. \
         --prompt "$prompt/ > " --border-label " F1 help ${FZD_STATUS:+· $FZD_STATUS }" \
@@ -966,9 +1010,10 @@ main() {
     _history_remember
     FZD_STATUS=''
     FZD_QUERY=''
-    case "$action" in HELP|RECENTS|COPY|CUT|PASTE|RENAME|MKDIR|TRASH) FZD_QUERY=${FZF_OUT[0]:-} ;; esac
+    case "$action" in HELP|RECENTS|COPY|CUT|PASTE|RENAME|MKDIR|TRASH|COPY_PATH|LAZYGIT) FZD_QUERY=${FZF_OUT[0]:-} ;; esac
 
     case "$action" in
+      COPY_PATH|LAZYGIT) if _explorer_load integrations; then _integration_action "$action" "$RAW"; fi ;;
       BACK) _history_step -1 ;;
       FORWARD) _history_step 1 ;;
       GLOBAL) _run_global_overlay ;;
@@ -1074,8 +1119,6 @@ _fzd_entry() {
     [[ -z "$FZD_SCREEN_RESTORE" ]] || FZD_SCREEN_OPTS=(--no-clear)
   fi
   dbg "start:pos supported: $HAS_POS"
-  EDITOR_CMD="${EDITOR:-${VISUAL:-micro}}"
-  command -v "$EDITOR_CMD" >/dev/null 2>&1 || EDITOR_CMD=micro
   main "$@"
 }
 

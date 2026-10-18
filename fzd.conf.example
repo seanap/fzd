@@ -23,6 +23,10 @@ FZD_PREVIEW_TIMEOUT=2
 FZD_PREVIEW_MAX_LINES=200
 
 # Optional label colors (hex). Leave commented to inherit your fzf/system theme.
-FZD_COLOR_DIR="#f9e2af"
-FZD_COLOR_FILE="#cdd6f4"
+# FZD_COLOR_DIR="#f9e2af"
+# FZD_COLOR_FILE="#cdd6f4"
 
+
+# Automatic Omarchy session palette: auto (default) or 0 to opt out.
+# FZD_OMARCHY_THEME=auto
+# Optional explicit fzf role overrides: FZD_COLOR_BORDER / HIGHLIGHT / FG / BG.
