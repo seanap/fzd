@@ -14,27 +14,85 @@
 # - Optional per-entry color via FZD_COLOR_DIR / FZD_COLOR_FILE (hex like #aabbcc). Default: no extra color.
 
 _fzd_paths() {
-  # ----------------- XDG + PATHS -----------------
-  : "${XDG_CONFIG_HOME:=$HOME/.config}"
-  : "${XDG_STATE_HOME:=$HOME/.local/state}"
-  : "${XDG_CACHE_HOME:=$HOME/.cache}"
-  # tmp: prefer runtime dir (per-session), else cache
-  if [[ -n "${XDG_RUNTIME_DIR:-}" ]]; then
-    : "${FZD_TMP_DIR:=$XDG_RUNTIME_DIR/fzd}"
-  else
-    : "${FZD_TMP_DIR:=$XDG_CACHE_HOME/fzd/tmp}"
-  fi
+  local variable value fallback
+  for variable in XDG_CONFIG_HOME XDG_DATA_HOME XDG_STATE_HOME XDG_CACHE_HOME; do
+    case $variable in
+      XDG_CONFIG_HOME) fallback=$HOME/.config ;;
+      XDG_DATA_HOME) fallback=$HOME/.local/share ;;
+      XDG_STATE_HOME) fallback=$HOME/.local/state ;;
+      XDG_CACHE_HOME) fallback=$HOME/.cache ;;
+    esac
+    value=${!variable:-}
+    # Ignore relative XDG values; reject traversal before accessing any files.
+    [[ $value == /* ]] || value=$fallback
+    [[ /$value/ != */../* ]] || { printf 'fzd: %s contains unsafe .. components\n' "$variable" >&2; return 1; }
+    printf -v "$variable" '%s' "$value"
+  done
   : "${FZD_STATE_DIR:=$XDG_STATE_HOME/fzd}"
   : "${FZD_CACHE_DIR:=$XDG_CACHE_HOME/fzd}"
-  FZD_CONF_FILE="${FZD_CONF_FILE:-$XDG_CONFIG_HOME/fzd/fzd.conf}"
+  : "${FZD_CONF_FILE:=$XDG_CONFIG_HOME/fzd/fzd.conf}"
+  [[ $FZD_CONF_FILE == /* && /$FZD_CONF_FILE/ != */../* ]] || {
+    printf 'fzd: FZD_CONF_FILE must be absolute without .. components\n' >&2; return 1;
+  }
+}
+
+_fzd_temp_no_symlinks() {
+  local path=${1#/} component current=''
+  while [[ -n $path ]]; do
+    component=${path%%/*}
+    current+=/$component
+    [[ ! -L $current ]] || return 1
+    [[ $path == */* ]] || break
+    path=${path#*/}
+  done
+}
+_fzd_temp_base_safe() {
+  local path=$1 mode
+  REPLY=''
+  [[ ! -e $path ]] && return 0
+  [[ -d $path && -O $path && -w $path && -x $path ]] || return 1
+  mode=$(stat -c %a -- "$path") || return 1
+  REPLY=$mode
+  (( (8#$mode & 0022) == 0 ))
+}
+
+_fzd_temp_init() {
+  local runtime=${XDG_RUNTIME_DIR:-} mode=''
+  if [[ -z ${FZD_TMP_DIR:-} ]]; then
+    if [[ $runtime == /* && /$runtime/ != */../* && -d $runtime && ! -L $runtime && -O $runtime && -w $runtime && -x $runtime ]] &&
+      [[ $(stat -c %a -- "$runtime" 2>/dev/null) == 700 ]] &&
+      _fzd_temp_no_symlinks "$runtime/fzd" && _fzd_temp_base_safe "$runtime/fzd"; then
+      FZD_TMP_DIR=$runtime/fzd
+      mode=$REPLY
+    else
+      FZD_TMP_DIR=$FZD_CACHE_DIR/tmp
+      # No per-preview stderr noise; interactive entry points give the guidance.
+      case ${1:-} in --_*) ;; *) printf 'fzd: XDG_RUNTIME_DIR unavailable or unsafe; using private cache temporary storage\n' >&2 ;; esac
+    fi
+  fi
+  [[ $FZD_TMP_DIR == /* && /$FZD_TMP_DIR/ != */../* ]] || {
+    printf 'fzd: FZD_TMP_DIR must be absolute without .. components\n' >&2; return 1;
+  }
+  # Never traverse symlinks in temporary storage, including dangling links.
+  _fzd_temp_no_symlinks "$FZD_TMP_DIR" || { printf 'fzd: unsafe temporary directory symlink: %s\n' "$FZD_TMP_DIR" >&2; return 1; }
+  (umask 077; mkdir -p -- "$FZD_STATE_DIR" "$FZD_CACHE_DIR" "$FZD_TMP_DIR") || {
+    printf 'fzd: cannot create state, cache or temporary directories\n' >&2; return 1;
+  }
+  [[ -d $FZD_TMP_DIR && -O $FZD_TMP_DIR && -w $FZD_TMP_DIR && -x $FZD_TMP_DIR ]] || return 1
+  if [[ -z $mode ]]; then mode=$(stat -c %a -- "$FZD_TMP_DIR") || return 1; fi
+  (( (8#$mode & 0022) == 0 )) || { printf 'fzd: temporary directory is writable by other users\n' >&2; return 1; }
+  FZD_SESSION_TMP=$(mktemp -d "$FZD_TMP_DIR/session.XXXXXXXX") || { printf 'fzd: cannot create private temporary directory\n' >&2; return 1; }
+  export TMPDIR="$FZD_SESSION_TMP"
 }
 
 _fzd_init() {
-  if ! mkdir -p "$FZD_STATE_DIR" "$FZD_CACHE_DIR" "$FZD_TMP_DIR"; then
-    printf 'fzd: cannot create state, cache or temporary directories\n' >&2
-    return 1
-  fi
-  export TMPDIR="$FZD_TMP_DIR"
+  local path
+  for path in "$FZD_STATE_DIR" "$FZD_CACHE_DIR"; do
+    [[ $path == /* && /$path/ != */../* ]] || { printf 'fzd: state/cache overrides must be absolute without .. components\n' >&2; return 1; }
+  done
+  # Captured previews never allocate control files or persistent state. Avoid
+  # directory creation and security probes on this frequent rendering path.
+  if [[ ${1:-} != --_preview ]]; then _fzd_temp_init "${1:-}"; fi
 
   # ----------------- CONFIG DEFAULTS -----------------
   : "${FZD_GLOBAL_BACKEND:=auto}" # auto|locate|cache|live
@@ -48,6 +106,8 @@ _fzd_init() {
   : "${FZD_DEBUG:=0}"
   : "${FZD_GLOBAL_ROOT:=/}" # filesystem root label for overlay prompt
   : "${FZD_EXCLUDES:=.git,node_modules,.cache,.venv,__pycache__}"
+  : "${FZD_ICONS:=1}" # 1 forces eza icons in captured previews; 0 disables them
+  [[ $FZD_ICONS == 0 || $FZD_ICONS == 1 ]] || { printf 'fzd: FZD_ICONS must be 0 or 1\n' >&2; return 1; }
   : "${FZD_PREVIEW_DEPTH:=2}"
   : "${FZD_PREVIEW_MAX_LINES:=200}"
   : "${FZD_PREVIEW_TIMEOUT:=2}"
@@ -187,6 +247,7 @@ _cleanup() {
     fi
   fi
   if ((${#FZD_TEMP_FILES[@]})); then rm -f -- "${FZD_TEMP_FILES[@]}"; fi
+  if [[ -n ${FZD_SESSION_TMP:-} ]]; then rmdir -- "$FZD_SESSION_TMP" 2>/dev/null || true; fi
 }
 _restore_screen() {
   if [[ ${FZD_SCREEN_ACTIVE:-0} == 1 ]]; then
@@ -352,12 +413,16 @@ _preview_dir() {
     local IFS=','; read -ra _ex <<<"$FZD_EXCLUDES"
     local ig=(); for g in "${_ex[@]}"; do [[ -n "$g" ]] && ig+=( --ignore-glob "$g" ); done
 
+    local icons=always
+    [[ ${FZD_ICONS:-1} != 0 ]] || icons=never
     local lsc; lsc="$(_lscolors_override)"
+    local eza_palette=${EZA_COLORS-${EXA_COLORS:-}}
+    eza_palette=$(_lscolors_override "$eza_palette")
     if [[ -n "$lsc" ]]; then
-      LS_COLORS="$lsc" _timeout_wrap "$FZD_PREVIEW_TIMEOUT" eza --tree -L "$depth" --group-directories-first --color=always --icons \
+      EZA_COLORS="$eza_palette" LS_COLORS="$lsc" _timeout_wrap "$FZD_PREVIEW_TIMEOUT" eza --tree -L "$depth" --group-directories-first --color=always --icons="$icons" \
         "${ig[@]}" -- "$dir"
     else
-      _timeout_wrap "$FZD_PREVIEW_TIMEOUT" eza --tree -L "$depth" --group-directories-first --color=always --icons \
+      EZA_COLORS="$eza_palette" _timeout_wrap "$FZD_PREVIEW_TIMEOUT" eza --tree -L "$depth" --group-directories-first --color=always --icons="$icons" \
         "${ig[@]}" -- "$dir"
     fi
     return
@@ -957,12 +1022,13 @@ _fzd_entry() {
   FZD_TEMP_FILES=()
   RECENT_PENDING=()
   FZD_ZOXIDE_PENDING=()
+  FZD_SESSION_TMP=''
   FZD_SCREEN_OPTS=(); FZD_SCREEN_ACTIVE=0; FZD_SCREEN_RESTORE=''
   trap _cleanup EXIT
   trap 'exit 130' INT
   trap 'exit 143' TERM
   trap 'exit 129' HUP
-  _fzd_init
+  _fzd_init "${1:-}"
   FZD_SELF=${BASH_SOURCE[0]}
   [[ "$FZD_SELF" == /* ]] || FZD_SELF="$PWD/$FZD_SELF"
   case "${1:-}" in

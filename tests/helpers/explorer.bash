@@ -5,7 +5,7 @@ setup_explorer_fixture() {
   bwrap=$(command -v bwrap || true)
   setup_fixture
   local tool
-  for tool in cp stat rmdir readlink cmp; do
+  for tool in cp readlink cmp; do
     ln -s "/usr/bin/$tool" "$UTILITY_BIN/$tool"
   done
   export FZD_TEST_HELPER="$FZD_REPO/tests/helpers/explorer.bash"

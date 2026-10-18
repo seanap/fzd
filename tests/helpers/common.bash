@@ -3,6 +3,7 @@ setup_fixture() {
   bats_require_minimum_version 1.5.0
   FZD_REPO=$(cd -- "$BATS_TEST_DIRNAME/.." && pwd)
   FZD_SCRIPT=${FZD_TEST_SCRIPT:-$FZD_REPO/fzd.sh}
+  FZD_REAL_EZA=$(command -v eza 2>/dev/null || true)
   FZD_REAL_TREE=$(command -v tree 2>/dev/null || true)
   FZD_REAL_FD=$(command -v fd 2>/dev/null || command -v fdfind 2>/dev/null || true)
   FZD_REAL_LOCATE=$(command -v plocate 2>/dev/null || true)
@@ -17,13 +18,14 @@ setup_fixture() {
   export XDG_STATE_HOME="$BATS_TEST_TMPDIR/state"
   export XDG_CACHE_HOME="$BATS_TEST_TMPDIR/cache"
   export XDG_RUNTIME_DIR="$BATS_TEST_TMPDIR/runtime"
+  mkdir -m 700 "$XDG_RUNTIME_DIR"
   export FZD_GLOBAL_PATHS="$FIXTURE_ROOT"
   export FZD_GLOBAL_BACKEND=live FZD_GLOBAL_MINLEN=2
   export FZD_GLOBAL_MAXDEPTH=6 FZD_GLOBAL_MAXRESULTS=100
   export FZD_EXCLUDES=.git,node_modules FZD_GLOBAL_XEXCLUDES=proc,sys,dev,run
   export FZD_STUB_RESULTS="$BATS_TEST_TMPDIR/results"
   export FZD_STUB_LOG="$BATS_TEST_TMPDIR/backend-arguments"
-  unset FZD_GLOBAL_ROOTS FZD_LOCATE_DBS FZD_TMP_DIR
+  unset FZD_ICONS FZD_GLOBAL_ROOTS FZD_LOCATE_DBS FZD_TMP_DIR
   export FZD_GLOBAL_FULLPATH=0
   unset FZD_INLINE_SUGGESTIONS FZD_AUTO_COMPLETION FZD_BLESH_PATH FZD_ZSH_AUTOSUGGESTIONS_PATH
   unset FZD_STATE_DIR FZD_CACHE_DIR FZD_COLOR_DIR FZD_COLOR_FILE
@@ -32,7 +34,7 @@ setup_fixture() {
   : >"$FZD_STUB_RESULTS"
   export _ZO_DATA_DIR="$BATS_TEST_TMPDIR/zoxide"
   unset _ZO_EXCLUDE_DIRS _ZO_RESOLVE_SYMLINKS _ZO_MAXAGE
-  for utility in zoxide bash sh env base64 tr find head sort awk sed grep cut dirname basename mktemp mkdir rm mv realpath flock sleep cat ls file timeout ln wc chmod tail; do
+  for utility in zoxide bash sh env base64 tr find head sort awk sed grep cut dirname basename mktemp mkdir rm mv realpath flock sleep cat ls file timeout ln wc chmod tail stat rmdir; do
     ln -s "$(command -v "$utility")" "$UTILITY_BIN/$utility"
   done
   ln -s "$FZD_REPO/tests/helpers/fzf-stub" "$TEST_BIN/fzf"

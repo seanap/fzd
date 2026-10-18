@@ -194,3 +194,51 @@ SH
   actual=$(base64 -w 0 <"$FZD_PREVIEW_LOG")
   [ "$actual" = "$expected" ]
 }
+
+@test "eza icons are explicitly forced or disabled in captured preview commands" {
+  cat >"$TEST_BIN/eza" <<'SH'
+#!/bin/sh
+printf '%s\n' "$@"
+SH
+  chmod +x "$TEST_BIN/eza"
+  run_palette_preview
+  [[ "$output" == *'--icons=always'* ]]
+  export FZD_ICONS=0
+  run_palette_preview
+  [[ "$output" == *'--icons=never'* ]]
+  [[ "$output" != *'--icons=always'* ]]
+}
+
+@test "eza retains its own palette while FZD explicit colors override only requested entries" {
+  cat >"$TEST_BIN/eza" <<'SH'
+#!/bin/sh
+printf '%s\n%s' "$LS_COLORS" "$EZA_COLORS"
+SH
+  chmod +x "$TEST_BIN/eza"
+  export LS_COLORS='di=34:fi=37:ln=36' EZA_COLORS='di=35:fi=0:ex=32' FZD_COLOR_DIR=010203
+  run_palette_preview
+  [ "$output" = $'di=38;2;1;2;3:fi=37:ln=36\ndi=38;2;1;2;3:fi=0:ex=32' ]
+  [ "$EZA_COLORS" = 'di=35:fi=0:ex=32' ]
+}
+
+@test "real eza emits Nerd glyph bytes in captured FZD previews and honors icon disable" {
+  [[ -x $FZD_REAL_EZA ]] || skip 'install eza to test captured glyph output'
+  ln -s "$FZD_REAL_EZA" "$TEST_BIN/eza"
+  mkdir "$FIXTURE_ROOT/glyph-directory"
+  printf text >"$FIXTURE_ROOT/example.rs"
+  run_palette_preview
+  # UTF-8 private-use glyphs used by Nerd Fonts; C locale matches bytes.
+  [[ "$output" == *[$'\xee\xef\xf3']* ]]
+  export FZD_ICONS=0
+  run_palette_preview
+  [[ "$output" != *[$'\xee\xef\xf3']* ]]
+}
+
+@test "invalid icon settings fail with guidance before preview execution" {
+  export FZD_ICONS=invalid
+  local encoded
+  encoded=$(printf '%s' "$FIXTURE_ROOT" | base64 -w 0)
+  run bash "$FZD_SCRIPT" --_preview "$encoded"
+  [ "$status" -ne 0 ]
+  [[ "$output" == *'FZD_ICONS must be 0 or 1'* ]]
+}
