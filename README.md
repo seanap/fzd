@@ -1,12 +1,13 @@
 # FZD
 
 <p align="center">
-  <img src="https://i.imgur.com/InGa0TZ.png" alt="FZD — a terminal file explorer and fuzzy finder">
+  <img src="https://i.imgur.com/BIzuhmK.png" alt="FZD — a terminal file explorer and fuzzy finder">
 </p>
 
-<p align="center"><strong>Find your way.</strong></p>
+<p align="center"><strong>Intuitive Linux File Explorer TUI</strong></p>
 
-Discover unfamiliar directories. Remember the places that matter. Get back to work.
+Browse directories with arrow keys from the terminal. Autocomplete common
+locations. Search your filesystem with plocate.
 
 FZD is a small, keyboard-driven file explorer for Linux, built with Bash,
 [fzf](https://github.com/junegunn/fzf), [zoxide](https://github.com/ajeetdsouza/zoxide),
@@ -17,7 +18,6 @@ right where you need to be.
 <p align="center">
   <img src="share/demo/fzd_demo.gif" alt="Animated demonstration of FZD terminal navigation">
   <br>
-  <sub>The original FZD demo; the navigation commands below extend this experience.</sub>
 </p>
 
 ## Explore. Remember. Find.
@@ -39,13 +39,12 @@ Use `lff` on its own to start a fresh global search.
 
 ## Why FZD exists
 
-After years of using Linux, running Docker containers, and self-hosting services,
-I still found myself asking: where did that project put its files?
-AI-generated projects added even more unfamiliar directory structures to explore.
+After years of using Linux, I still found myself asking: where did that project
+put its files?
 
 I built FZD to find my bearings without memorizing paths or repeatedly typing
-`cd` and `ls`. Look around, understand what's there, and get back to the actual
-work. Once you've found a useful place, zoxide helps you get there again.
+`cd` and `ls`. Browse the directory tree, edit a config, and find files across the
+system. Once you've found a useful place, zoxide helps you get there again.
 
 ## Install
 
