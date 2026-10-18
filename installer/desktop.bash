@@ -50,6 +50,8 @@ _desktop_prepare() {
     quoted=${quoted//\`/\\\`}
     quoted=${quoted//\$/\\\$}
     quoted=${quoted//%/%%}
+    # Desktop string escaping is decoded before Exec argument quoting.
+    quoted=${quoted//\\/\\\\}
     exec_line+="${exec_line:+ }\"$quoted\""
   done
   mkdir -m 700 "$TX/desktop-home"

@@ -164,3 +164,32 @@ SH
   [ "$(cat "$OMARCHY_PATH/default/bash/rc")" = user-content ]
   [ ! -e "$PREFIX/bin/fzd" ]
 }
+
+@test "native desktop parser retains quoted special characters in custom launcher prefixes" {
+  [[ -n $REAL_GIO ]] || skip 'gio unavailable for native desktop parsing'
+  enhancement_tools
+  omarchy_tools
+  PREFIX="$HOME/space \"quote\" \$literal \`literal\` \\slash %percent"
+  DATA="$PREFIX/share/fzd"
+  install_fzd --prefix "$PREFIX" --enhanced --omarchy-launcher float
+  assert_installed
+  cat >"$TEST_BIN/xdg-terminal-exec" <<'SH'
+#!/bin/sh
+printf '%s\0' "$@" >"$HOME/launcher-args"
+SH
+  chmod +x "$TEST_BIN/xdg-terminal-exec"
+  run "$REAL_GIO" launch "$XDG_DATA_HOME/applications/FZD.desktop"
+  [ "$status" -eq 0 ]
+  # GIO spawns asynchronously; wait for the private recording process only.
+  local attempt
+  for attempt in {1..30}; do
+    [[ ! -e $HOME/launcher-args ]] || break
+    sleep .05
+  done
+  local args=()
+  mapfile -d '' -t args <"$HOME/launcher-args"
+  [ "${args[0]}" = --app-id=TUI.float ]
+  [ "${args[2]}" = bash ]
+  [ "${args[4]}" = "$DATA/launcher.bash" ]
+  [ "${args[5]}" = -i ]
+}

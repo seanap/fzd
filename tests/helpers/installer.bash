@@ -9,6 +9,7 @@ setup() {
   export BASH_ENV=/dev/null ENV=/dev/null
   export TEST_BIN="$BATS_TEST_TMPDIR/bin" CALLS="$BATS_TEST_TMPDIR/calls"
   HOST_PATH=$PATH
+  REAL_GIO=$(command -v gio || true)
   REAL_BASH=$(command -v bash)
   REAL_ZSH=$(command -v zsh || true)
   REAL_TMUX=$(command -v tmux || true)

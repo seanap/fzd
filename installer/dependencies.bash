@@ -49,7 +49,8 @@ package_for() {
   wl-copy) REPLY=wl-clipboard ;;
   fc-list | fc-cache) REPLY=fontconfig ;;
   xz) [[ $PM == apt ]] && REPLY=xz-utils || REPLY=xz ;;
-  base64 | sort | mktemp | install | sha256sum | readlink | truncate | cp | mv | realpath | chmod | rm | mkdir | stat) REPLY=coreutils ;;
+  head | tr | cat | ls | dirname | basename | wc | tail | base64 | sort | mktemp | install | sha256sum | readlink | truncate | cp | mv | realpath | chmod | rm | mkdir | stat) REPLY=coreutils ;;
+  awk) [[ $PM == apt ]] && REPLY=mawk || REPLY=gawk ;;
   flock) [[ $PM == dnf ]] && REPLY=util-linux-core || REPLY=util-linux ;;
   find) REPLY=findutils ;;
   ps) [[ $PM == apt ]] && REPLY=procps || REPLY=procps-ng ;;
@@ -91,7 +92,7 @@ install_packages() {
 collect_missing() {
   local tool
   MISSING=()
-  for tool in zoxide plocate base64 sort mktemp install sha256sum readlink truncate find cp mv realpath chmod rm mkdir flock stat; do
+  for tool in zoxide plocate bash head grep sed awk tr cat ls dirname basename wc tail base64 sort mktemp install sha256sum readlink truncate find cp mv realpath chmod rm mkdir flock stat; do
     have "$tool" || MISSING+=("$tool")
   done
   have fzf || [[ -n $FZF_VERSION ]] || MISSING+=(fzf)
@@ -177,9 +178,10 @@ ensure_dependencies() {
   fi
   local locate_probe
   plocate --version >/dev/null 2>&1 || die 'plocate is installed but cannot execute'
-  local -a locate_args=(--count --limit 1)
+  local -a locate_command=(plocate) locate_args=(--count --limit 1)
+  if have timeout; then locate_command=(timeout --kill-after=1 3 plocate); fi
   [[ -z ${FZD_LOCATE_DBS:-} ]] || locate_args+=(-d "$FZD_LOCATE_DBS")
-  if ! locate_probe=$(plocate "${locate_args[@]}" -- / 2>/dev/null) || [[ ! $locate_probe =~ ^[1-9][0-9]*$ ]]; then
+  if ! locate_probe=$("${locate_command[@]}" "${locate_args[@]}" -- / 2>/dev/null) || [[ ! $locate_probe =~ ^[1-9][0-9]*$ ]]; then
     warn 'plocate index is missing, empty or unreadable; global search will retain its filesystem fallback.'
     warn 'Review /etc/updatedb.conf and your distribution indexing schedule. If appropriate, initialize it yourself with sudo updatedb. FZD does not run updatedb or change exclusions/timers.'
   fi
