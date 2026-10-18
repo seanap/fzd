@@ -16,7 +16,7 @@ setup() { setup_fixture; }
 }
 
 @test "relative XDG homes use freedesktop defaults without accessing relative paths" {
-  export HOME="$BATS_TEST_TMPDIR/home"
+  export HOME="$BATS_TEST_TMPDIR/uncreated-home"
   run bash -ec '
     source "$1"
     XDG_CONFIG_HOME=relative; XDG_DATA_HOME=relative; XDG_STATE_HOME=relative; XDG_CACHE_HOME=relative

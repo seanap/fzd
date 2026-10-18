@@ -10,8 +10,8 @@ setup_fixture() {
   FZD_REAL_LOCATE=$(command -v plocate 2>/dev/null || true)
   FZD_REAL_UPDATEDB=$(command -v updatedb.plocate 2>/dev/null || command -v updatedb 2>/dev/null || true)
   FZD_REAL_ZSH=$(command -v zsh 2>/dev/null || true)
-  export HOME="$BATS_TEST_TMPDIR/home" XDG_DATA_HOME="$BATS_TEST_TMPDIR/data"
-  FIXTURE_ROOT="$BATS_TEST_TMPDIR/files"
+  export HOME="$BATS_TEST_TMPDIR" XDG_DATA_HOME="$BATS_TEST_TMPDIR/data"
+  FIXTURE_ROOT="$HOME/files"
   TEST_BIN="$BATS_TEST_TMPDIR/bin"
   UTILITY_BIN="$BATS_TEST_TMPDIR/utilities"
   mkdir -p "$HOME" "$FIXTURE_ROOT" "$TEST_BIN" "$UTILITY_BIN"
