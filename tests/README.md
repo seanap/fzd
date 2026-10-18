@@ -28,7 +28,8 @@ Use upstream zoxide >= 0.9.0, Bash 4.4 or later, Bats-core 1.5 or later, and GNU
 tests additionally use fd/fdfind and plocate. Terminal tests use tmux and fzf;
 shell integration tests use zsh when available. Missing optional tools produce
 explicit skips. The phase-one environment uses Bash 5.2 and Bats 1.10.
-Installer fixtures also expect fzf, micro, file, tree, curl, tar and gzip in the
+Captured icon regressions also require eza; hosted/distribution validation
+installs it and rejects skips. Installer fixtures also expect fzf, micro, file, tree, curl, tar and gzip in the
 development environment. Distribution-profile isolation additionally uses
 bubblewrap; those four checks explicitly skip if it is not installed.
 
@@ -53,6 +54,8 @@ plocate, and assert that successful locate checks did not silently fall back.
 | recovery.bats | Failed runtime creation, failed mktemp, normal cleanup, interrupted search |
 | dependencies.bats | Version/capability checks, executable aliases, package mappings, sudo and bounded package-manager transactions |
 | distributions.bats | Full installer with Ubuntu/Debian/Fedora/Arch metadata and manager stubs in a bubblewrap namespace; host read-only, network isolated |
+| install-modes.bats | Simple/Enhanced defaults, optional dependencies/fonts, native/WSL behavior, preservation, v2 migration, minimal and custom startup files |
+| xdg.bats | Absolute and relative XDG paths, runtime ownership/modes, temporary symlinks, isolated sessions and cleanup |
 | inline-installer.bats | Verified engine download, conditional dependencies, existing engines, explicit opt-in, updates, disable, rollback and shared-dependency retention |
 | installer.bats | Fresh install/update/verify/uninstall, preservation, XDG/ZDOTDIR, staging, download failures, TERM/KILL recovery, installed-wrapper PTYs |
 | zoxide-navigation.bats | Dispatch, partial/multiple matching, fallback, upstream ranking/learning/preferences, hooks, conflicts and completion preservation |
@@ -218,3 +221,10 @@ Existing-framework tests check that completion is initialized once. Ubuntu,
 Debian and Arch validators exercise the real opt-in installer with native plugin
 dependency resolution and the official download in a disposable home. Fedora
 continues its existing runtime validation; no additional RPM work is introduced.
+
+The v2 upgrade test uses the immutable source subset documented in
+[fixtures/README.md](fixtures/README.md), including in source archive validation.
+Font tests use controlled fontconfig/curl responses and an isolated font fixture
+for successful publication, plus real checksum rejection for untrusted input.
+No test installs a font into the real user's data directory. Actual terminal font
+selection and Windows-side installation remain manual visual checks.

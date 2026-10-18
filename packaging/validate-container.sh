@@ -100,13 +100,13 @@ esac
 
 case $target in
 ubuntu | debian)
-  apt-get install --no-install-recommends -y zsh tmux bats bubblewrap file tree curl ca-certificates git bat fd-find libglib2.0-bin plocate procps xz-utils
+  apt-get install --no-install-recommends -y zsh tmux bats bubblewrap eza file tree curl ca-certificates git bat fd-find libglib2.0-bin plocate procps xz-utils
   ;;
 arch)
-  pacman -S --noconfirm --needed zsh tmux bats bubblewrap file tree curl git bat fd glib2 plocate procps-ng
+  pacman -S --noconfirm --needed zsh tmux bats bubblewrap eza file tree curl git bat fd glib2 plocate procps-ng
   ;;
 fedora)
-  dnf install -y zsh tmux bats bubblewrap file tree curl git bat fd-find glib2 plocate diffutils which tar gzip xz procps-ng
+  dnf install -y zsh tmux bats bubblewrap eza file tree curl git bat fd-find glib2 plocate diffutils which tar gzip xz procps-ng
   ;;
 esac
 printf '. /usr/share/fzd/integration.sh\n' >>"$HOME/.bashrc"
@@ -131,8 +131,8 @@ if [[ $target == ubuntu || $target == debian || $target == arch ]]; then
   mkdir -p "$inline_home"
   HOME=$inline_home ZDOTDIR=$inline_home bash install.sh --noninteractive --inline-suggestions
   [[ -r $inline_home/.local/share/blesh/ble.sh ]]
-  grep -q '^FZD_INLINE_SUGGESTIONS=1$' "$inline_home/.bashrc"
-  grep -q '^FZD_INLINE_SUGGESTIONS=1$' "$inline_home/.zshrc"
+  grep -q 'FZD_INLINE_SUGGESTIONS:=1' "$inline_home/.config/fzd/shell.bash"
+  grep -q 'FZD_INLINE_SUGGESTIONS:=1' "$inline_home/.config/fzd/shell.zsh"
   HOME=$inline_home ZDOTDIR=$inline_home bash "$inline_home/.local/share/fzd/install.sh" --verify --inline-suggestions
   HOME=$inline_home ZDOTDIR=$inline_home bash "$inline_home/.local/share/fzd/install.sh" --uninstall
   [[ -r $inline_home/.local/share/blesh/ble.sh && ! -e $inline_home/.local/bin/fzd ]]

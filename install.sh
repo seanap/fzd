@@ -16,15 +16,22 @@ warn() { printf 'fzd install: %s\n' "$*" >&2; }
 usage() {
   cat <<'USAGE'
 Usage: bash install.sh [options]
+  bash install.sh             Simple: recommended tools and native Tab completion
+  bash install.sh --enhanced  Enhanced: also inline suggestions and font setup
+
+Advanced options (automation and compatibility):
+  --enhanced               Add inline suggestions and optional Nerd Font setup
+                           Default: Simple (recommended tools, native Tab)
   --prefix DIR             User installation prefix (default: ~/.local)
   --deps none|required|recommended
-                           Default none; recommended also installs fd and bat
+                           Default recommended; includes eza, fd, bat, tree, file
   --noninteractive         Never request sudo input; missing prerequisites fail
   --inline-suggestions     Install/configure ble.sh (Bash) and/or
                            zsh-autosuggestions for the selected --shell target
                            Implies --deps recommended unless --deps is explicit
   --no-inline-suggestions  Disable FZD-managed inline setup; retain shared engines
   --shell both|bash|zsh|none  Default both; respects exported ZDOTDIR
+  --bashrc FILE --zshrc FILE  Explicit shell startup paths (also FZD_BASH_RC/FZD_ZSH_RC)
   --no-config              Do not initialize user configuration
   --adopt                  Explicitly replace unmanaged/modified application
                            files, retaining originals in transaction backups
@@ -42,6 +49,7 @@ Update: git pull --ff-only, then repeat installation from the checkout.
 After installation: lf explores; lf name remembers; lff name finds.
 Use fzd_cd/fzd_find when lf/lff already exist. Open a new shell first.
 The installer never changes third-party themes, EDITOR, or LS_COLORS.
+Missing system packages require root or cached sudo authorization (sudo -v).
 USAGE
 }
 
@@ -51,12 +59,14 @@ SCRIPT_DIR=$(cd -- "$script_parent" && printf '%s.' "$PWD")
 SCRIPT_DIR=${SCRIPT_DIR%.}
 PREFIX=${HOME:?HOME must be set}/.local
 [[ $SCRIPT_DIR != */share/fzd ]] || PREFIX=${SCRIPT_DIR%/share/fzd}
-PREFIX_SET=0 DEPS=none DEPS_SET=0 NONINTERACTIVE=0 SHELL_TARGET=both NO_CONFIG=0 ADOPT=0
-INLINE_SUGGESTIONS=keep BLESH_PATH='' AUTOSUGGEST_PATH=''
+PREFIX_SET=0 DEPS=recommended DEPS_SET=0 NONINTERACTIVE=1 SHELL_TARGET=both NO_CONFIG=0 ADOPT=0
+INLINE_SUGGESTIONS=keep BLESH_PATH='' AUTOSUGGEST_PATH='' ENHANCED=0
+BASH_RC=${FZD_BASH_RC:-$HOME/.bashrc}
+ZSH_RC=${FZD_ZSH_RC:-${ZDOTDIR:-$HOME}/.zshrc}
 MODE=install STAGE='' FZF_VERSION='' FZF_SHA256='' JOURNAL_COUNT=0
 while (($#)); do
   case "$1" in
-  --prefix | --deps | --shell | --stage | --fzf-version | --fzf-sha256)
+  --prefix | --deps | --shell | --stage | --fzf-version | --fzf-sha256 | --bashrc | --zshrc)
     if (($# < 2)) || [[ -z $2 ]]; then die "$1 requires a value"; fi
     case "$1" in
     --prefix)
@@ -68,6 +78,8 @@ while (($#)); do
       DEPS_SET=1
       ;;
     --shell) SHELL_TARGET=$2 ;;
+    --bashrc) BASH_RC=$2 ;;
+    --zshrc) ZSH_RC=$2 ;;
     --stage) STAGE=$2 ;;
     --fzf-version) FZF_VERSION=$2 ;;
     --fzf-sha256) FZF_SHA256=$2 ;;
@@ -76,6 +88,11 @@ while (($#)); do
     ;;
   --noninteractive)
     NONINTERACTIVE=1
+    shift
+    ;;
+  --enhanced)
+    ENHANCED=1
+    [[ $INLINE_SUGGESTIONS != keep ]] || INLINE_SUGGESTIONS=1
     shift
     ;;
   --inline-suggestions)
@@ -113,13 +130,27 @@ if [[ $INLINE_SUGGESTIONS == 1 ]]; then
   [[ $SHELL_TARGET != none ]] || die '--inline-suggestions needs --shell bash, zsh or both'
   ((DEPS_SET)) || DEPS=recommended
 fi
-for path in "$PREFIX" "${XDG_CONFIG_HOME:-$HOME/.config}" "${ZDOTDIR:-$HOME}" "${FZD_CONF_FILE:-/unused}"; do
-  [[ $path == /* && $path != *'/../'* && $path != */.. ]] || die 'Installation, XDG, ZDOTDIR and configuration paths must be absolute without .. components'
+# XDG relative values are ignored as specified by the Base Directory spec.
+# Reject traversal rather than allowing installation writes through ambiguous paths.
+for variable in XDG_CONFIG_HOME XDG_DATA_HOME XDG_STATE_HOME XDG_CACHE_HOME; do
+  value=${!variable:-}
+  if [[ -n $value && $value != /* ]]; then
+    warn "Ignoring relative $variable; using its default"
+    unset "$variable"
+  elif [[ /$value/ == */../* ]]; then
+    die "$variable must not contain .. components"
+  fi
+done
+XDG_CONFIG_HOME=${XDG_CONFIG_HOME:-$HOME/.config}
+XDG_DATA_HOME=${XDG_DATA_HOME:-$HOME/.local/share}
+XDG_STATE_HOME=${XDG_STATE_HOME:-$HOME/.local/state}
+XDG_CACHE_HOME=${XDG_CACHE_HOME:-$HOME/.cache}
+for path in "$HOME" "$PREFIX" "$XDG_CONFIG_HOME" "$XDG_DATA_HOME" "$XDG_STATE_HOME" "$XDG_CACHE_HOME" "${ZDOTDIR:-$HOME}" "$BASH_RC" "$ZSH_RC" "${FZD_CONF_FILE:-/unused}"; do
+  [[ $path == /* && /$path/ != */../* ]] || die 'Installation, XDG, ZDOTDIR and configuration paths must be absolute without .. components'
 done
 PREFIX=${PREFIX%/}
 [[ -n $PREFIX ]] || die 'The filesystem root cannot be an installation prefix'
 [[ $PREFIX != *:* ]] || die 'The installation prefix cannot contain : because PATH uses it as a separator'
-XDG_CONFIG_HOME=${XDG_CONFIG_HOME:-$HOME/.config}
 CFG=${FZD_CONF_FILE:-$XDG_CONFIG_HOME/fzd/fzd.conf}
 DATA=$PREFIX/share/fzd
 MANIFEST=$DATA/install.manifest
@@ -131,14 +162,17 @@ source "$SCRIPT_DIR/installer/dependencies.bash"
 source "$SCRIPT_DIR/installer/lifecycle.bash"
 # shellcheck source=installer/inline.bash
 source "$SCRIPT_DIR/installer/inline.bash"
+# shellcheck source=installer/fonts.bash
+source "$SCRIPT_DIR/installer/fonts.bash"
 
 if [[ -n $STAGE ]]; then
+  ((DEPS_SET)) || DEPS=none
   [[ $STAGE == /* && $STAGE != / && $STAGE != *'/../'* && $STAGE != */.. ]] || die '--stage requires an absolute disposable staging directory'
   if ! STAGE=$(readlink -m -- "$STAGE" && printf '.'); then die 'Could not resolve staging root; GNU readlink -m is required'; fi
   STAGE=${STAGE%.}
   STAGE=${STAGE%$'\n'}
   [[ -n $STAGE && $STAGE != / ]] || die 'Resolved staging root cannot be empty or /'
-  [[ $PREFIX_SET == 1 && $MODE == install && $DEPS == none && -z $FZF_VERSION && -z $FZF_SHA256 && $INLINE_SUGGESTIONS == keep ]] || die 'Package staging requires --prefix and forbids dependency downloads, inline setup and lifecycle operations'
+  [[ $PREFIX_SET == 1 && $MODE == install && $DEPS == none && -z $FZF_VERSION && -z $FZF_SHA256 && $INLINE_SUGGESTIONS == keep && $ENHANCED == 0 ]] || die 'Package staging requires --prefix and forbids dependency downloads, inline setup and lifecycle operations'
   [[ -f $SCRIPT_DIR/fzd.sh ]] || die 'Package staging requires the source checkout'
   install -Dm755 "$SCRIPT_DIR/fzd.sh" "$STAGE$PREFIX/bin/fzd"
   install -Dm644 "$SCRIPT_DIR/shell/integration.sh" "$STAGE$PREFIX/share/fzd/integration.sh"
@@ -210,6 +244,7 @@ install_owned "$SCRIPT_DIR/install.sh" "$DATA/install.sh" 755
 install_owned "$SCRIPT_DIR/installer/dependencies.bash" "$DATA/installer/dependencies.bash" 644
 install_owned "$SCRIPT_DIR/installer/lifecycle.bash" "$DATA/installer/lifecycle.bash" 644
 install_owned "$SCRIPT_DIR/installer/inline.bash" "$DATA/installer/inline.bash" 644
+install_owned "$SCRIPT_DIR/installer/fonts.bash" "$DATA/installer/fonts.bash" 644
 if [[ -n $FZF_VERSION ]]; then
   install_owned "$TX/fzf" "$PREFIX/bin/fzf" 755
 else
@@ -228,11 +263,15 @@ if ((NO_CONFIG == 0)) && [[ ! -e $CFG && ! -L $CFG ]]; then
   write_file "$source_config" "$CFG" 644
 fi
 for index in "${!RC_PATHS[@]}"; do record rc "${RC_PATHS[index]}" "${RC_NEWLINES[index]}"; done
-case "$SHELL_TARGET" in both | bash) edit_rc "$HOME/.bashrc" add bash ;; esac
-case "$SHELL_TARGET" in both | zsh) edit_rc "${ZDOTDIR:-$HOME}/.zshrc" add zsh ;; esac
+case "$SHELL_TARGET" in both | bash) edit_rc "$BASH_RC" add bash ;; esac
+case "$SHELL_TARGET" in both | zsh) edit_rc "$ZSH_RC" add zsh ;; esac
+for index in "${!SHELL_PATHS[@]}"; do record shell "${SHELL_PATHS[index]}" "${SHELL_HASHES[index]}"; done
 write_file "$TX/manifest" "$MANIFEST" 600
 : >"$TX/committed"
 COMMITTED=1
 log "Installed $PREFIX/bin/fzd. Configuration preserved at $CFG."
 log "Open a new shell: lf / lf name / lff name (or fzd_cd/fzd_find). Verify/uninstall: bash $(printf %q "$DATA/install.sh") --verify / --uninstall"
 log "Original files and transaction journal: $DATA/backups"
+if ((ENHANCED)); then
+  (_font_setup) || warn 'Optional font setup did not complete; FZD is installed. See docs/TECHNICAL.md.'
+fi

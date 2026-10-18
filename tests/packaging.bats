@@ -42,6 +42,7 @@ setup_file() {
   [ "$(dpkg-deb -f "$PACKAGE_DEB" Architecture)" = all ]
   run dpkg-deb -f "$PACKAGE_DEB" Recommends
   [[ "$output" == *'libglib2.0-bin | trash-cli'* ]]
+  [[ "$output" == *'eza'* ]]
 }
 
 @test "Debian downloadable filename is GitHub safe while metadata retains Debian prerelease ordering" {

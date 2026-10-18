@@ -35,8 +35,10 @@ FZD initializes upstream zoxide learning only when not already initialized;
 existing z/zi commands and hook preferences are preserved. Native Tab completion
 uses learned directories. Inline suggestions require a user-installed engine;
 zsh-autosuggestions needs its completion strategy to suggest learned names.
-The source installer option --inline-suggestions installs and configures these
-engines explicitly. Existing engines are reused and shared dependencies retained
+The source installer option --enhanced installs and configures these
+engines and offers optional user font setup. The default Simple installation
+includes recommended eza, fd, bat, tree and file without shell-wide engines
+or fonts. Existing engines are reused and shared dependencies retained
 on uninstall. Native zsh completion initializes after startup if necessary.
 .SH CONTROLS
 Left/Right navigate parent/child directories. Enter selects a directory or
@@ -54,6 +56,10 @@ FZD_CONF_FILE selects another path. An example is installed at
 .PP
 EDITOR or VISUAL selects a single executable, without arguments; micro is the
 fallback. FZD_BIN selects an alternate executable for shell integration.
+.PP
+FZD_ICONS=0 disables eza icons; the default 1 forces them in captured previews.
+Enhanced source setup stores fonts at user scope and preserves terminal settings.
+On WSL, install/select a Nerd Font on Windows instead.
 .SH STATE
 Recent directories and the internal clipboard live below
 ${XDG_STATE_HOME:-$HOME/.local/state}/fzd/explorer/.

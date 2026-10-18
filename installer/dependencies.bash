@@ -45,6 +45,9 @@ package_for() {
   case "$executable" in
   fd) [[ $PM == pacman ]] && REPLY=fd || REPLY=fd-find ;;
   bat) REPLY=bat ;;
+  eza) REPLY=eza ;;
+  fc-list | fc-cache) REPLY=fontconfig ;;
+  xz) [[ $PM == apt ]] && REPLY=xz-utils || REPLY=xz ;;
   base64 | sort | mktemp | install | sha256sum | readlink | truncate | cp | mv | realpath | chmod | rm | mkdir | stat) REPLY=coreutils ;;
   flock) [[ $PM == dnf ]] && REPLY=util-linux-core || REPLY=util-linux ;;
   find) REPLY=findutils ;;
@@ -62,7 +65,7 @@ install_packages() {
     ((existing)) || packages+=("$package")
   done
   ((${#packages[@]})) || return 0
-  log "Required package transaction ($PM): ${packages[*]}"
+  log "Package transaction ($PM): ${packages[*]}"
   if ((EUID != 0)); then
     have sudo || die "sudo is unavailable. Install these packages as root: ${packages[*]}"
     if ((NONINTERACTIVE)); then
@@ -92,13 +95,43 @@ collect_missing() {
   have fzf || [[ -n $FZF_VERSION ]] || MISSING+=(fzf)
   # The runtime accepts a single editor executable. Preserve EDITOR/VISUAL.
   if ! have "${EDITOR:-${VISUAL:-micro}}" && ! have micro; then MISSING+=(micro); fi
-  if [[ $DEPS == recommended ]]; then
-    have file || MISSING+=(file)
-    have tree || MISSING+=(tree)
-    have fd || have fdfind || MISSING+=(fd)
-    have bat || have batcat || MISSING+=(bat)
-  fi
   if [[ ${INLINE_SUGGESTIONS:-keep} == 1 ]]; then _inline_collect_missing; fi
+}
+
+collect_recommended() {
+  MISSING=()
+  have eza || MISSING+=(eza)
+  have file || MISSING+=(file)
+  have tree || MISSING+=(tree)
+  have fd || have fdfind || MISSING+=(fd)
+  have bat || have batcat || MISSING+=(bat)
+}
+
+ensure_recommended() {
+  [[ $DEPS == recommended ]] || return 0
+  collect_recommended
+  ((${#MISSING[@]})) || return 0
+  local tool
+  local -a optional=("${MISSING[@]}") packages=()
+  # Unsupported or unavailable optional packages must not break the core install.
+  if ! (detect_pm); then
+    warn "Recommended tools unavailable: ${optional[*]}; existing preview/search fallbacks remain usable"
+    return 0
+  fi
+  detect_pm
+  for tool in "${optional[@]}"; do
+    package_for "$tool"
+    packages+=("$REPLY")
+  done
+  if ! (install_packages "${packages[@]}"); then
+    for tool in "${optional[@]}"; do
+      package_for "$tool"
+      (install_packages "$REPLY") || warn "Optional $tool unavailable; keeping the existing fallback"
+    done
+  fi
+  collect_recommended
+  ((${#MISSING[@]} == 0)) || warn "Recommended tools still missing: ${MISSING[*]} (FZD will use available fallbacks)"
+  return 0
 }
 
 ensure_dependencies() {
@@ -119,6 +152,7 @@ ensure_dependencies() {
   if [[ -z $FZF_VERSION ]]; then
     check_fzf "$(command -v fzf)" || die 'fzf must be >= 0.44.0 and support FZD bindings. Use a compatible distro package or --fzf-version VERSION --fzf-sha256 SHA256 (see README).'
   fi
+  ensure_recommended
   local zoxide_version
   zoxide_version=$(zoxide --version) || die 'zoxide could not execute'
   version_ge "${zoxide_version#zoxide }" 0.9.0 || die 'zoxide >= 0.9.0 is required; upgrade your distribution package'

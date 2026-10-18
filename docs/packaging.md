@@ -222,12 +222,15 @@ dependencies, never FZD package payloads. CI uses pinned, private engine fixture
 
 ## Optional inline setup
 
-`--inline-suggestions` in the source installer installs the selected shells'
-engine requirements and writes opt-in settings in the existing managed shell
-block. ble.sh is an independently verified upstream download, kept as a shared
+`--enhanced` (or the advanced `--inline-suggestions` flag) in the source installer installs the selected shells'
+engine requirements and writes opt-in settings in dedicated XDG shell files.
+Only minimal guarded source entries are added to startup files. Enhanced also
+offers optional user-scope font setup; package staging performs neither step. ble.sh is an independently verified upstream download, kept as a shared
 user-local dependency; zsh-autosuggestions is resolved through the distribution.
 Neither engine is bundled in FZD's source/package artifacts. Debian Suggests and
-Arch optdepends advertise zsh/zsh-autosuggestions. The package payload includes
+Arch optdepends advertise zsh/zsh-autosuggestions. eza is a Debian Recommends
+and an Arch recommended optdepend; source Simple and Enhanced attempt to install
+it with fd, bat, tree and file. Missing optional packages preserve fallbacks. The package payload includes
 `inline.sh`, activated only by explicit user configuration. Package staging never
 runs downloads or edits shell startup files. The default integration initializes
 fresh zsh native completion after startup without replacing an existing setup.

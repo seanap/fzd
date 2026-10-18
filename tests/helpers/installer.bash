@@ -3,6 +3,7 @@ setup() {
   bats_require_minimum_version 1.5.0
   REPO=$(cd -- "$BATS_TEST_DIRNAME/.." && pwd)
   export HOME="$BATS_TEST_TMPDIR/home"
+  export XDG_DATA_HOME="$HOME/data"
   export XDG_CONFIG_HOME="$HOME/config" XDG_STATE_HOME="$HOME/state" XDG_CACHE_HOME="$HOME/cache"
   export XDG_RUNTIME_DIR="$HOME/runtime"
   export BASH_ENV=/dev/null ENV=/dev/null
@@ -18,6 +19,7 @@ setup() {
   PREFIX="$HOME/.local"
   DATA="$PREFIX/share/fzd"
   mkdir -p "$HOME" "$TEST_BIN"
+  unset FZD_BASH_RC FZD_ZSH_RC FZD_ICONS WSL_DISTRO_NAME WSL_INTEROP
   unset FZD_CONF_FILE FZD_BIN FZD_GLOBAL_ROOTS ZDOTDIR EDITOR VISUAL
   unset FZD_INLINE_SUGGESTIONS FZD_AUTO_COMPLETION FZD_BLESH_PATH FZD_ZSH_AUTOSUGGESTIONS_PATH
   unset FZD_STATE_DIR FZD_CACHE_DIR FZD_TMP_DIR
@@ -39,7 +41,7 @@ teardown() {
   if [[ -n ${INSTALL_SOCKET:-} ]]; then "$REAL_TMUX" -S "$INSTALL_SOCKET" kill-server 2>/dev/null || true; fi
 }
 
-install_fzd() { run bash "$REPO/install.sh" --noninteractive "$@"; }
+install_fzd() { run bash "$REPO/install.sh" --noninteractive --deps none "$@"; }
 assert_installed() {
   [ "$status" -eq 0 ]
   [ -x "$PREFIX/bin/fzd" ]

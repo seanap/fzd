@@ -4,6 +4,9 @@ _inline_find_engines() {
   local path
   BLESH_PATH=${FZD_BLESH_PATH:-}
   AUTOSUGGEST_PATH=${FZD_ZSH_AUTOSUGGESTIONS_PATH:-}
+  for path in "$BLESH_PATH" "$AUTOSUGGEST_PATH"; do
+    [[ -z $path || ($path == /* && /$path/ != */../*) ]] || die 'Custom inline engine paths must be absolute without .. components'
+  done
   if [[ ($SHELL_TARGET == both || $SHELL_TARGET == bash) && -n $BLESH_PATH && ! -r $BLESH_PATH ]]; then die 'FZD_BLESH_PATH must name a readable ble.sh'; fi
   if [[ ($SHELL_TARGET == both || $SHELL_TARGET == zsh) && -n $AUTOSUGGEST_PATH && ! -r $AUTOSUGGEST_PATH ]]; then die 'FZD_ZSH_AUTOSUGGESTIONS_PATH must name a readable plugin'; fi
   if [[ -z $BLESH_PATH ]]; then

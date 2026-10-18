@@ -53,15 +53,18 @@ Run as your normal user on Ubuntu/Debian, Arch, or Fedora:
 ```bash
 git clone https://github.com/seanap/fzd.git
 cd fzd
-bash install.sh --deps recommended --inline-suggestions
+bash install.sh --enhanced
 ```
 
-Open a **new terminal**, then run `lf`. The installer resolves missing dependencies
-through your distribution's package manager, installs FZD under `~/.local`, and
-adds Bash/zsh integration with gray inline suggestions. Press **Right** to accept
-a suggestion. Sudo is requested only for missing system packages. You need Git
-to clone the repository. Leave off `--inline-suggestions` to keep engine setup
-unchanged, or use `--shell bash` / `--shell zsh` to configure one shell.
+`--enhanced` adds optional inline autosuggestions and Nerd Font conveniences.
+Plain `bash install.sh` provides the standard **Simple** experience: required
+and recommended tools, previews, shell integration, and native **Tab** completion.
+
+Open a **new terminal**, then run `lf`. Both modes reuse existing tools and
+preserve your shell customizations. FZD lives under `~/.local`, with its shell
+setup in `~/.config/fzd/shell.bash` or `shell.zsh`. Missing system packages need
+root or cached sudo authorization (`sudo -v`). Enhanced provides terminal font
+selection guidance; on WSL, fonts must be installed and selected on Windows.
 
 <details>
 <summary>Packages, manual installation, updates and removal</summary>
@@ -94,12 +97,9 @@ If another tool already owns `lf` or `lff`, use `fzd_cd` or `fzd_find` instead.
 
 ## Finish the thought
 
-Type `lf imm` and accept the gray suggestion with **Right**, or press Enter
-immediately and let zoxide resolve the partial name. Native **Tab** completion
-also works in Bash and fresh zsh sessions.
-
-The installer’s explicit `--inline-suggestions` option installs and configures
-ble.sh for Bash and zsh-autosuggestions for zsh. Existing engines are reused.
+Type `lf imm` and press Enter to let zoxide resolve the partial name, or use
+**Tab** to complete it in Bash or zsh. Enhanced also offers inline suggestions:
+press **Right** to accept the suggested suffix. Existing engines are reused.
 [Setup, updates and removal](docs/TECHNICAL.md#tab-completion-and-inline-suggestions).
 
 ## Go deeper
