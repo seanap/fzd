@@ -4,6 +4,7 @@ https://github.com/omacom/omarchy (master; former basecamp/omarchy URLs redirect
 - bin/omarchy-launch-editor
 - bin/omarchy-theme-color
 - bin/omarchy-tui-install
+- default/bash/{rc,aliases,init,inputrc}
 - themes/tokyo-night/colors.toml
 - themes/catppuccin-latte/colors.toml
 

@@ -46,6 +46,7 @@ package_for() {
   fd) [[ $PM == pacman ]] && REPLY=fd || REPLY=fd-find ;;
   bat) REPLY=bat ;;
   eza) REPLY=eza ;;
+  wl-copy) REPLY=wl-clipboard ;;
   fc-list | fc-cache) REPLY=fontconfig ;;
   xz) [[ $PM == apt ]] && REPLY=xz-utils || REPLY=xz ;;
   base64 | sort | mktemp | install | sha256sum | readlink | truncate | cp | mv | realpath | chmod | rm | mkdir | stat) REPLY=coreutils ;;
@@ -90,12 +91,19 @@ install_packages() {
 collect_missing() {
   local tool
   MISSING=()
-  for tool in zoxide base64 sort mktemp install sha256sum readlink truncate find cp mv realpath chmod rm mkdir flock stat; do
+  for tool in zoxide plocate base64 sort mktemp install sha256sum readlink truncate find cp mv realpath chmod rm mkdir flock stat; do
     have "$tool" || MISSING+=("$tool")
   done
   have fzf || [[ -n $FZF_VERSION ]] || MISSING+=(fzf)
-  # The runtime accepts a single editor executable. Preserve EDITOR/VISUAL.
-  if ! have "${EDITOR:-${VISUAL:-micro}}" && ! have micro; then MISSING+=(micro); fi
+  # Use the same safe argument parsing as the runtime; never source user files.
+  if ! declare -F _fzd_editor_command >/dev/null; then
+    local command_lib=${BASH_SOURCE[0]%/installer/*}/lib/command.bash
+    if [[ -f $command_lib ]]; then
+      # shellcheck source=lib/command.bash
+      source "$command_lib"
+    fi
+  fi
+  if ! _fzd_editor_command; then MISSING+=(micro); fi
   if [[ ${INLINE_SUGGESTIONS:-keep} == 1 ]]; then _inline_collect_missing; fi
 }
 
@@ -106,6 +114,15 @@ collect_recommended() {
   have tree || MISSING+=(tree)
   have fd || have fdfind || MISSING+=(fd)
   have bat || have batcat || MISSING+=(bat)
+  if [[ ${ENHANCED:-0} == 1 ]]; then
+    have chafa || MISSING+=(chafa)
+    have glow || MISSING+=(glow)
+    if [[ -n ${WAYLAND_DISPLAY:-} ]]; then
+      have wl-copy || MISSING+=(wl-copy)
+    elif [[ -n ${DISPLAY:-} ]]; then
+      have xclip || have xsel || MISSING+=(xclip)
+    fi
+  fi
 }
 
 ensure_recommended() {
@@ -146,12 +163,25 @@ ensure_dependencies() {
       package_for "$tool"
       packages+=("$REPLY")
     done
+    # Debian/Ubuntu's plocate postinst may call updatedb directly, outside
+    # policy-rc.d. Never hide an expensive first index inside a package install.
+    if [[ $PM == apt && ${ALLOW_PACKAGE_INDEXING:-0} != 1 ]] && ! have plocate; then
+      die 'The distro plocate package may initialize a system index on first install. Review /etc/updatedb.conf, then install plocate yourself or explicitly authorize its package setup with --allow-package-indexing. No FZD files were changed.'
+    fi
     install_packages "${packages[@]}"
     collect_missing
     ((${#MISSING[@]} == 0)) || die "Still missing after package installation: ${MISSING[*]}"
   fi
   if [[ -z $FZF_VERSION ]]; then
     check_fzf "$(command -v fzf)" || die 'fzf must be >= 0.44.0 and support FZD bindings. Use a compatible distro package or --fzf-version VERSION --fzf-sha256 SHA256 (see README).'
+  fi
+  local locate_probe
+  plocate --version >/dev/null 2>&1 || die 'plocate is installed but cannot execute'
+  local -a locate_args=(--count --limit 1)
+  [[ -z ${FZD_LOCATE_DBS:-} ]] || locate_args+=(-d "$FZD_LOCATE_DBS")
+  if ! locate_probe=$(plocate "${locate_args[@]}" -- / 2>/dev/null) || [[ ! $locate_probe =~ ^[1-9][0-9]*$ ]]; then
+    warn 'plocate index is missing, empty or unreadable; global search will retain its filesystem fallback.'
+    warn 'Review /etc/updatedb.conf and your distribution indexing schedule. If appropriate, initialize it yourself with sudo updatedb. FZD does not run updatedb or change exclusions/timers.'
   fi
   ensure_recommended
   local zoxide_version

@@ -100,13 +100,13 @@ esac
 
 case $target in
 ubuntu | debian)
-  apt-get install --no-install-recommends -y zsh tmux bats bubblewrap eza file tree curl ca-certificates git bat fd-find libglib2.0-bin plocate procps xz-utils
+  apt-get install --no-install-recommends -y python3 chafa zsh tmux bats bubblewrap eza file tree curl ca-certificates git bat fd-find libglib2.0-bin plocate procps xz-utils
   ;;
 arch)
-  pacman -S --noconfirm --needed zsh tmux bats bubblewrap eza file tree curl git bat fd glib2 plocate procps-ng
+  pacman -S --noconfirm --needed python chafa zsh tmux bats bubblewrap eza file tree curl git bat fd glib2 plocate procps-ng
   ;;
 fedora)
-  dnf install -y zsh tmux bats bubblewrap eza file tree curl git bat fd-find glib2 plocate diffutils which tar gzip xz procps-ng
+  dnf install -y python3 chafa zsh tmux bats bubblewrap eza file tree curl git bat fd-find glib2 plocate diffutils which tar gzip xz procps-ng
   ;;
 esac
 printf '. /usr/share/fzd/integration.sh\n' >>"$HOME/.bashrc"

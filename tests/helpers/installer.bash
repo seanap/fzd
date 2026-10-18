@@ -32,6 +32,9 @@ setup() {
   for tool in zoxide bash sh env cat base64 sort mktemp install sha256sum readlink truncate find file tree micro cp mv rm rmdir mkdir chmod cmp tail uname tar gzip xz ps curl sleep kill wc grep head ln touch date tr awk sed cut ls timeout basename dirname realpath flock stat; do
     ln -s "$(command -v "$tool")" "$TEST_BIN/$tool"
   done
+  # shellcheck disable=SC2016 # Variables belong to the generated plocate stub.
+  printf '#!/bin/sh\ncase "$1" in --version) echo "plocate 1.1.19" ;; *) echo "${PLOCATE_COUNT:-1}"; exit "${PLOCATE_STATUS:-0}" ;; esac\n' >"$TEST_BIN/plocate"
+  chmod +x "$TEST_BIN/plocate"
   ln -s "$REAL_FZF" "$TEST_BIN/fzf"
   [[ -z $REAL_ZSH ]] || ln -s "$REAL_ZSH" "$TEST_BIN/zsh"
   export PATH="$TEST_BIN"

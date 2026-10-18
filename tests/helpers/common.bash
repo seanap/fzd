@@ -3,6 +3,7 @@ setup_fixture() {
   bats_require_minimum_version 1.5.0
   FZD_REPO=$(cd -- "$BATS_TEST_DIRNAME/.." && pwd)
   FZD_SCRIPT=${FZD_TEST_SCRIPT:-$FZD_REPO/fzd.sh}
+  FZD_REAL_CHAFA=$(command -v chafa 2>/dev/null || true)
   FZD_REAL_EZA=$(command -v eza 2>/dev/null || true)
   FZD_REAL_TREE=$(command -v tree 2>/dev/null || true)
   FZD_REAL_FD=$(command -v fd 2>/dev/null || command -v fdfind 2>/dev/null || true)

@@ -134,3 +134,23 @@ theme_fixture() {
   [ "$status" -eq 0 ]
   [ "$output" = "$FIXTURE_ROOT" ]
 }
+
+@test "current upstream Omarchy Bash startup keeps aliases zoxide hooks and completion preferences" {
+  mkdir -p "$HOME/omarchy/default/bash"
+  local item
+  for item in rc aliases init inputrc; do cp "$FZD_REPO/tests/fixtures/omarchy/bash-$item" "$HOME/omarchy/default/bash/$item"; done
+  for item in envs shell functions completions; do printf ':\n' >"$HOME/omarchy/default/bash/$item"; done
+  run bash --noprofile --norc -ic 'export OMARCHY_PATH="$HOME/omarchy"; source "$OMARCHY_PATH/default/bash/rc"; before=$(alias cd ls ff); hook=$PROMPT_COMMAND; complete -W custom lf; source "$1/shell/integration.sh"; source "$1/shell/integration.sh"; [[ $(alias cd ls ff) == "$before" ]]; [[ $PROMPT_COMMAND == *"$hook"* ]]; [[ $(complete -p lf) == *custom* ]]; [[ $(declare -f z) == *zoxide* ]]' _ "$FZD_REPO"
+  [ "$status" -eq 0 ]
+}
+
+@test "native Chafa renders a real PNG through captured FZD preview" {
+  [[ -x $FZD_REAL_CHAFA ]] || skip 'Chafa unavailable for native preview validation'
+  ln -s "$FZD_REAL_CHAFA" "$TEST_BIN/chafa"
+  # A 1x1 PNG, no external image libraries needed by the fixture.
+  printf '%s' iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+a1ZkAAAAASUVORK5CYII= | base64 -d >"$FIXTURE_ROOT/tiny.png"
+  run bash -c 'source "$1/fzd.sh"; FZD_PREVIEW_TIMEOUT=2; _preview_file "$2"' _ "$FZD_REPO" "$FIXTURE_ROOT/tiny.png"
+  [ "$status" -eq 0 ]
+  [[ "$output" != *'PNG image data'* ]]
+  [ -n "$output" ]
+}

@@ -17,6 +17,11 @@ _font_find_compatible() {
   # This also accepts a custom verified font/fallback with the required glyphs.
   families=$(fc-list ':charset=f115 f15b e5ff f024b' family 2>/dev/null) || return 1
   [[ -n $families ]] || return 1
+  if have omarchy-font-current; then
+    local selected
+    selected=$(omarchy-font-current 2>/dev/null) || selected=''
+    [[ -z $selected ]] || log "Omarchy fontconfig monospace: $selected (terminal selection may differ)"
+  fi
   log "Compatible font coverage found: ${families%%$'\n'*}; no font installed"
 }
 

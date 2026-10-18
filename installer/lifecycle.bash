@@ -31,7 +31,7 @@ begin_transaction() {
   : >"$TX/journal"
   : >"$TX/manifest"
   printf '%s\0' "$CFG" >"$TX/rc-targets"
-  for path in "${SHELL_PATHS[@]}"; do printf '%s\0' "$path" >>"$TX/rc-targets"; done
+  for path in "${SHELL_PATHS[@]}" "${LAUNCHER_PATHS[@]}"; do printf '%s\0' "$path" >>"$TX/rc-targets"; done
   printf '%s\0' "$TX" >"$LOCK/transaction"
   COMMITTED=0
   trap finish_transaction EXIT
@@ -167,7 +167,7 @@ delete_file() {
 
 owned_file() {
   case "$1" in
-  "$PREFIX/bin/fzd" | "$PREFIX/bin/fzf" | "$DATA/integration.sh" | "$DATA/integration.zsh" | "$DATA/inline.sh" | "$DATA/fzd.conf.example" | "$DATA/LICENSE.txt" | "$DATA/install.sh" | "$DATA/installer/dependencies.bash" | "$DATA/installer/lifecycle.bash" | "$DATA/installer/inline.bash" | "$DATA/installer/fonts.bash" | "$DATA/lib/state.bash" | "$DATA/lib/operations.bash" | "$DATA/lib/ui.bash") return 0 ;;
+  "$PREFIX/bin/fzd" | "$PREFIX/bin/fzf" | "$DATA/integration.sh" | "$DATA/integration.zsh" | "$DATA/inline.sh" | "$DATA/fzd.conf.example" | "$DATA/LICENSE.txt" | "$DATA/install.sh" | "$DATA/installer/dependencies.bash" | "$DATA/installer/lifecycle.bash" | "$DATA/installer/inline.bash" | "$DATA/installer/fonts.bash" | "$DATA/lib/state.bash" | "$DATA/lib/operations.bash" | "$DATA/launcher.bash" | "$DATA/launcher.conf" | "$DATA/installer/desktop.bash" | "$DATA/lib/ui.bash" | "$DATA/lib/command.bash" | "$DATA/lib/theme.bash" | "$DATA/lib/integrations.bash") return 0 ;;
   *) return 1 ;;
   esac
 }
@@ -176,6 +176,8 @@ load_manifest() {
   local kind path digest
   FILE_PATHS=()
   FILE_HASHES=()
+  LAUNCHER_PATHS=()
+  LAUNCHER_HASHES=()
   SHELL_PATHS=()
   SHELL_HASHES=()
   RC_PATHS=()
@@ -188,6 +190,11 @@ load_manifest() {
       if ! owned_file "$path" || [[ ! $digest =~ ^[a-f0-9]{64}$ ]]; then die 'Invalid file in install manifest'; fi
       FILE_PATHS+=("$path")
       FILE_HASHES+=("$digest")
+      ;;
+    launcher)
+      [[ $path == /* && /$path/ != */../* && $path == */applications/FZD.desktop && $digest =~ ^[a-f0-9]{64}$ ]] || die 'Invalid launcher in install manifest'
+      LAUNCHER_PATHS+=("$path")
+      LAUNCHER_HASHES+=("$digest")
       ;;
     shell)
       [[ $path == /* && /$path/ != */../* && ($path == */fzd/shell.bash || $path == */fzd/shell.zsh) && ($digest == keep || $digest =~ ^[a-f0-9]{64}$) ]] || die 'Invalid shell configuration in install manifest'
@@ -296,6 +303,9 @@ edit_rc() {
     [[ -f $rc ]] || die 'Shell configuration symlink must resolve to a regular file'
     [[ -O $rc ]] || die "Shell configuration target must belong to the installing user: $rc"
   fi
+  if [[ $action == add && ($rc == /usr/share/omarchy/* || $rc == "${OMARCHY_PATH:-/usr/share/omarchy}/default/"*) ]]; then
+    die "Refusing to modify package-owned Omarchy startup: $rc; select your user startup file"
+  fi
   printf '%s\0' "$rc" >>"$TX/rc-targets"
   : >"$temporary"
   if [[ -e $rc ]]; then
@@ -378,6 +388,12 @@ verify_installation() {
       bash -n "${SHELL_PATHS[index]}" || die "Shell configuration has invalid syntax: ${SHELL_PATHS[index]}"
     fi
   done
+  for index in "${!LAUNCHER_PATHS[@]}"; do
+    if [[ -f ${LAUNCHER_PATHS[index]} && ! -L ${LAUNCHER_PATHS[index]} ]]; then
+      hash_file "${LAUNCHER_PATHS[index]}"
+      [[ $REPLY == "${LAUNCHER_HASHES[index]}" ]] || warn "Launcher modified by user: ${LAUNCHER_PATHS[index]}"
+    else warn "Launcher missing or replaced: ${LAUNCHER_PATHS[index]}"; fi
+  done
   bash -n "$PREFIX/bin/fzd"
   [[ ! -e $CFG ]] || bash -n "$CFG" || die "Configuration has invalid Bash syntax: $CFG"
   log 'Verified installed files, dependency capabilities and configuration syntax (configuration was not executed).'
@@ -411,6 +427,13 @@ uninstall_files() {
     if [[ -f $path && ! -L $path ]]; then
       hash_file "$path"
       if [[ $REPLY == "${SHELL_HASHES[index]}" ]]; then delete_file "$path"; else warn "Preserving modified shell configuration: $path"; fi
+    fi
+  done
+  for index in "${!LAUNCHER_PATHS[@]}"; do
+    path=${LAUNCHER_PATHS[index]}
+    if [[ -f $path && ! -L $path ]]; then
+      hash_file "$path"
+      if [[ $REPLY == "${LAUNCHER_HASHES[index]}" ]]; then delete_file "$path"; else warn "Preserving modified launcher: $path"; fi
     fi
   done
   delete_file "$MANIFEST"

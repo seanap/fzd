@@ -30,13 +30,13 @@ fzd_find is the alternative when lff is already in use.
 Raw fzd prints the selected directory instead.
 Installation never changes users' startup files or configuration.
 .PP
-Zoxide is required. Explorer visits are learned on exit. In interactive shells,
+Zoxide and plocate are required for standard installation. Explorer visits are learned on exit. In interactive shells,
 FZD initializes upstream zoxide learning only when not already initialized;
 existing z/zi commands and hook preferences are preserved. Native Tab completion
 uses learned directories. Inline suggestions require a user-installed engine;
 zsh-autosuggestions needs its completion strategy to suggest learned names.
 The source installer option --enhanced installs and configures these
-engines and offers optional user font setup. The default Simple installation
+engines, optional Chafa/Glow/clipboard tools, and user font setup. The default Simple installation
 includes recommended eza, fd, bat, tree and file without shell-wide engines
 or fonts. Existing engines are reused and shared dependencies retained
 on uninstall. Native zsh completion initializes after startup if necessary.
@@ -47,6 +47,8 @@ global search. Alt+Left/Right traverse history; Alt+H shows recent directories.
 .PP
 Ctrl+C/X/V copy/cut/paste; Alt+C/X/V are alternatives. Ctrl+R or F2 renames.
 Ctrl+N or F7 creates a directory. F8 requests confirmed, recoverable Trash.
+Alt+Y copies the absolute path to the display clipboard. Alt+G opens Lazygit
+when separately installed and the selection belongs to a Git working tree.
 F1 shows contextual help. Ctrl+G exits. Delete edits the query.
 .SH CONFIGURATION
 Defaults work without a configuration file. Optional trusted Bash settings
@@ -54,8 +56,8 @@ are read from $XDG_CONFIG_HOME/fzd/fzd.conf, defaulting to ~/.config/fzd/fzd.con
 FZD_CONF_FILE selects another path. An example is installed at
 /usr/share/fzd/fzd.conf.example.
 .PP
-EDITOR or VISUAL selects a single executable, without arguments; micro is the
-fallback. FZD_BIN selects an alternate executable for shell integration.
+EDITOR takes precedence over VISUAL and supports safely quoted arguments.
+Omarchy editor changes take effect without reinstalling. Micro is the fallback. FZD_BIN selects an alternate executable for shell integration.
 .PP
 FZD_ICONS=0 disables eza icons; the default 1 forces them in captured previews.
 Enhanced source setup stores fonts at user scope and preserves terminal settings.

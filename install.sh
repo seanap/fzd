@@ -17,11 +17,13 @@ usage() {
   cat <<'USAGE'
 Usage: bash install.sh [options]
   bash install.sh             Simple: recommended tools and native Tab completion
-  bash install.sh --enhanced  Enhanced: also inline suggestions and font setup
+  bash install.sh --enhanced  Enhanced: rich preview tools, suggestions and font setup
 
 Advanced options (automation and compatibility):
   --enhanced               Add inline suggestions and optional Nerd Font setup
                            Default: Simple (recommended tools, native Tab)
+  --omarchy-launcher float|tile  Optional Enhanced Omarchy terminal launcher
+  --allow-package-indexing  Authorize distro plocate package initial indexing
   --prefix DIR             User installation prefix (default: ~/.local)
   --deps none|required|recommended
                            Default recommended; includes eza, fd, bat, tree, file
@@ -60,15 +62,16 @@ SCRIPT_DIR=${SCRIPT_DIR%.}
 PREFIX=${HOME:?HOME must be set}/.local
 [[ $SCRIPT_DIR != */share/fzd ]] || PREFIX=${SCRIPT_DIR%/share/fzd}
 PREFIX_SET=0 DEPS=recommended DEPS_SET=0 NONINTERACTIVE=1 SHELL_TARGET=both NO_CONFIG=0 ADOPT=0
-INLINE_SUGGESTIONS=keep BLESH_PATH='' AUTOSUGGEST_PATH='' ENHANCED=0
+INLINE_SUGGESTIONS=keep BLESH_PATH='' AUTOSUGGEST_PATH='' ENHANCED=0 OMARCHY_LAUNCHER=none ALLOW_PACKAGE_INDEXING=0
 BASH_RC=${FZD_BASH_RC:-$HOME/.bashrc}
 ZSH_RC=${FZD_ZSH_RC:-${ZDOTDIR:-$HOME}/.zshrc}
 MODE=install STAGE='' FZF_VERSION='' FZF_SHA256='' JOURNAL_COUNT=0
 while (($#)); do
   case "$1" in
-  --prefix | --deps | --shell | --stage | --fzf-version | --fzf-sha256 | --bashrc | --zshrc)
+  --prefix | --deps | --shell | --stage | --fzf-version | --fzf-sha256 | --bashrc | --zshrc | --omarchy-launcher)
     if (($# < 2)) || [[ -z $2 ]]; then die "$1 requires a value"; fi
     case "$1" in
+    --omarchy-launcher) OMARCHY_LAUNCHER=$2 ;;
     --prefix)
       PREFIX=$2
       PREFIX_SET=1
@@ -88,6 +91,10 @@ while (($#)); do
     ;;
   --noninteractive)
     NONINTERACTIVE=1
+    shift
+    ;;
+  --allow-package-indexing)
+    ALLOW_PACKAGE_INDEXING=1
     shift
     ;;
   --enhanced)
@@ -124,6 +131,8 @@ while (($#)); do
   *) die "Unknown argument: $1 (try --help)" ;;
   esac
 done
+[[ $OMARCHY_LAUNCHER == none || $OMARCHY_LAUNCHER == float || $OMARCHY_LAUNCHER == tile ]] || die 'Invalid --omarchy-launcher value'
+[[ $OMARCHY_LAUNCHER == none || $ENHANCED == 1 ]] || die '--omarchy-launcher requires --enhanced'
 [[ $DEPS == none || $DEPS == required || $DEPS == recommended ]] || die 'Invalid --deps value'
 [[ $SHELL_TARGET == both || $SHELL_TARGET == bash || $SHELL_TARGET == zsh || $SHELL_TARGET == none ]] || die 'Invalid --shell value'
 if [[ $INLINE_SUGGESTIONS == 1 ]]; then
@@ -164,6 +173,8 @@ source "$SCRIPT_DIR/installer/lifecycle.bash"
 source "$SCRIPT_DIR/installer/inline.bash"
 # shellcheck source=installer/fonts.bash
 source "$SCRIPT_DIR/installer/fonts.bash"
+# shellcheck source=installer/desktop.bash
+source "$SCRIPT_DIR/installer/desktop.bash"
 
 if [[ -n $STAGE ]]; then
   ((DEPS_SET)) || DEPS=none
@@ -245,6 +256,14 @@ install_owned "$SCRIPT_DIR/installer/dependencies.bash" "$DATA/installer/depende
 install_owned "$SCRIPT_DIR/installer/lifecycle.bash" "$DATA/installer/lifecycle.bash" 644
 install_owned "$SCRIPT_DIR/installer/inline.bash" "$DATA/installer/inline.bash" 644
 install_owned "$SCRIPT_DIR/installer/fonts.bash" "$DATA/installer/fonts.bash" 644
+install_owned "$SCRIPT_DIR/installer/desktop.bash" "$DATA/installer/desktop.bash" 644
+install_owned "$SCRIPT_DIR/shell/launcher.bash" "$DATA/launcher.bash" 644
+{
+  printf 'FZD_LAUNCH_RC=%q\n' "$BASH_RC"
+  printf 'FZD_LAUNCH_BIN=%q\n' "$PREFIX/bin/fzd"
+  printf 'FZD_LAUNCH_CONFIG=%q\n' "$CFG"
+} >"$TX/launcher.conf"
+install_owned "$TX/launcher.conf" "$DATA/launcher.conf" 644
 if [[ -n $FZF_VERSION ]]; then
   install_owned "$TX/fzf" "$PREFIX/bin/fzf" 755
 else
@@ -270,6 +289,7 @@ for index in "${!RC_PATHS[@]}"; do record rc "${RC_PATHS[index]}" "${RC_NEWLINES
 case "$SHELL_TARGET" in both | bash) edit_rc "$BASH_RC" add bash ;; esac
 case "$SHELL_TARGET" in both | zsh) edit_rc "$ZSH_RC" add zsh ;; esac
 for index in "${!SHELL_PATHS[@]}"; do record shell "${SHELL_PATHS[index]}" "${SHELL_HASHES[index]}"; done
+_desktop_prepare
 write_file "$TX/manifest" "$MANIFEST" 600
 : >"$TX/committed"
 COMMITTED=1
