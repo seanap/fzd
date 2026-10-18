@@ -1,0 +1,532 @@
+1..325
+ok 1 invalid color overrides are ignored without terminating startup
+ok 2 hex colors accept optional hash and mixed case while rejecting invalid digits
+ok 3 explicit configuration path is loaded
+ok 4 XDG configuration path is loaded when no explicit file is set
+ok 5 legacy root variables expand without evaluating shell commands
+ok 6 legacy leading tilde roots expand without evaluating shell code
+ok 7 shipped configuration defines one backend and one root list
+ok 8 root arrays preserve spaces and override the legacy root string
+ok 9 root arrays retain quotes substitutions and trailing newlines as path data
+ok 10 configuration declarations retain top-level Bash scope
+ok 11 configured runtime paths are applied before creating storage
+ok 12 legacy root expansion never executes substitution text
+ok 13 invalid numeric settings fail with an actionable diagnostic
+ok 14 unknown backend fails before launching a picker
+ok 15 Explorer dependency detection reports missing flock and maps distribution providers
+ok 16 Ubuntu and Debian apt transaction authenticates once and refreshes metadata once
+ok 17 Fedora dnf and Arch pacman use bounded deduplicated package transactions
+ok 18 interactive sudo authenticates normally while noninteractive authentication failures stop
+ok 19 dependency package failures are propagated without continuing installation
+ok 20 dependency mappings and versions handle executable aliases and numerical comparison
+ok 21 fd bat executable aliases and an existing configured editor prevent unnecessary installs
+ok 22 fzf capability detection ignores hostile inherited defaults and rejects unsupported bindings
+ok 23 distribution detection uses os-release rather than an unrelated package manager on PATH
+ok 24 present but incompatible GNU serialization tools fail their capability checks
+ok 25 zoxide is required before installation and maps to each supported distribution package
+ok 26 source installer installs missing upstream zoxide through the native package manager
+ok 27 unsupported zoxide version is rejected before application files change
+ok 28 apt transactions are noninteractive and retain existing modified conffiles
+ok 29 filename labels escape every non-NUL ASCII control byte and DEL
+ok 30 filename display retains Unicode and distinguishes literal escapes from control bytes
+ok 31 local candidate labels are printable while control-character path identities remain exact
+ok 32 global candidate labels are printable while control-character path identities remain exact
+not ok 33 isolated Ubuntu profile detects apt installs missing findutils and completes
+# (from function `assert_installed' in file tests/helpers/installer.bash, line 50,
+#  from function `profile_install' in file tests/distributions.bats, line 31,
+#  in test file tests/distributions.bats, line 37)
+#   `profile_install ubuntu 'apt-get <install> <--no-install-recommends> <-y> <findutils>'' failed
+# Last output:
+# bwrap: loopback: Failed to create NETLINK_ROUTE socket: Operation not permitted
+not ok 34 isolated Debian profile detects apt installs missing findutils and completes
+# (from function `assert_installed' in file tests/helpers/installer.bash, line 50,
+#  from function `profile_install' in file tests/distributions.bats, line 31,
+#  in test file tests/distributions.bats, line 41)
+#   `profile_install debian 'apt-get <install> <--no-install-recommends> <-y> <findutils>'' failed
+# Last output:
+# bwrap: loopback: Failed to create NETLINK_ROUTE socket: Operation not permitted
+not ok 35 isolated Fedora profile detects dnf installs missing findutils and completes
+# (from function `assert_installed' in file tests/helpers/installer.bash, line 50,
+#  from function `profile_install' in file tests/distributions.bats, line 31,
+#  in test file tests/distributions.bats, line 45)
+#   `profile_install fedora 'dnf <install> <-y> <findutils>'' failed
+# Last output:
+# bwrap: loopback: Failed to create NETLINK_ROUTE socket: Operation not permitted
+not ok 36 isolated Arch profile detects pacman installs missing findutils and completes
+# (from function `assert_installed' in file tests/helpers/installer.bash, line 50,
+#  from function `profile_install' in file tests/distributions.bats, line 31,
+#  in test file tests/distributions.bats, line 49)
+#   `profile_install arch 'pacman <-S> <--needed> <--noconfirm> <findutils>'' failed
+# Last output:
+# bwrap: loopback: Failed to create NETLINK_ROUTE socket: Operation not permitted
+ok 37 batch encoding matches GNU base64 for every non-NUL byte and alignment
+ok 38 one encoder handles a thousand local records without per-path execution
+ok 39 truncated encoder output fails without publishing partial path identities
+ok 40 encoder failure after complete output is still propagated
+ok 41 global batches preserve order exact paths and caps across chunk boundaries
+ok 42 global serialization uses one encoder per bounded batch
+ok 43 repeated encoding closes descriptors and reaps its producers
+ok 44 global search emits the first match while its producer is still scanning
+ok 45 a competing destination created during rename is not replaced
+ok 46 name prompt codec roundtrips every non-NUL byte and keeps valid Unicode readable
+ok 47 rename preserves exact name bytes and unchanged names perform no move
+ok 48 directory rename rebases browser history recents clipboard and highlighted names
+ok 49 rename conflicts never replace files links or merge directories
+ok 50 mkdir accepts unusual bytes rejects invalid names and never replaces existing targets
+ok 51 rename permission failures preserve names and state
+ok 52 copy persists across sessions and preserves unusual filenames contents and permissions
+ok 53 recursive copy preserves directory permissions hardlinks and symlinks without touching targets
+ok 54 cut only records intent then successful paste moves and clears its clipboard
+ok 55 paste refuses its original location and directory descendants including symlink aliases
+ok 56 dangling symlinks can be listed copied and moved as links
+ok 57 existing destination files directories and symlinks are never replaced or merged
+ok 58 missing clipboard sources and synthetic navigation entries fail safely
+ok 59 failed copying cleans private staging while preserving the source and clipboard
+ok 60 a destination appearing during atomic copy publication is not overwritten or reported successful
+ok 61 permission failures preserve cut sources and allow retry
+ok 62 concurrent clipboard writers publish complete private records
+not ok 63 cut paste works across an isolated tmpfs boundary
+# (in test file tests/explorer-operations.bats, line 198)
+#   `[ "$status" -eq 0 ]' failed
+# Last output:
+# bwrap: loopback: Failed to create NETLINK_ROUTE socket: Operation not permitted
+ok 64 termination during copying cleans private staging and preserves clipboard and source
+ok 65 failed atomic publication retains the previous state and permits retry
+ok 66 invalid clipboard versions truncated records and extra fields are rejected
+ok 67 local Enter and global Enter persist the returned directory as most recent
+ok 68 browser history traverses without duplicates and discards the forward branch
+ok 69 browser history skips missing and inaccessible directories and is bounded
+ok 70 recent directories persist in MRU order with exact bytes and private permissions
+ok 71 recents discard stale paths and retain at most 25 unique directories
+ok 72 concurrent recent-directory updates retain each session without corrupting records
+ok 73 invalid state and symlinked state files fail without replacing unrelated data
+not ok 74 real terminal preserves inherited initial query and colors while reserving operation keys
+# (from function `start_terminal' in file tests/helpers/terminal.bash, line 22,
+#  in test file tests/explorer-terminal.bats, line 12)
+#   `start_terminal '1/3'' failed
+# error connecting to /home/htpc/fzd/.test-work/tmp/bats-run-cDkWB4/test/74/tmux.sock (Operation not permitted)
+not ok 75 real terminal pickers ignore inherited queries and print-query without losing the local query
+# (from function `start_terminal' in file tests/helpers/terminal.bash, line 22,
+#  in test file tests/explorer-terminal.bats, line 29)
+#   `start_terminal '1/2'' failed
+# error connecting to /home/htpc/fzd/.test-work/tmp/bats-run-cDkWB4/test/75/tmux.sock (Operation not permitted)
+not ok 76 real terminal F8 requires explicit confirmation and keeps the application usable
+# (from function `start_terminal' in file tests/helpers/terminal.bash, line 22,
+#  in test file tests/explorer-terminal.bats, line 50)
+#   `start_terminal' failed
+# error connecting to /home/htpc/fzd/.test-work/tmp/bats-run-cDkWB4/test/76/tmux.sock (Operation not permitted)
+not ok 77 real terminal Delete still edits the query and F1 help works at 60 by 16
+# (from function `start_terminal' in file tests/helpers/terminal.bash, line 22,
+#  in test file tests/explorer-terminal.bats, line 72)
+#   `start_terminal' failed
+# error connecting to /home/htpc/fzd/.test-work/tmp/bats-run-cDkWB4/test/77/tmux.sock (Operation not permitted)
+not ok 78 real terminal F2 preserves an unusual name unchanged and Ctrl-R renames and restores highlighting
+# (from function `start_terminal' in file tests/helpers/terminal.bash, line 22,
+#  in test file tests/explorer-terminal.bats, line 92)
+#   `start_terminal' failed
+# error connecting to /home/htpc/fzd/.test-work/tmp/bats-run-cDkWB4/test/78/tmux.sock (Operation not permitted)
+not ok 79 real terminal Ctrl-N and F7 validate cancel and create directories with escaped names
+# (from function `start_terminal' in file tests/helpers/terminal.bash, line 22,
+#  in test file tests/explorer-terminal.bats, line 115)
+#   `start_terminal' failed
+# error connecting to /home/htpc/fzd/.test-work/tmp/bats-run-cDkWB4/test/79/tmux.sock (Operation not permitted)
+not ok 80 real terminal global F1 help restores the active global query
+# (from function `start_terminal' in file tests/helpers/terminal.bash, line 22,
+#  in test file tests/explorer-terminal.bats, line 139)
+#   `start_terminal' failed
+# error connecting to /home/htpc/fzd/.test-work/tmp/bats-run-cDkWB4/test/80/tmux.sock (Operation not permitted)
+not ok 81 real terminal Ctrl-C Ctrl-X Ctrl-V copy cut and paste without aborting
+# (from function `start_terminal' in file tests/helpers/terminal.bash, line 22,
+#  from function `clipboard_terminal_cycle' in file tests/explorer-terminal.bats, line 158,
+#  in test file tests/explorer-terminal.bats, line 189)
+#   `clipboard_terminal_cycle C-c C-x C-v' failed
+# error connecting to /home/htpc/fzd/.test-work/tmp/bats-run-cDkWB4/test/81/tmux.sock (Operation not permitted)
+not ok 82 real terminal Alt-C Alt-X Alt-V provide the same clipboard operations
+# (from function `start_terminal' in file tests/helpers/terminal.bash, line 22,
+#  from function `clipboard_terminal_cycle' in file tests/explorer-terminal.bats, line 158,
+#  in test file tests/explorer-terminal.bats, line 193)
+#   `clipboard_terminal_cycle M-c M-x M-v' failed
+# error connecting to /home/htpc/fzd/.test-work/tmp/bats-run-cDkWB4/test/82/tmux.sock (Operation not permitted)
+not ok 83 real terminal can copy a selected global result and paste into the browsed directory
+# (from function `start_terminal' in file tests/helpers/terminal.bash, line 22,
+#  in test file tests/explorer-terminal.bats, line 199)
+#   `start_terminal' failed
+# error connecting to /home/htpc/fzd/.test-work/tmp/bats-run-cDkWB4/test/83/tmux.sock (Operation not permitted)
+not ok 84 real terminal Alt arrows traverse local and global visits without replacing parent navigation
+# (from function `start_terminal' in file tests/helpers/terminal.bash, line 22,
+#  in test file tests/explorer-terminal.bats, line 221)
+#   `start_terminal' failed
+# error connecting to /home/htpc/fzd/.test-work/tmp/bats-run-cDkWB4/test/84/tmux.sock (Operation not permitted)
+not ok 85 real terminal F1 and recent-directory cancellation restore the filtered view
+# (from function `start_terminal' in file tests/helpers/terminal.bash, line 22,
+#  in test file tests/explorer-terminal.bats, line 258)
+#   `start_terminal' failed
+# error connecting to /home/htpc/fzd/.test-work/tmp/bats-run-cDkWB4/test/85/tmux.sock (Operation not permitted)
+not ok 86 real terminal recent picker navigates and session history includes that visit
+# (from function `start_terminal' in file tests/helpers/terminal.bash, line 22,
+#  in test file tests/explorer-terminal.bats, line 279)
+#   `start_terminal' failed
+# error connecting to /home/htpc/fzd/.test-work/tmp/bats-run-cDkWB4/test/86/tmux.sock (Operation not permitted)
+ok 87 missing Trash backend leaves data untouched without any permanent-delete fallback
+ok 88 Trash passes exact file directory and symlink arguments and never follows the link
+ok 89 trashing a directory clears affected clipboard and prunes recents and browser history
+ok 90 failed Trash operations retain source and clipboard and do not report success
+ok 91 trash-put is used when gio is unavailable
+ok 92 a changed item after confirmation is not trashed
+not ok 93 real gio uses an isolated XDG Trash with recoverable metadata
+# (in test file tests/explorer-trash.bats, line 110)
+#   `[ "$status" -eq 0 ]' failed
+# Last output:
+# bwrap: loopback: Failed to create NETLINK_ROUTE socket: Operation not permitted
+ok 94 sourcing exposes functions without configuration or filesystem side effects
+ok 95 local listing retains newlines hidden names and symlinks without duplicates
+ok 96 local records keep exact path bytes and escape display record separators
+ok 97 navigation preserves directory names with trailing newlines
+ok 98 Left at the filesystem root is a safe no-op under errexit
+ok 99 inaccessible directories are safe no-op transitions
+ok 100 an empty directory still offers the current-directory Enter shortcut
+ok 101 selection decoding retains every trailing newline byte
+ok 102 preview opens the exact filename including a trailing newline
+ok 103 callback shell quoting preserves spaces quotes substitutions and newlines
+ok 104 enumeration restores glob options and does not duplicate hidden entries
+ok 105 global index does not execute command substitutions in filenames
+ok 106 cache sends configured roots and exclusions to fd
+ok 107 cache directory labels contain the directory basename
+ok 108 cache falls back to find when fd is unavailable
+ok 109 find search returns directories and files case insensitively
+ok 110 find honors exclusions with spaces without shell expansion
+ok 111 locate filters results outside configured roots
+ok 112 locate root slash admits descendants
+ok 113 failed locate database falls back to live filesystem search
+ok 114 explicit live mode does not call an available locate backend
+ok 115 query option characters are literal filename data
+ok 116 short queries return no records successfully
+ok 117 no matches is a successful empty search
+ok 118 all search producers preserve unusual path bytes without executing names
+ok 119 find honors depth and result limits
+ok 120 locate applies result cap after scope and exclusion filtering
+ok 121 basename and full-path policies agree across backends
+ok 122 missing results are omitted while live and dangling symlinks remain operable
+ok 123 a failed locate producer cannot leak partial results before fallback
+ok 124 Enhanced installs verified upstream Bash engine and configures both selected shells
+ok 125 ordinary updates preserve opt-in and explicit disable retains shared engines and user rc content
+ok 126 existing custom Bash engine is reused and paths through symlinked Bash rc files are correct
+ok 127 inline configuration requires explicit opt-in and never runs during noninteractive sourcing
+ok 128 inline with deps none requires engines already present and staging forbids shell setup
+ok 129 failed download and wrong checksum roll back FZD without installing downloaded code
+ok 130 existing incomplete engine directories are preserved and never adopted automatically
+ok 131 inline dependency detection includes zsh plugin and native ps package providers
+ok 132 opt-in zsh configuration retains existing strategy order and colors without duplicate completion entries
+ok 133 Enhanced Bash respects active engines and user blesh configuration including faces and opt-outs
+ok 134 plain Simple install uses present recommended tools and only minimal startup entries
+ok 135 Simple installs missing eza through the native package manager without replacing aliases
+ok 136 unavailable recommended packages leave a usable core installation and fallback guidance
+ok 137 default required package installation fails without prompting when sudo is unauthorized
+ok 138 clean Enhanced reuses existing engines and a compatible native font without executing custom code
+ok 139 font detection recognizes Nerd families and verified alternative glyph coverage
+ok 140 WSL Enhanced reports Windows font setup and never attempts Linux font installation
+ok 141 WSL kernel detection works without WSL environment variables
+ok 142 optional native font download failure keeps the core installation verified and cleans private downloads
+ok 143 font checksum mismatch discards download without overwriting fonts or rolling back FZD
+ok 144 font publication uses XDG data user scope and never clobbers a concurrent or existing destination
+ok 145 existing font destinations including symlinks are preserved
+ok 146 custom startup paths and ZDOTDIR preserve aliases hooks and shell preferences
+ok 147 edited shell configuration stays user-owned through update explicit preference changes and uninstall
+ok 148 preexisting user shell files are neither executed nor claimed for removal
+ok 149 v2 managed blocks migrate once retaining inline settings without evaluating them
+ok 150 unsafe installer overrides fail before writes while relative XDG homes use defaults
+ok 151 Enhanced package staging is forbidden and Simple staging never creates home files
+ok 152 shell config symlinks and foreign installation blocks never get overwritten
+ok 153 custom engine paths are quoted safely for both generated shell files and never evaluated during install
+ok 154 changing XDG config locations keeps all owned source entries recoverable on uninstall
+ok 155 optional font tooling package failures preserve a verified core install
+ok 156 font download termination cleans its private archive directory
+ok 157 new XDG configuration directories are private and existing directory modes stay unchanged
+ok 158 failed uninstall rolls back shell files at historic XDG locations outside HOME
+ok 159 installed Explorer modules load from share and uninstall removes only owned helpers
+ok 160 fresh noninteractive install verifies without root and matches the runtime exactly
+ok 161 reinstallation is idempotent and updates retain user configuration and shell contents
+ok 162 installed lifecycle script uninstalls without the checkout and preserves shared files
+ok 163 custom XDG ZDOTDIR prefix and configuration paths are preserved exactly
+ok 164 existing FZD configuration is checked but never executed or rewritten by install or verify
+ok 165 invalid configuration and invalid CLI options fail before any installation writes
+ok 166 missing dependencies and incompatible fzf fail with useful errors before user changes
+ok 167 available dependencies cause no sudo or package-manager calls
+ok 168 shell integration preserves existing lf executable editor settings and third-party themes
+ok 169 symbolic shell rc files keep their links mode and unrelated contents
+ok 170 malformed shell blocks roll back all application and configuration writes
+ok 171 unmanaged files require explicit adoption and keep recoverable originals
+ok 172 modified owned files block updates and are preserved on uninstall
+ok 173 legacy configuration migrates by copying without executing or deleting its source
+ok 174 manual mode installs no shell integration or user configuration
+ok 175 package staging separates distribution files from all user lifecycle state
+ok 176 download failures and checksum mismatch never publish fzf or application files
+ok 177 unverified downloads and relative install paths are rejected before transactions
+ok 178 failed file publication and SIGTERM restore prior shell and application files
+ok 179 SIGKILL leaves an explicit recoverable transaction and blocks concurrent installs
+ok 180 recovery refuses a live installer owner
+ok 181 installed Bash and zsh wrappers transport a real FZD selection ending with newlines
+ok 182 real pinned upstream fzf archive installs verifies and remains owned across updates
+ok 183 installer upgrades an owned runtime from a changed source checkout
+ok 184 uninstall preserves shell edits added after installation and foreign replacement blocks
+ok 185 unterminated shell files survive repeated installation and uninstall byte-for-byte
+ok 186 application destination symlinks and malformed manifests are never followed
+ok 187 canonical prefix paths keep installed lifecycle ownership consistent
+ok 188 recovery clears a stale lock after a completed transaction was archived
+ok 189 rc targets outside HOME also roll back safely through retained dotfile symlinks
+not ok 190 installed Bash and zsh launchers change parent directory through a real fzf terminal
+# (in test file tests/installer.bats, line 465)
+#   `"$REAL_TMUX" -S "$INSTALL_SOCKET" -f /dev/null new-session -d -x 120 -y 32 -s install -c "$HOME" "$command"' failed
+# error connecting to /home/htpc/fzd/.test-work/tmp/bats-run-cDkWB4/test/190/installed-bash.sock (Operation not permitted)
+# Last output:
+# fzd install: Installed /home/htpc/fzd/.test-work/tmp/bats-run-cDkWB4/test/190/home/.local/bin/fzd. Configuration preserved at /home/htpc/fzd/.test-work/tmp/bats-run-cDkWB4/test/190/home/config/fzd/fzd.conf.
+# fzd install: Open a new shell: lf / lf name / lff name (or fzd_cd/fzd_find). Verify/uninstall: bash /home/htpc/fzd/.test-work/tmp/bats-run-cDkWB4/test/190/home/.local/share/fzd/install.sh --verify / --uninstall
+# fzd install: Original files and transaction journal: /home/htpc/fzd/.test-work/tmp/bats-run-cDkWB4/test/190/home/.local/share/fzd/backups
+ok 191 failed uninstall restores deleted files without replacing an unrelated temporary-looking file
+ok 192 real fzf preview pane receives eza Nerd glyphs ANSI colors and exclusions
+ok 193 Omarchy interactive launcher keeps selected directory after real fzf exits
+ok 194 real terminal clipboard and Lazygit actions return to local and global query sessions
+ok 195 editor parses arguments without eval and preserves unusual filenames
+ok 196 unsafe editor expressions are rejected without execution and fallback respects precedence
+ok 197 current Omarchy wrapper uses live selected editor and adds exactly one separator
+ok 198 current light and dark Omarchy palettes apply once and explicit colors win
+ok 199 inherited fzf colors and opt out preserve user palettes without parsing shell code
+ok 200 Wayland and X11 copy exact absolute bytes while headless and provider failures remain usable
+ok 201 Lazygit checks repositories on action and restores interactive terminal through common runner
+ok 202 Chafa uses bounded symbols rendering and discards partial failures
+ok 203 Glow preserves style and falls back on failure or timeout
+ok 204 optional action bindings preserve existing controls and local navigation
+ok 205 current upstream Omarchy Bash startup keeps aliases zoxide hooks and completion preferences
+ok 206 native Chafa renders a real PNG through captured FZD preview
+ok 207 ordinary startup and preview helpers avoid missing Omarchy utility PATH scans
+ok 208 real fd indexes configured roots and labels directories
+ok 209 real fd query preserves newline paths and literal option characters
+ok 210 real plocate private database preserves unusual names and directory labels
+ok 211 real plocate treats wildcard query characters literally
+ok 212 real plocate missing database falls back to the filesystem
+ok 213 real plocate no matches succeeds without a fallback scan
+ok 214 real fd honors relative roots containing dot components
+ok 215 real fd and find agree that depth zero yields no descendants
+ok 216 global Right on a file is a no-op and leaves FZD running
+ok 217 global Right on a disappeared result is a no-op
+ok 218 live overlay Right enters a directory with the existing controls
+ok 219 global Left retains its existing overlay-cancel behavior
+ok 220 local Right on a file does not terminate FZD
+ok 221 Left restores the child directory selection
+ok 222 Enter on the parent row preserves the current-directory shortcut
+ok 223 Esc exits with 130 and no directory output
+ok 224 plocate is mandatory while an uninitialized index yields actionable guidance without indexing
+ok 225 native first plocate installs require authorization for package-managed indexing
+ok 226 required plocate installs through mapped package transactions when indexing is authorized
+ok 227 Enhanced reuses rich preview clipboard and editor tools and never installs Lazygit
+ok 228 Enhanced dependency collection selects display provider and excludes headless clipboard and Lazygit
+ok 229 Omarchy launcher uses upstream helper and interactive shell with idempotent ownership
+ok 230 unmanaged and modified Omarchy desktop entries are preserved even with adopt
+ok 231 launcher skips non Omarchy and unsupported shell and rejects accidental Simple registration
+ok 232 launcher rollback leaves an earlier desktop entry intact after later publication failure
+ok 233 package-owned Omarchy startup files cannot be selected through a user symlink
+ok 234 native desktop parser retains quoted special characters in custom launcher prefixes
+ok 235 Debian payload includes all Explorer modules and opt-in integration
+ok 236 Debian package has no maintainer scripts home files or source lifecycle
+ok 237 Debian dependencies explicitly cover interpreter fzf flock GNU tools and default editor
+ok 238 Debian downloadable filename is GitHub safe while metadata retains Debian prerelease ordering
+ok 239 Stable and future candidate builds automatically use GitHub safe Debian filenames
+ok 240 Debian build is byte reproducible with fixed source epoch
+ok 241 Debian revision supports ordered package upgrades
+ok 242 Build rejects invalid source epoch and package revisions
+ok 243 Immutable release build ignores untracked inputs and validates checksums
+ok 244 Release manifest uses exact GitHub safe asset names and pins matching Arch metadata
+ok 245 Current release installation documentation matches the generated Debian filename
+ok 246 Package files have only standard root ownership and data permissions
+ok 247 tree applies the list directory and file colors to its inherited palette
+ok 248 tree honors TREE_COLORS precedence and preserves unrelated entries
+ok 249 tree retains its palette without valid overrides and supports empty palettes
+ok 250 real tree renders configured directory and regular file colors
+ok 251 eza preserves the inherited palette without explicit overrides even with vivid installed
+ok 252 eza replaces only the requested directory color and retains separators
+ok 253 eza replaces adjacent directory and file colors including palette endpoints
+ok 254 eza appends missing override entries and handles an empty inherited palette
+ok 255 eza retains escaped colons backslashes and empty palette entries
+ok 256 invalid eza color overrides retain the inherited entries
+ok 257 preview preserves text MIME policy renderer options and exact filename
+ok 258 binary MIME and failed MIME detection retain binary previews
+ok 259 directory preview retains tree colors depth exclusions and path bytes
+ok 260 eza icons are explicitly forced or disabled in captured preview commands
+ok 261 eza retains its own palette while FZD explicit colors override only requested entries
+ok 262 real eza emits Nerd glyph bytes in captured FZD previews and honors icon disable
+ok 263 invalid icon settings fail with guidance before preview execution
+ok 264 unwritable runtime storage fails clearly before starting fzf
+ok 265 failed mktemp never launches a session with an empty control pathname
+ok 266 normal exit and Esc remove all control files
+ok 267 termination cleans a locate staging file and reports signal status
+not ok 268 native Bash and zsh Tab complete learned names and preserve escaped local paths
+# (from function `start_completion_shell' in file tests/shell-completion-terminal.bats, line 82,
+#  in test file tests/shell-completion-terminal.bats, line 97)
+#   `start_completion_shell "$shell"' failed
+# error connecting to /home/htpc/fzd/.test-work/tmp/bats-run-cDkWB4/test/268/tmux.sock (Operation not permitted)
+not ok 269 ble.sh displays a learned directory as ghost text and Right accepts it
+# (from function `start_completion_shell' in file tests/shell-completion-terminal.bats, line 82,
+#  from function `check_inline_suggestion' in file tests/shell-completion-terminal.bats, line 115,
+#  in test file tests/shell-completion-terminal.bats, line 134)
+#   `check_inline_suggestion bash blesh' failed
+# error connecting to /home/htpc/fzd/.test-work/tmp/bats-run-cDkWB4/test/269/tmux.sock (Operation not permitted)
+not ok 270 zsh-autosuggestions completion strategy displays ghost text and Right accepts it
+# (from function `start_completion_shell' in file tests/shell-completion-terminal.bats, line 82,
+#  from function `check_inline_suggestion' in file tests/shell-completion-terminal.bats, line 115,
+#  in test file tests/shell-completion-terminal.bats, line 139)
+#   `check_inline_suggestion zsh autosuggestions' failed
+# error connecting to /home/htpc/fzd/.test-work/tmp/bats-run-cDkWB4/test/270/tmux.sock (Operation not permitted)
+not ok 271 Enter on an uncompleted partial query jumps in both real interactive shells
+# (from function `start_completion_shell' in file tests/shell-completion-terminal.bats, line 82,
+#  in test file tests/shell-completion-terminal.bats, line 145)
+#   `start_completion_shell "$shell"' failed
+# error connecting to /home/htpc/fzd/.test-work/tmp/bats-run-cDkWB4/test/271/tmux.sock (Operation not permitted)
+not ok 272 ordinary interactive cd is learned with only one upstream hook after repeated sourcing
+# (from function `start_completion_shell' in file tests/shell-completion-terminal.bats, line 82,
+#  in test file tests/shell-completion-terminal.bats, line 160)
+#   `start_completion_shell "$shell"' failed
+# error connecting to /home/htpc/fzd/.test-work/tmp/bats-run-cDkWB4/test/272/tmux.sock (Operation not permitted)
+not ok 273 upstream hook none stays disabled while explicit interactive FZD jumps still learn
+# (from function `start_completion_shell' in file tests/shell-completion-terminal.bats, line 82,
+#  in test file tests/shell-completion-terminal.bats, line 186)
+#   `start_completion_shell "$shell"' failed
+# error connecting to /home/htpc/fzd/.test-work/tmp/bats-run-cDkWB4/test/273/tmux.sock (Operation not permitted)
+not ok 274 installer-enabled Bash inline suggestions display gray ghost text with Right acceptance
+# (from function `start_completion_shell' in file tests/shell-completion-terminal.bats, line 82,
+#  from function `check_inline_suggestion' in file tests/shell-completion-terminal.bats, line 115,
+#  in test file tests/shell-completion-terminal.bats, line 221)
+#   `check_inline_suggestion bash installed' failed
+# error connecting to /home/htpc/fzd/.test-work/tmp/bats-run-cDkWB4/test/274/tmux.sock (Operation not permitted)
+# Last output:
+# fzd install: plocate index is missing, empty or unreadable; global search will retain its filesystem fallback.
+# fzd install: Review /etc/updatedb.conf and your distribution indexing schedule. If appropriate, initialize it yourself with sudo updatedb. FZD does not run updatedb or change exclusions/timers.
+# fzd install: Installed /home/htpc/fzd/.test-work/tmp/bats-run-cDkWB4/test/274/home/.local/bin/fzd. Configuration preserved at /home/htpc/fzd/.test-work/tmp/bats-run-cDkWB4/test/274/fzd.conf.
+# fzd install: Open a new shell: lf / lf name / lff name (or fzd_cd/fzd_find). Verify/uninstall: bash /home/htpc/fzd/.test-work/tmp/bats-run-cDkWB4/test/274/home/.local/share/fzd/install.sh --verify / --uninstall
+# fzd install: Original files and transaction journal: /home/htpc/fzd/.test-work/tmp/bats-run-cDkWB4/test/274/home/.local/share/fzd/backups
+not ok 275 installer-enabled zsh inline suggestions work on the first prompt without manual compinit or plugin setup
+# (from function `start_completion_shell' in file tests/shell-completion-terminal.bats, line 82,
+#  from function `check_inline_suggestion' in file tests/shell-completion-terminal.bats, line 115,
+#  in test file tests/shell-completion-terminal.bats, line 226)
+#   `check_inline_suggestion zsh installed' failed
+# error connecting to /home/htpc/fzd/.test-work/tmp/bats-run-cDkWB4/test/275/tmux.sock (Operation not permitted)
+# Last output:
+# fzd install: plocate index is missing, empty or unreadable; global search will retain its filesystem fallback.
+# fzd install: Review /etc/updatedb.conf and your distribution indexing schedule. If appropriate, initialize it yourself with sudo updatedb. FZD does not run updatedb or change exclusions/timers.
+# fzd install: Installed /home/htpc/fzd/.test-work/tmp/bats-run-cDkWB4/test/275/home/.local/bin/fzd. Configuration preserved at /home/htpc/fzd/.test-work/tmp/bats-run-cDkWB4/test/275/fzd.conf.
+# fzd install: Open a new shell: lf / lf name / lff name (or fzd_cd/fzd_find). Verify/uninstall: bash /home/htpc/fzd/.test-work/tmp/bats-run-cDkWB4/test/275/home/.local/share/fzd/install.sh --verify / --uninstall
+# fzd install: Original files and transaction journal: /home/htpc/fzd/.test-work/tmp/bats-run-cDkWB4/test/275/home/.local/share/fzd/backups
+not ok 276 fresh zsh initializes compinit once and preserves a framework initialized later in startup
+# (in test file tests/shell-completion-terminal.bats, line 240)
+#   `tmux -S "$SOCKET" -f /dev/null new-session -d -x 120 -y 32 -s fzd -c "$FIXTURE_ROOT" 'exec zsh -d -i'' failed
+# error connecting to /home/htpc/fzd/.test-work/tmp/bats-run-cDkWB4/test/276/tmux.sock (Operation not permitted)
+ok 277 explicit completion opt-out preserves a zsh setup without compinit
+not ok 278 installed inline engines preserve real FZD browsing and return to the parent shell
+# (from function `start_completion_shell' in file tests/shell-completion-terminal.bats, line 82,
+#  in test file tests/shell-completion-terminal.bats, line 257)
+#   `start_completion_shell "$shell" installed' failed
+# error connecting to /home/htpc/fzd/.test-work/tmp/bats-run-cDkWB4/test/278/tmux.sock (Operation not permitted)
+# Last output:
+# fzd install: plocate index is missing, empty or unreadable; global search will retain its filesystem fallback.
+# fzd install: Review /etc/updatedb.conf and your distribution indexing schedule. If appropriate, initialize it yourself with sudo updatedb. FZD does not run updatedb or change exclusions/timers.
+# fzd install: Installed /home/htpc/fzd/.test-work/tmp/bats-run-cDkWB4/test/278/home/.local/bin/fzd. Configuration preserved at /home/htpc/fzd/.test-work/tmp/bats-run-cDkWB4/test/278/fzd.conf.
+# fzd install: Open a new shell: lf / lf name / lff name (or fzd_cd/fzd_find). Verify/uninstall: bash /home/htpc/fzd/.test-work/tmp/bats-run-cDkWB4/test/278/home/.local/share/fzd/install.sh --verify / --uninstall
+# fzd install: Original files and transaction journal: /home/htpc/fzd/.test-work/tmp/bats-run-cDkWB4/test/278/home/.local/share/fzd/backups
+ok 279 existing Bash integration changes directory with quotes Unicode and embedded newline
+ok 280 existing zsh integration changes directory with quotes Unicode and embedded newline
+ok 281 existing Bash integration treats Esc as a cancelled navigation
+ok 282 existing zsh integration treats Esc as a cancelled navigation
+ok 283 Bash and zsh wrappers preserve directories ending with multiple newlines
+ok 284 Bash and zsh wrappers preserve every legal non-NUL filename byte
+ok 285 shell integration leaves existing lf functions aliases and executables intact
+ok 286 shell integration preserves editor colors and never sources Bash user configuration in zsh
+ok 287 shell wrappers propagate failures safely under errexit and treat empty output as success
+ok 288 shell wrappers forward existing unexported editor and colors without changing the parent environment
+not ok 289 real terminal Right Left and Enter restore the child selection
+# (from function `start_terminal' in file tests/helpers/terminal.bash, line 22,
+#  in test file tests/terminal.bats, line 10)
+#   `start_terminal' failed
+# error connecting to /home/htpc/fzd/.test-work/tmp/bats-run-cDkWB4/test/289/tmux.sock (Operation not permitted)
+not ok 290 real terminal Ctrl-F cache search Right and Enter keep their controls
+# (from function `start_terminal' in file tests/helpers/terminal.bash, line 22,
+#  from function `check_global_navigation' in file tests/terminal.bats, line 37,
+#  in test file tests/terminal.bats, line 54)
+#   `check_global_navigation' failed
+# error connecting to /home/htpc/fzd/.test-work/tmp/bats-run-cDkWB4/test/290/tmux.sock (Operation not permitted)
+not ok 291 real terminal Ctrl-F live search Right and Enter keep their controls
+# (from function `start_terminal' in file tests/helpers/terminal.bash, line 22,
+#  from function `check_global_navigation' in file tests/terminal.bats, line 37,
+#  in test file tests/terminal.bats, line 59)
+#   `check_global_navigation' failed
+# error connecting to /home/htpc/fzd/.test-work/tmp/bats-run-cDkWB4/test/291/tmux.sock (Operation not permitted)
+not ok 292 real terminal Ctrl-F searches a private locate database
+# (from function `start_terminal' in file tests/helpers/terminal.bash, line 22,
+#  from function `check_global_navigation' in file tests/terminal.bats, line 37,
+#  in test file tests/terminal.bats, line 63)
+#   `check_global_navigation locate' failed
+# error connecting to /home/htpc/fzd/.test-work/tmp/bats-run-cDkWB4/test/292/tmux.sock (Operation not permitted)
+not ok 293 real terminal auto search survives a broken locate database
+# (from function `start_terminal' in file tests/helpers/terminal.bash, line 22,
+#  from function `check_global_navigation' in file tests/terminal.bats, line 37,
+#  in test file tests/terminal.bats, line 67)
+#   `check_global_navigation broken-locate' failed
+# error connecting to /home/htpc/fzd/.test-work/tmp/bats-run-cDkWB4/test/293/tmux.sock (Operation not permitted)
+not ok 294 real terminal Enter opens exact unusual filename then Esc returns 130
+# (from function `start_terminal' in file tests/helpers/terminal.bash, line 22,
+#  in test file tests/terminal.bats, line 84)
+#   `start_terminal' failed
+# error connecting to /home/htpc/fzd/.test-work/tmp/bats-run-cDkWB4/test/294/tmux.sock (Operation not permitted)
+not ok 295 real terminal remains usable after resizing to 60 columns and 16 rows
+# (from function `start_terminal' in file tests/helpers/terminal.bash, line 22,
+#  in test file tests/terminal.bats, line 103)
+#   `start_terminal' failed
+# error connecting to /home/htpc/fzd/.test-work/tmp/bats-run-cDkWB4/test/295/tmux.sock (Operation not permitted)
+not ok 296 real terminal Ctrl-C refuses the navigation row and Esc leaves no control files
+# (from function `start_terminal' in file tests/helpers/terminal.bash, line 22,
+#  in test file tests/terminal.bats, line 112)
+#   `start_terminal' failed
+# error connecting to /home/htpc/fzd/.test-work/tmp/bats-run-cDkWB4/test/296/tmux.sock (Operation not permitted)
+not ok 297 real fzf completes a delayed action write before navigation resumes
+# (from function `start_terminal' in file tests/helpers/terminal.bash, line 22,
+#  in test file tests/terminal.bats, line 134)
+#   `start_terminal' failed
+# error connecting to /home/htpc/fzd/.test-work/tmp/bats-run-cDkWB4/test/297/tmux.sock (Operation not permitted)
+not ok 298 real terminal works without an alternate-screen restore capability
+# (from function `start_terminal' in file tests/helpers/terminal.bash, line 22,
+#  in test file tests/terminal.bats, line 150)
+#   `start_terminal' failed
+# error connecting to /home/htpc/fzd/.test-work/tmp/bats-run-cDkWB4/test/298/tmux.sock (Operation not permitted)
+not ok 299 seeded global discovery produces results without typing on live cache and locate
+# (from function `start_terminal' in file tests/helpers/terminal.bash, line 22,
+#  in test file tests/terminal.bats, line 164)
+#   `start_terminal 'global:/ > needle-seeded'' failed
+# error connecting to /home/htpc/fzd/.test-work/tmp/bats-run-cDkWB4/test/299/tmux.sock (Operation not permitted)
+not ok 300 real fzf directory preview captures eza glyphs even though eza stdout is a pipe
+# (from function `start_terminal' in file tests/helpers/terminal.bash, line 22,
+#  in test file tests/terminal.bats, line 191)
+#   `start_terminal' failed
+# error connecting to /home/htpc/fzd/.test-work/tmp/bats-run-cDkWB4/test/300/tmux.sock (Operation not permitted)
+ok 301 absolute XDG homes keep configuration state cache and temporary storage separate
+ok 302 relative XDG homes use freedesktop defaults without accessing relative paths
+ok 303 XDG traversal and relative FZD overrides fail before touching their targets
+ok 304 missing relative unsafe and non-directory runtime paths fall back to cache
+ok 305 runtime permissions are checked without repairing or changing user directories
+ok 306 runtime symlinks fall back while explicit temporary symlinks are rejected
+ok 307 temporary overrides create isolated private sessions retaining the user's parent mode
+ok 308 unsafe shared temporary override directories and dangling symlinks are rejected
+ok 309 success failure and signal cleanup remove session directories with their temporary files
+ok 310 unsafe runtime child paths fall back instead of following symlinks or shared directories
+ok 311 lf without arguments explores and lff always forwards one seeded global query
+ok 312 partial and multiple terms jump to upstream zoxide's highest-ranked directory
+ok 313 unmatched and option-like keywords fall back to discovery without executing shell data
+ok 314 direct paths symlinks spaces trailing newlines and dash navigation preserve shell behavior
+ok 315 upstream-excluded newline names fall back and ordinary direct jumps learn immediately
+ok 316 existing lff and fallback names are preserved together with their completion handlers
+ok 317 missing zoxide stops shell navigation and runtime with actionable diagnostics
+ok 318 completion offers ranked leaf names multiple terms and quoted local directories
+ok 319 completion lists accessible learned directories only and never launches fzf
+ok 320 Bash upstream initialization preserves scalar and array prompt commands and z/zi
+ok 321 existing upstream zoxide configuration wins when sourced before or after FZD
+ok 322 zsh upstream initialization retains chpwd hooks and key bindings and learns ordinary cd
+ok 323 FZD traversal and selected destinations are learned even when the explorer is cancelled
+ok 324 seeded discovery binds initial reload for live and locate and supplies cache query
+ok 325 zoxide honors user database exclusions and symlink preferences without a second database

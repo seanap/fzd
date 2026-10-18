@@ -798,3 +798,7 @@ and [Fedora 44 spec](https://src.fedoraproject.org/rpms/plocate/blob/f44/f/ploca
 The authorization guard covers all supported native package managers, including
 schedules enabled during package setup. An existing plocate needs no authorization
 flag and FZD leaves its indexing policy intact.
+
+See the [Omarchy implementation and validation report](validation/omarchy/README.md)
+for the complete test outcomes, measured performance, indexing authorization
+exception, and unexecuted hosted/native platform checks.

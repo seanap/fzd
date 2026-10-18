@@ -170,3 +170,8 @@ timings are written incrementally. Measurements describe observed response time,
 including query work and scheduling, not physical rendering or selected fonts.
 [Installation experience results](results/simple-enhanced/README.md) retain the
 full timing arrays, versions and limitations.
+
+For the Omarchy integration workload, set `FZD_BENCH_OMARCHY=1` when invoking the
+same runner. It stages the current upstream theme utility and Tokyo Night palette
+in each private home. The [Omarchy results](results/omarchy/README.md) retain normal
+and themed trials, exact provenance, and WSL2 limitations.

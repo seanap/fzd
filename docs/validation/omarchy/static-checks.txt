@@ -1,0 +1,5 @@
+bash packaging/check.sh: exit 0 (Bash/zsh syntax, ShellCheck, shfmt, git diff --check)
+actionlint: exit 0
+Omarchy fixture SHA256 verification: exit 0
+Two immutable-commit builds: byte-identical source archive, Debian package, PKGBUILD and provenance; manifest verified.
+Lintian: exit 0; existing initial-upload-closes-no-bugs warning (no errors).
