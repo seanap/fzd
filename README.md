@@ -15,12 +15,19 @@ and [plocate](https://plocate.sesse.net/).
 Browse with previews, search across your filesystem, and return to your shell
 right where you need to be.
 
+**New in [FZD 2.1](https://github.com/seanap/fzd/releases/tag/v2.1.0):**
+Simple and Enhanced installation, Omarchy theme and editor integration,
+image and Markdown previews, clipboard actions, and Lazygit support.
+See the [release notes](docs/releases/v2.1.0.md) for upgrade guidance.
+
 <p align="center">
   <img src="share/demo/fzd_demo.gif" alt="Animated demonstration of FZD terminal navigation">
   <br>
 </p>
 
 ## Explore. Remember. Find.
+
+<img width="1440" height="535" alt="FZD's three commands: explore, remember and find" src="https://github.com/user-attachments/assets/a311fe78-90fa-44f2-966c-f1f8dc2ced20" />
 
 ```bash
 lf                 # Explore from here
@@ -46,6 +53,8 @@ I built FZD to find my bearings without memorizing paths or repeatedly typing
 `cd` and `ls`. Browse the directory tree, edit a config, and find files across the
 system. Once you've found a useful place, zoxide helps you get there again.
 
+<img width="1440" height="611" alt="FZD file and directory previews" src="https://github.com/user-attachments/assets/a3798f0a-5ddb-487a-b03b-fdc0654f1bf0" />
+
 ## Install
 
 Run as your normal user on Omarchy, ordinary Arch, Ubuntu/Debian, Fedora, or WSL:
@@ -56,11 +65,14 @@ cd fzd
 bash install.sh --enhanced
 ```
 
+<img width="1440" height="620" alt="FZD Simple and Enhanced installation options" src="https://github.com/user-attachments/assets/11e2182f-773e-4d48-b794-f2dcc043a6f3" />
+
 `--enhanced` adds optional image/Markdown preview tools, clipboard support,
 inline autosuggestions, and Nerd Font conveniences. Plain `bash install.sh`
 provides the full standard experience with plocate, recommended preview tools,
 shell integration, and native **Tab** completion. Both run the same application;
 installed capabilities work automatically in either mode.
+Use `--shell bash` / `--shell zsh` to configure one shell.
 
 Open a **new terminal**, then run `lf`. Both modes reuse existing tools and
 preserve your shell customizations. FZD lives under `~/.local`, with its shell
