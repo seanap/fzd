@@ -17,11 +17,16 @@ FZD_GLOBAL_XEXCLUDES="mnt,proc,sys,dev,run,proc/*,sys/*,dev/*,run/*,snap,lost+fo
 FZD_EXCLUDES=".git,node_modules,.cache,.venv,.tox,dist,build,__pycache__,.DS_Store"
 
 # Preview
+FZD_ICONS=1                       # 0 disables eza icons for fonts without Nerd glyphs
 FZD_PREVIEW_DEPTH=2
 FZD_PREVIEW_TIMEOUT=2
 FZD_PREVIEW_MAX_LINES=200
 
 # Optional label colors (hex). Leave commented to inherit your fzf/system theme.
-FZD_COLOR_DIR="#f9e2af"
-FZD_COLOR_FILE="#cdd6f4"
+# FZD_COLOR_DIR="#f9e2af"
+# FZD_COLOR_FILE="#cdd6f4"
 
+
+# Automatic Omarchy session palette: auto (default) or 0 to opt out.
+# FZD_OMARCHY_THEME=auto
+# Optional explicit fzf role overrides: FZD_COLOR_BORDER / HIGHLIGHT / FG / BG.

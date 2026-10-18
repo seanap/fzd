@@ -4,7 +4,7 @@ set -euo pipefail
 repo=$(cd -- "${BASH_SOURCE[0]%/*}/.." && pwd)
 cd "$repo"
 scripts=(lib/*.bash tests/run.sh tests/helpers/*.bash install.sh installer/*.bash
-  shell/integration.sh shell/inline.sh tests/helpers/installer-mv-stub tests/helpers/fzf-stub
+  shell/integration.sh shell/inline.sh shell/launcher.bash tests/helpers/installer-mv-stub tests/helpers/fzf-stub
   tests/helpers/backend-stub tests/helpers/pty-session benchmarks/*.sh dev/*.sh packaging/*.sh)
 bash -n fzd.sh
 zsh -n shell/integration.zsh

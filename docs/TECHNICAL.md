@@ -68,10 +68,12 @@ turn off automatic initialization while retaining an existing completion setup.
 **Inline gray suggestions with Right-arrow acceptance:** opt in explicitly:
 
 ```bash
-bash install.sh --inline-suggestions
+bash install.sh --enhanced
 ```
 
-This implies `--deps recommended` unless `--deps` is provided explicitly.
+Both installation modes default to `--deps recommended`; an explicit `--deps`
+choice takes precedence. The advanced `--inline-suggestions` flag enables engines
+without font setup, and remains supported for existing automation.
 The default `--shell both` configures both shells; add `--shell bash` or
 `--shell zsh` to configure one. Requirements for the selected engines are
 installed through apt/pacman/dnf. Zsh uses the distribution's `zsh` and
@@ -87,12 +89,14 @@ Existing readable engines in standard system/user locations are reused.
 `FZD_BLESH_PATH=/path/to/ble.sh` and
 `FZD_ZSH_AUTOSUGGESTIONS_PATH=/path/to/zsh-autosuggestions.zsh` select custom
 installations. Export these variables when running the installer; the chosen
-paths are recorded safely in its marked shell block. Already loaded engines are
-not loaded again. New Bash engine loading uses gray ghost text; custom colors
-of an already loaded engine remain intact.
+paths are recorded safely in its dedicated XDG shell configuration. Already loaded engines are
+not loaded again. Bash setup uses gray ghost text only when no existing engine configuration is
+present. Already loaded engines and explicit `.blerc`/XDG blesh configuration
+retain their settings, faces and suggestion opt-outs.
 
-The opt-in enables ble.sh automatic completion and removes only the options that
-disable/suppress completion-derived suggestions. It appends `completion` to
+For an unconfigured Bash engine, the opt-in enables automatic completion and
+removes the options that suppress completion-derived suggestions. Existing
+engine configurations keep their preferences. It appends `completion` to
 zsh-autosuggestions' strategies, preserving the order of the user's existing
 strategies and highlight style. Engines provide their normal Right-arrow
 acceptance. These are shell-wide settings during the session; FZD does not edit
@@ -139,21 +143,48 @@ Prepare fixtures with `bash dev/prepare-shell-compat.sh`; see
 For a source installation with optional inline suggestions, use the
 [source-checkout command in the README](../README.md#install).
 
-**Current release: `v2.0.0`.** Get its packages, source archive and checksums from
-[GitHub Releases](https://github.com/seanap/fzd/releases/tag/v2.0.0). FZD is not
+The current checkout provides two choices:
+
+| Mode | Command | Behavior |
+| --- | --- | --- |
+| Simple (default) | `bash install.sh` | Required tools plus recommended eza, fd, bat, tree and file; shell integration and native Tab completion |
+| Enhanced (opt-in) | `bash install.sh --enhanced` | Simple plus Chafa, Glow, a display clipboard provider, compatible inline engines and optional user font setup |
+
+Simple creates no fonts, terminal appearance changes, shell-wide suggestion engine,
+or locate index. On updates it preserves an existing Enhanced inline preference.
+Only `--no-inline-suggestions` explicitly disables FZD's managed engine setup.
+Enhanced respects inline preferences set earlier in shell startup; an explicit
+`FZD_INLINE_SUGGESTIONS=0` there continues to win. User-edited integration files
+are preserved even with explicit flags, with guidance to apply changes manually.
+Both modes require plocate and reuse an existing installation. Neither mode runs
+updatedb or changes exclusions/timers. Some distro packages index during setup;
+see [the explicit authorization requirement](#plocate-readiness-and-package-indexing).
+
+Missing recommended packages are attempted through the native package manager.
+If a repository lacks eza (or another recommendation), core installation succeeds
+with fallback guidance; no external apt repository, binary replacement, or
+third-party configuration is introduced. `--deps required` omits recommendations;
+`--deps none` forbids all package transactions and downloads except an explicitly
+requested, checksum-verified fzf bootstrap. Enhanced with `--deps none` requires
+existing engines; optional fonts can be downloaded if font tools already exist.
+The legacy `--inline-suggestions`, `--noninteractive`, `--no-updatedb` and all
+lifecycle, prefix, shell, staging and verified-fzf flags remain supported.
+
+**Release: `v2.1.0`.** Get its packages, source archive and checksums from
+[GitHub Releases](https://github.com/seanap/fzd/releases/tag/v2.1.0). FZD is not
 available in the official Ubuntu or Debian repositories.
 
 Tested on Linux x86_64: Ubuntu 24.04, Debian 13 and current Arch Linux. Fedora 44
 has staged-runtime validation, not an RPM package. ARM64 is not yet validated.
 
-For Ubuntu/Debian, download `fzd-2.0.0-debian-all.deb`, `SHA256SUMS` and `SOURCE`
+For Ubuntu/Debian, download `fzd-2.1.0-debian-all.deb`, `SHA256SUMS` and `SOURCE`
 into a clean directory. Verify the checksum and source revision, then install
 with APT so dependencies are resolved:
 
 ```bash
 sha256sum --ignore-missing -c SHA256SUMS
 cat SOURCE
-sudo apt install ./fzd-2.0.0-debian-all.deb
+sudo apt install ./fzd-2.1.0-debian-all.deb
 ```
 
 For Arch, download `PKGBUILD` from the same release into a clean directory and
@@ -185,21 +216,24 @@ supported. The source installer is separate from package installation; it owns
 only its user-local files. Other Linux systems can use the manual installation
 below. See [Packaging](packaging.md) for build and validation details.
 
-Download the custom `fzd-2.0.0.tar.gz`, `SHA256SUMS` and `SOURCE` from the
+Download the custom `fzd-2.1.0.tar.gz`, `SHA256SUMS` and `SOURCE` from the
 same release. GitHub's automatically generated source links are different archives.
 Extract the custom archive and install as your normal user:
 
 ```bash
 sha256sum --ignore-missing -c SHA256SUMS
 cat SOURCE
-tar -xzf fzd-2.0.0.tar.gz
-cd fzd-2.0.0
-bash install.sh --deps recommended
+tar -xzf fzd-2.1.0.tar.gz
+cd fzd-2.1.0
+bash install.sh
 ```
 
-The installer prints the missing packages before installing them. It requests
-sudo only for those packages, then installs FZD under `~/.local` and adds a small,
-marked block to your Bash/zsh startup files. Open a **new terminal** and run:
+The installer prints missing packages before installing them. Package operations
+use root or cached sudo authorization (`sudo -v` before installation); ordinary
+installs never prompt. Package transactions do not read installer input; Debian
+keeps existing modified conffiles. It installs FZD under `~/.local`, creates user-editable
+XDG shell configuration, and adds a three-line marked source entry to each
+selected shell startup file. Open a **new terminal** and run:
 
 ```bash
 lf
@@ -279,20 +313,26 @@ filesystem index or background process. Uninstallation preserves this state.
 
 | Level | Tools |
 | --- | --- |
-| Required | Bash 4.4+, fzf >= 0.44.0 with the tested bindings, zoxide >= 0.9.0, GNU coreutils, findutils, flock (util-linux), standard Linux text utilities, and an editor |
-| Recommended | fd/fdfind, bat/batcat, file, tree |
-| Optional | gio or trash-put for Trash, plocate/locate with an existing index, eza and a compatible icon font, hexdump, tput |
+| Required | Bash 4.4+, fzf >= 0.44.0 with the tested bindings, zoxide >= 0.9.0, plocate, GNU coreutils, findutils, flock (util-linux), standard Linux text utilities, and an editor |
+| Recommended | eza, fd/fdfind, bat/batcat, file, tree |
+| Optional | Chafa, Glow, display clipboard provider, separately installed Lazygit, gio or trash-put for Trash, a compatible icon font, hexdump, tput |
 | Optional download | curl, CA certificates, tar, gzip |
 
-`--deps none` (the default) checks prerequisites without package transactions.
-`--deps required` installs only missing required tools. `--deps recommended`
+`--deps none` checks required prerequisites without package transactions.
+`--deps required` installs only missing required tools. `--deps recommended` (the default in both modes)
 also installs the preview and search tools above. Ubuntu/Debian use packages
 `fd-find` and `bat`, whose executables may be `fdfind` and `batcat`.
 
-Set `EDITOR` or `VISUAL` to a **single executable name or path** to use your editor.
-Arguments inside these variables are not supported. If the selected executable
-is unavailable, FZD falls back to micro; the installer ensures a usable fallback
-without changing your shell's editor variables.
+`EDITOR` takes precedence over `VISUAL`; when both are empty the fallback is
+micro. Conventional arguments, single/double quotes and escaped whitespace are
+supported, for example `EDITOR="omarchy-launch-editor --inline"` or
+`EDITOR='nvim -f'`. Expansions, pipelines, redirects and command substitution are
+rejected; FZD never evaluates an editor command as shell code. Use a wrapper
+executable for more complex commands. An unavailable or invalid command falls
+back to micro without rewriting editor preferences. File paths are separate
+arguments, including spaces, quotes and newlines. Standard editors get a `--`
+separator; Omarchy's wrapper supplies its own. The selected editor is resolved
+when opening a file, so Omarchy editor changes need no reinstall.
 
 Ubuntu 24.04's fzf 0.44.1 works, including child highlighting; an upgrade is not
 required. Installation checks both the version and required action bindings.
@@ -318,6 +358,105 @@ implicitly, and an existing unmanaged `~/.local/bin/fzf` requires `--adopt`.
 A different fzf release can have different upstream styling defaults (for
 example, its selection marker). FZD continues to inherit your configured fzf
 styling; compatible existing installations are kept.
+
+## Enhanced fonts and terminal selection
+
+Font setup is optional and runs after the core transaction commits. Failed
+downloads, unsupported systems, missing font tools and cache refresh failures do
+not undo FZD. Simple never probes for or installs fonts.
+
+On native Linux, Enhanced queries fontconfig for a font covering representative
+eza directory/file glyphs (`f115`, `f15b`, `e5ff`, and the Nerd Fonts 3 material glyph `f024b`). This recognizes JetBrainsMono,
+Cascadia/Caskaydia, FiraCode, Hack, Meslo and Symbols Only Nerd Fonts, as well as
+other fonts with verified coverage. Family names alone are not proof of coverage.
+Detection means the font is available to fontconfig; it cannot prove that every
+eza icon is covered or that the terminal selected that font.
+
+When coverage is missing, setup uses the official
+[Nerd Fonts v3.4.0 release](https://github.com/ryanoasis/nerd-fonts/releases/tag/v3.4.0):
+`JetBrainsMono.tar.xz`, SHA256
+`ef552a3e638f25125c6ad4c51176a6adcdce295ab1d2ffacf0db060caf8c1582`
+from its [upstream checksum list](https://github.com/ryanoasis/nerd-fonts/releases/download/v3.4.0/SHA-256.txt).
+Only `JetBrainsMonoNerdFontMono-Regular.ttf` is extracted into a private directory,
+validated with `fc-scan`, and published without clobbering under
+`${XDG_DATA_HOME:-$HOME/.local/share}/fonts/fzd-nerd-fonts-3.4.0/`.
+Fontconfig's cache is refreshed. Existing destinations, including incomplete
+installations and symlinks, are preserved for manual inspection.
+Required download/font tools can be installed from the distribution in Enhanced;
+no fontconfig override or terminal configuration file is edited.
+
+Select **JetBrainsMono Nerd Font Mono**, or your preferred compatible face, in
+your terminal's font settings. Try `printf '    \n'`: if you see squares,
+select another face or set `FZD_ICONS=0`. A terminal's selected font cannot be
+identified reliably across emulators. FZD never changes the system default font.
+
+On **WSL**, Enhanced detects WSL environment variables or the kernel identity and
+skips Linux font installation. Download a font from the
+[official font downloads](https://www.nerdfonts.com/font-downloads), extract and
+install it **on Windows**, then choose it in Windows Terminal → Settings → your
+profile → [Appearance → Font face](https://learn.microsoft.com/en-us/windows/terminal/customize-settings/profile-appearance#font-face). Linux font availability does not configure the
+Windows host terminal. Other Windows terminal applications need their own font
+selector; FZD does not modify Windows settings.
+
+## Dedicated shell configuration and migration
+
+The source installer creates `${XDG_CONFIG_HOME:-$HOME/.config}/fzd/shell.bash`
+and/or `shell.zsh`, then adds only a guarded source statement between its existing
+ownership markers in `.bashrc` or `${ZDOTDIR:-$HOME}/.zshrc`. The dedicated file
+contains FZD's executable, configuration path, PATH entry, inline preferences and
+source for the installed integration. You can edit it; updates and uninstall
+preserve changed files. An unmodified generated file is updated transactionally
+and removed on uninstall. Preexisting user files are never claimed for removal.
+Use `--bashrc FILE` / `--zshrc FILE` (or exported `FZD_BASH_RC` / `FZD_ZSH_RC`)
+for alternative startup locations. All selected paths must be absolute without
+`..`; exported `ZDOTDIR` continues to work. Startup symlinks retain their links,
+and regular targets retain permissions, contents and backups.
+
+The v2.0 marked block migrates in place, preserving recorded inline settings
+without sourcing the old file. Repeated installation adds no duplicate block.
+Existing shell configurations are parsed as text, never executed by installation
+or verification. Syntax checks use `bash -n` or `zsh -f -n` for the relevant
+shell; zsh checks are skipped with guidance when zsh is unavailable. Keep your XDG and
+prefix environment consistent during updates; old manifest paths remain tracked
+for uninstall if the XDG location changes. Foreign installation blocks require
+removal with their original installer before another prefix takes ownership.
+Debian/Arch packages stage only distribution files and never run this user setup.
+
+## XDG storage and temporary paths
+
+FZD follows the [XDG Base Directory specification](https://specifications.freedesktop.org/basedir/latest/).
+Unset/empty XDG homes use the defaults below. Relative XDG home values are ignored
+with installer guidance; paths with `..` components are rejected. Explicit FZD
+path overrides, installation prefixes, startup paths and `ZDOTDIR` must be
+absolute without `..`. Prefixes also reject `:` because they enter PATH.
+
+| Purpose | Default / override |
+| --- | --- |
+| Configuration | `$XDG_CONFIG_HOME/fzd` (`~/.config/fzd`); `FZD_CONF_FILE` selects the application config |
+| Installed program and support files | `PREFIX/bin/fzd`, `PREFIX/share/fzd`; default prefix `~/.local`, retained for v2 ownership and upgrades |
+| Shared user data | `$XDG_DATA_HOME` (`~/.local/share`); fonts below `fonts`, existing blesh installations are also discovered here |
+| Persistent recents/clipboard | `$XDG_STATE_HOME/fzd` (`~/.local/state/fzd`); `FZD_STATE_DIR` overrides |
+| Regenerable cache | `$XDG_CACHE_HOME/fzd` (`~/.cache/fzd`); `FZD_CACHE_DIR` overrides |
+| Session temporary files | Valid `$XDG_RUNTIME_DIR/fzd`, otherwise the FZD cache's `tmp`; `FZD_TMP_DIR` selects an explicit base |
+
+No existing application data is relocated. In particular, `XDG_DATA_HOME` does
+not silently move an installed prefix or its recovery journals; use `--prefix`
+to choose application placement. New installs do not create `~/.fzd`. The legacy
+configuration is copied only when the selected new config does not yet exist.
+
+Runtime selection requires an absolute, existing, writable/searchable directory
+owned by the current user, with mode exactly `0700` and no symlink traversal.
+Invalid runtime locations fall back to the cache. Temporary bases must be owned
+by the user and not writable by other users; symlinks, including ancestor and
+dangling links, are rejected. An explicit invalid `FZD_TMP_DIR` fails with a
+diagnostic. Processes that use temporary storage create a fresh private `0700` `session.*` directory
+and uses it as TMPDIR; tracked files and the empty session directory are removed
+on success, failure, HUP, INT and TERM. New configuration/font directories are created privately (`0700`); existing
+parent permissions are preserved.
+SIGKILL/power loss cannot run cleanup; stale private session directories may be
+removed manually when no FZD process uses them. No file is recursively deleted
+from a user-supplied temporary path. Captured previews use no FZD temporary
+files and skip storage creation and probes.
 
 ## Configuration and appearance
 
@@ -352,8 +491,12 @@ over fzf's `--expect` and multiselect settings. To request different
 label colors, set `FZD_COLOR_DIR` / `FZD_COLOR_FILE` in your FZD configuration
 to six hexadecimal digits, optionally prefixed with `#`. Invalid overrides are
 ignored. Directory previews use the same explicit directory/file colors with
-both eza and tree. They inherit `LS_COLORS` (or `TREE_COLORS` for tree when set),
-replacing only explicitly requested directory or file colors.
+both eza and tree. They inherit `LS_COLORS`, `EZA_COLORS`/legacy `EXA_COLORS`,
+and `TREE_COLORS` for tree when set, replacing only explicitly requested directory
+or file colors for that invocation. Existing eza aliases, themes and configuration
+files are left intact. Set `FZD_ICONS=0` in `fzd.conf` to disable eza glyphs;
+`FZD_ICONS=1` (default) uses `--icons=always` so captured fzf previews retain them.
+If eza is unavailable, previews use tree, then ls.
 Third-party bat, micro, eza, or terminal themes are personal choices: configure
 those tools yourself if desired. Installation never downloads themes or changes
 their configuration. To use a vivid palette, configure `LS_COLORS` in your shell.
@@ -368,7 +511,8 @@ bash install.sh --noninteractive --deps none
 
 This mode never prompts for sudo input. To permit automated package installation,
 use `--deps required` or `--deps recommended` and provide root or an existing
-noninteractive sudo authorization. Package-manager failures stop installation.
+noninteractive sudo authorization. Required package failures stop installation;
+recommended package failures keep the available fallbacks.
 Arch package databases are not refreshed automatically: update the system
 normally rather than creating a partial upgrade.
 
@@ -421,7 +565,7 @@ the same installation options. From a Git checkout, update and reinstall:
 
 ```bash
 git pull --ff-only
-bash install.sh --deps recommended
+bash install.sh
 ```
 
 Custom configurations are not merged or overwritten. Modified program files
@@ -452,8 +596,9 @@ Open a new terminal afterward to clear previously loaded functions.
   installation with `dpkg -V fzd` or `pacman -Qkk fzd`. Confirm that your shell reads the configured rc
   file; pass exported `ZDOTDIR` when using a custom zsh setup.
 - **Missing tools / sudo authentication:** install the reported packages, then
-  retry. Interactive dependency installation uses normal sudo authentication;
-  noninteractive mode needs existing authorization and fails with guidance.
+  retry. Missing required packages need root or cached sudo authorization. Run `sudo -v`
+  separately if needed; installations never prompt. Unavailable recommended tools
+  produce guidance and keep the existing fallbacks.
 - **Old fzf:** use the verified pinned example above or a compatible distro
   package. FZD does not silently replace a shared system executable.
 - **Invalid configuration:** correct the reported Bash syntax error. Existing
@@ -480,6 +625,10 @@ Open a new terminal afterward to clear previously loaded functions.
   or network filesystems can prevent trashing; FZD reports the backend error.
 
 ## Development and packaging
+
+See the [Simple/Enhanced implementation and validation report](validation/simple-enhanced/README.md)
+for the current checkout, complete local results, performance samples and pending
+hosted/native checks.
 
 Run `bash tests/run.sh`; see [test instructions](../tests/README.md) and
 [benchmarks](../benchmarks/README.md). Installer tests use disposable homes and
@@ -508,3 +657,145 @@ batched on exit and adds no zoxide process to the redraw loop.
 
 [Retained measurements](../benchmarks/results/zoxide-navigation/README.md) include
 all groups and terminal trials, baseline revision and reproduction commands.
+
+
+## Omarchy integration
+
+Omarchy is detected conditionally through `omarchy-theme-color` and its current
+palette. The current upstream location is
+`~/.local/state/omarchy/current/theme/colors.toml`; FZD also checks the XDG state
+location and older config location. `FZD_OMARCHY_THEME_FILE=/absolute/colors.toml`
+can select another palette. `FZD_OMARCHY_THEME=0` disables the adapter.
+
+FZD queries `omarchy-theme-color --file ... --all` once per session, with a bounded
+timeout. Only known keys with valid six-digit hex colors are accepted. A validated
+snapshot is passed to preview helpers, so redraws do not repeatedly run theme
+utilities. A theme change applies to the next session; no config rewrite, hooks,
+daemons, or polling are involved.
+
+Color precedence is explicit FZD overrides, current Omarchy palette, inherited
+terminal/fzf appearance, then the existing fallback. Set `FZD_COLOR_DIR` and
+`FZD_COLOR_FILE` for entry/preview colors; an explicit empty value suppresses their
+automatic color. `FZD_COLOR_BORDER`, `FZD_COLOR_HIGHLIGHT`, `FZD_COLOR_FG` and
+`FZD_COLOR_BG` override individual fzf roles. If `FZF_DEFAULT_OPTS` or
+`FZF_DEFAULT_OPTS_FILE` contains `--color`/`--no-color`, FZD leaves that fzf palette
+alone unless an explicit FZD role override is set. The inherited LS_COLORS,
+EZA_COLORS and TREE_COLORS keep their unrelated entries. Explicit FZD colors in
+existing configurations are preserved during upgrade. New example configs leave
+colors commented out so inheritance works immediately.
+
+FZD leaves Omarchy's `cd`, `z`, `ff`, `ls`, prompt, key bindings and completions
+intact. Native Tab completion remains available without installing suggestions.
+Package-owned Omarchy startup scripts cannot be selected as installation targets,
+even through a user symlink. User `.bashrc` keeps its minimal managed source entry.
+
+Sources checked for this implementation: current upstream
+[editor wrapper](https://github.com/omacom/omarchy/blob/master/bin/omarchy-launch-editor),
+[theme utility](https://github.com/omacom/omarchy/blob/master/bin/omarchy-theme-color),
+[Bash initialization](https://github.com/omacom/omarchy/blob/master/default/bash/init),
+[aliases](https://github.com/omacom/omarchy/blob/master/default/bash/aliases), and
+[TUI installer](https://github.com/omacom/omarchy/blob/master/bin/omarchy-tui-install).
+Tests retain exact source fixtures and hashes; those tests are not native Omarchy
+validation.
+
+### Optional Omarchy launcher
+
+```bash
+bash install.sh --enhanced --omarchy-launcher float  # or tile
+```
+
+Registration is off by default, noninteractive, and conditional on Omarchy's
+utilities. The installer invokes `omarchy-tui-install` in a private staged home,
+then transactionally publishes its output to
+`$XDG_DATA_HOME/applications/FZD.desktop`. It uses the terminal icon and Omarchy's
+`TUI.float`/`TUI.tile` classes; no global shortcut is assigned. Existing unmanaged,
+modified or symlinked entries are preserved, including with `--adopt`. Ordinary
+updates retain existing registration; uninstall removes an unchanged owned entry.
+
+The launcher opens Bash with a dedicated rc driver, reads the user's selected
+Bash startup file normally at runtime, runs FZD's directory-return wrapper, and
+leaves an interactive prompt in the chosen directory. Cancellation retains the
+starting directory. It does not launch raw `fzd`, which cannot change its parent
+shell. This launcher currently supports Bash; zsh users keep using `lf` from their
+terminal. Other shell integration remains fully supported. Package installation
+never registers a per-user launcher.
+
+## Capability previews and contextual actions
+
+These capabilities depend on installed tools, never an installation-mode marker:
+
+| Capability | Behavior |
+| --- | --- |
+| Directory | eza with forced captured icons and ANSI color, then tree/ls if absent; `FZD_ICONS=0` disables glyphs |
+| Raster image | Chafa symbols, bounded to the preview pane, no animation or terminal probing; falls back to file information |
+| Markdown | Glow for text Markdown extensions up to 1 MiB, pane width and no pager; then bat/head |
+| Alt+Y | Absolute highlighted path to wl-copy under Wayland, xclip/xsel under X11; exact bytes with no appended newline |
+| Alt+G | Lazygit in the highlighted directory or file parent when inside a Git working tree; returns to the current query/session |
+
+Ctrl+C/Ctrl+X/Ctrl+V retain FZD's file copy/cut/paste semantics. F1 lists both new
+actions. Clipboard success/failure appears in the border; headless sessions need
+no provider. Lazygit is never auto-installed. Git repository detection runs only
+when Alt+G is pressed, with no per-redraw status scans or background work.
+
+Chafa uses `--format=symbols --polite=on --animate=off`, disabling probes with
+`--probe=off` when supported (older distro versions predate that option), avoiding
+terminal-specific pixel protocols and tmux passthrough. This is portable across
+Foot, Alacritty, Ghostty and Kitty, but native GUI rendering on these terminals
+still needs platform validation. Unsupported Chafa versions or failed renderers
+fall back cleanly. SVG is left to existing file/text handling. Glow preserves
+user style/configuration; no hard-coded light/dark theme is forced. Renderer
+output is buffered until success so failures/timeouts do not mix partial output
+with fallback text. Preview timeout and size limits remain in force. See the
+[Chafa manual](https://hpjansson.org/chafa/man/) and
+[Glow documentation](https://github.com/charmbracelet/glow#usage).
+
+Enhanced attempts missing Chafa/Glow and an appropriate clipboard provider through
+the native package manager. On repositories lacking a package (notably Glow on
+some Debian/Ubuntu releases), it reports the missing optional tool and preserves
+the core install; it never adds a third-party repository. Install that utility
+through its upstream instructions to activate the feature. Headless installs skip
+clipboard packages. Existing fonts and suggestions are reused as described above.
+
+## Plocate readiness and package indexing
+
+Plocate is required by the source installer and Debian/Arch package metadata.
+Existing installations are reused. A bounded `plocate --count --limit 1 -- /`
+probe checks whether an accessible populated index is available, respecting an
+exported `FZD_LOCATE_DBS`. Missing/empty/unreadable indexes produce guidance,
+without failing an otherwise usable installation. Runtime discovery retains its
+existing locate-first behavior and filesystem fallbacks for failures or manual
+installations. No global search redesign is involved.
+
+**First-install package limitation:** Debian/Ubuntu can invoke `updatedb` directly
+in `postinst`; Fedora starts the indexing service after installation; Arch ships
+a timer enabled by its package. When plocate is missing, FZD stops before the
+package transaction rather than authorizing indexing implicitly. Review `/etc/updatedb.conf` and your distribution's scheduled indexing,
+then either install plocate yourself or explicitly authorize package setup:
+
+```bash
+bash install.sh --enhanced --allow-package-indexing
+```
+
+This advanced flag authorizes distro package setup, not changes to exclusion
+rules or a separate FZD-triggered updatedb. FZD never changes timers, services,
+indexing exclusions, or invokes updatedb itself. After explicit authorization, native distribution setup and schedules are
+retained. An installed but unpopulated
+index needs user-directed initialization (usually `sudo updatedb`, after review)
+or the existing distribution schedule. A completely automatic first installation
+with these native packages is incompatible with the no-implicit-indexing guarantee;
+the installer reports this explicitly and does not prompt or partially install
+FZD. Package-manager installation of the Debian/Arch artifacts follows distro dependency
+setup policy independently of the source installer.
+
+
+Indexing side effects were checked against the Ubuntu 24.04 plocate package
+postinst and current official
+[Arch PKGBUILD](https://gitlab.archlinux.org/archlinux/packaging/packages/plocate/-/blob/main/PKGBUILD)
+and [Fedora 44 spec](https://src.fedoraproject.org/rpms/plocate/blob/f44/f/plocate.spec).
+The authorization guard covers all supported native package managers, including
+schedules enabled during package setup. An existing plocate needs no authorization
+flag and FZD leaves its indexing policy intact.
+
+See the [Omarchy implementation and validation report](validation/omarchy/README.md)
+for the complete test outcomes, measured performance, indexing authorization
+exception, and unexecuted hosted/native platform checks.

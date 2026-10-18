@@ -1,0 +1,22 @@
+{
+  "044": {
+    "counts": {
+      "passed": 255,
+      "failed": 41,
+      "skipped": 2
+    },
+    "failure_reasons": {
+      "sandbox permission denial": 41
+    }
+  },
+  "065": {
+    "counts": {
+      "passed": 255,
+      "failed": 41,
+      "skipped": 2
+    },
+    "failure_reasons": {
+      "sandbox permission denial": 41
+    }
+  }
+}

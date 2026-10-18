@@ -32,12 +32,12 @@ provenance; it does not claim an independent cryptographic signature.
 ## Versioning
 
 `VERSION` is MAJOR.MINOR.PATCH, optionally `-rc.N`. The current release is
-`2.0.0`, following the previous public stable release `v1.6`. The build creates
+`2.1.0`, following the previous public stable release `v2.0.0`. The build creates
 no tag. Existing tags and the historical `v0.1.0-rc.1` draft remain unchanged.
 
 | Upstream | Debian | Arch |
 | --- | --- | --- |
-| `2.0.0` | `2.0.0-1` | `2.0.0-1` |
+| `2.1.0` | `2.1.0-1` | `2.1.0-1` |
 | `2.1.0-rc.1` (example) | `2.1.0~rc.1-1` | `2.1.0rc.1-1` |
 
 Prereleases sort below the final release. Packaging-only rebuilds increment the
@@ -47,7 +47,7 @@ published archive at the same version. Checksums identify the exact source commi
 
 Downloadable Debian files use `fzd-VERSION-debian-all.deb`, independently of the
 internal Debian version and packaging revision. The stable filename is
-`fzd-2.0.0-debian-all.deb`, while `dpkg-deb -f FILE Version` returns `2.0.0-1`.
+`fzd-2.1.0-debian-all.deb`, while `dpkg-deb -f FILE Version` returns `2.1.0-1`.
 For prereleases, Debian's tilde keeps the candidate below the final version;
 GitHub normalizes tildes in asset names, so downloadable filenames never use them.
 The builders emit the final filename directly and generate matching manifest
@@ -83,12 +83,17 @@ install manifests/lifecycle scripts are excluded from packages.
 | GNU tools | coreutils, findutils, grep, sed, mawk or gawk | coreutils, findutils, grep, sed, gawk | Same with gawk |
 | flock | util-linux | util-linux | util-linux-core |
 | Default editor | micro | micro | micro |
-| Search/previews | fd-find, bat, file, tree | fd, bat, file, tree | fd-find, bat, file, tree |
+| Search/previews | eza, fd-find, bat, file, tree | eza, fd, bat, file, tree | eza, fd-find, bat, file, tree |
 | Optional Trash | libglib2.0-bin or trash-cli | glib2 or trash-cli | glib2 or trash-cli |
-| Optional index | plocate | plocate | plocate |
+| Required index search | plocate | plocate | plocate |
 
-Micro is explicit because the unchanged runtime uses it when EDITOR/VISUAL is
-absent/unavailable. No editor variables or locate databases are changed.
+Micro is explicit because the runtime uses it when EDITOR/VISUAL is
+absent/unavailable. No editor variables or locate databases are changed by FZD.
+plocate is required; its distribution package can initialize indexing or enable
+a schedule. The source installer requires `--allow-package-indexing` before
+installing a missing plocate package; ordinary package installation follows the
+distribution's dependency setup policy. See the
+[indexing guidance](TECHNICAL.md#plocate-readiness-and-package-indexing).
 Debian recommends preview/search tools and Trash; normal APT installs these,
 `--no-install-recommends` does not. Arch optdepends are explicit user choices.
 Without gio/trash-put, F8 reports the missing backend and leaves files untouched.
@@ -96,15 +101,15 @@ Permanent deletion is never substituted.
 
 ## Install, integrate, update and remove
 
-Download `fzd-2.0.0-debian-all.deb`, `SHA256SUMS` and `SOURCE` from the
-`v2.0.0` entry on [GitHub Releases](https://github.com/seanap/fzd/releases).
+Download `fzd-2.1.0-debian-all.deb`, `SHA256SUMS` and `SOURCE` from the
+`v2.1.0` entry on [GitHub Releases](https://github.com/seanap/fzd/releases).
 FZD is not in the official Ubuntu/Debian repositories; APT installs the
 downloaded file and its dependencies.
 
 ```bash
 sha256sum --ignore-missing -c SHA256SUMS
 cat SOURCE
-sudo apt install ./fzd-2.0.0-debian-all.deb
+sudo apt install ./fzd-2.1.0-debian-all.deb
 ```
 
 On fully updated Arch, download `PKGBUILD` from the same release into a clean
@@ -222,12 +227,15 @@ dependencies, never FZD package payloads. CI uses pinned, private engine fixture
 
 ## Optional inline setup
 
-`--inline-suggestions` in the source installer installs the selected shells'
-engine requirements and writes opt-in settings in the existing managed shell
-block. ble.sh is an independently verified upstream download, kept as a shared
+`--enhanced` (or the advanced `--inline-suggestions` flag) in the source installer installs the selected shells'
+engine requirements and writes opt-in settings in dedicated XDG shell files.
+Only minimal guarded source entries are added to startup files. Enhanced also
+offers optional user-scope font setup; package staging performs neither step. ble.sh is an independently verified upstream download, kept as a shared
 user-local dependency; zsh-autosuggestions is resolved through the distribution.
 Neither engine is bundled in FZD's source/package artifacts. Debian Suggests and
-Arch optdepends advertise zsh/zsh-autosuggestions. The package payload includes
+Arch optdepends advertise zsh/zsh-autosuggestions. eza is a Debian Recommends
+and an Arch recommended optdepend; source Simple and Enhanced attempt to install
+it with fd, bat, tree and file. Missing optional packages preserve fallbacks. The package payload includes
 `inline.sh`, activated only by explicit user configuration. Package staging never
 runs downloads or edits shell startup files. The default integration initializes
 fresh zsh native completion after startup without replacing an existing setup.

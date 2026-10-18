@@ -45,7 +45,12 @@ package_for() {
   case "$executable" in
   fd) [[ $PM == pacman ]] && REPLY=fd || REPLY=fd-find ;;
   bat) REPLY=bat ;;
-  base64 | sort | mktemp | install | sha256sum | readlink | truncate | cp | mv | realpath | chmod | rm | mkdir | stat) REPLY=coreutils ;;
+  eza) REPLY=eza ;;
+  wl-copy) REPLY=wl-clipboard ;;
+  fc-list | fc-cache) REPLY=fontconfig ;;
+  xz) [[ $PM == apt ]] && REPLY=xz-utils || REPLY=xz ;;
+  head | tr | cat | ls | dirname | basename | wc | tail | base64 | sort | mktemp | install | sha256sum | readlink | truncate | cp | mv | realpath | chmod | rm | mkdir | stat) REPLY=coreutils ;;
+  awk) [[ $PM == apt ]] && REPLY=mawk || REPLY=gawk ;;
   flock) [[ $PM == dnf ]] && REPLY=util-linux-core || REPLY=util-linux ;;
   find) REPLY=findutils ;;
   ps) [[ $PM == apt ]] && REPLY=procps || REPLY=procps-ng ;;
@@ -62,7 +67,7 @@ install_packages() {
     ((existing)) || packages+=("$package")
   done
   ((${#packages[@]})) || return 0
-  log "Required package transaction ($PM): ${packages[*]}"
+  log "Package transaction ($PM): ${packages[*]}"
   if ((EUID != 0)); then
     have sudo || die "sudo is unavailable. Install these packages as root: ${packages[*]}"
     if ((NONINTERACTIVE)); then
@@ -75,30 +80,77 @@ install_packages() {
   fi
   case "$PM" in
   apt)
-    "${privilege[@]}" apt-get update || die 'apt metadata refresh failed'
-    "${privilege[@]}" apt-get install --no-install-recommends -y "${packages[@]}" || die 'apt installation failed'
+    "${privilege[@]}" env DEBIAN_FRONTEND=noninteractive apt-get update </dev/null || die 'apt metadata refresh failed'
+    "${privilege[@]}" env DEBIAN_FRONTEND=noninteractive apt-get install --no-install-recommends -y "${packages[@]}" \
+      -o Dpkg::Options::=--force-confdef -o Dpkg::Options::=--force-confold </dev/null || die 'apt installation failed'
     ;;
-  pacman) "${privilege[@]}" pacman -S --needed --noconfirm "${packages[@]}" || die 'pacman installation failed (refresh/upgrade the system separately)' ;;
-  dnf) "${privilege[@]}" dnf install -y "${packages[@]}" || die 'dnf installation failed' ;;
+  pacman) "${privilege[@]}" pacman -S --needed --noconfirm "${packages[@]}" </dev/null || die 'pacman installation failed (refresh/upgrade the system separately)' ;;
+  dnf) "${privilege[@]}" dnf install -y "${packages[@]}" </dev/null || die 'dnf installation failed' ;;
   esac
 }
 
 collect_missing() {
   local tool
   MISSING=()
-  for tool in zoxide base64 sort mktemp install sha256sum readlink truncate find cp mv realpath chmod rm mkdir flock stat; do
+  for tool in zoxide plocate bash head grep sed awk tr cat ls dirname basename wc tail base64 sort mktemp install sha256sum readlink truncate find cp mv realpath chmod rm mkdir flock stat; do
     have "$tool" || MISSING+=("$tool")
   done
   have fzf || [[ -n $FZF_VERSION ]] || MISSING+=(fzf)
-  # The runtime accepts a single editor executable. Preserve EDITOR/VISUAL.
-  if ! have "${EDITOR:-${VISUAL:-micro}}" && ! have micro; then MISSING+=(micro); fi
-  if [[ $DEPS == recommended ]]; then
-    have file || MISSING+=(file)
-    have tree || MISSING+=(tree)
-    have fd || have fdfind || MISSING+=(fd)
-    have bat || have batcat || MISSING+=(bat)
+  # Use the same safe argument parsing as the runtime; never source user files.
+  if ! declare -F _fzd_editor_command >/dev/null; then
+    local command_lib=${BASH_SOURCE[0]%/installer/*}/lib/command.bash
+    if [[ -f $command_lib ]]; then
+      # shellcheck source=lib/command.bash
+      source "$command_lib"
+    fi
   fi
+  if ! _fzd_editor_command; then MISSING+=(micro); fi
   if [[ ${INLINE_SUGGESTIONS:-keep} == 1 ]]; then _inline_collect_missing; fi
+}
+
+collect_recommended() {
+  MISSING=()
+  have eza || MISSING+=(eza)
+  have file || MISSING+=(file)
+  have tree || MISSING+=(tree)
+  have fd || have fdfind || MISSING+=(fd)
+  have bat || have batcat || MISSING+=(bat)
+  if [[ ${ENHANCED:-0} == 1 ]]; then
+    have chafa || MISSING+=(chafa)
+    have glow || MISSING+=(glow)
+    if [[ -n ${WAYLAND_DISPLAY:-} ]]; then
+      have wl-copy || MISSING+=(wl-copy)
+    elif [[ -n ${DISPLAY:-} ]]; then
+      have xclip || have xsel || MISSING+=(xclip)
+    fi
+  fi
+}
+
+ensure_recommended() {
+  [[ $DEPS == recommended ]] || return 0
+  collect_recommended
+  ((${#MISSING[@]})) || return 0
+  local tool
+  local -a optional=("${MISSING[@]}") packages=()
+  # Unsupported or unavailable optional packages must not break the core install.
+  if ! (detect_pm); then
+    warn "Recommended tools unavailable: ${optional[*]}; existing preview/search fallbacks remain usable"
+    return 0
+  fi
+  detect_pm
+  for tool in "${optional[@]}"; do
+    package_for "$tool"
+    packages+=("$REPLY")
+  done
+  if ! (install_packages "${packages[@]}"); then
+    for tool in "${optional[@]}"; do
+      package_for "$tool"
+      (install_packages "$REPLY") || warn "Optional $tool unavailable; keeping the existing fallback"
+    done
+  fi
+  collect_recommended
+  ((${#MISSING[@]} == 0)) || warn "Recommended tools still missing: ${MISSING[*]} (FZD will use available fallbacks)"
+  return 0
 }
 
 ensure_dependencies() {
@@ -112,6 +164,11 @@ ensure_dependencies() {
       package_for "$tool"
       packages+=("$REPLY")
     done
+    # APT can run updatedb directly, Fedora starts its service, and Arch ships
+    # an enabled timer. Never hide first-time indexing inside package setup.
+    if [[ ${ALLOW_PACKAGE_INDEXING:-0} != 1 ]] && ! have plocate; then
+      die 'The distro plocate package may initialize an index or enable its indexing schedule. Review /etc/updatedb.conf, then install plocate yourself or explicitly authorize package setup with --allow-package-indexing. No FZD files were changed.'
+    fi
     install_packages "${packages[@]}"
     collect_missing
     ((${#MISSING[@]} == 0)) || die "Still missing after package installation: ${MISSING[*]}"
@@ -119,6 +176,16 @@ ensure_dependencies() {
   if [[ -z $FZF_VERSION ]]; then
     check_fzf "$(command -v fzf)" || die 'fzf must be >= 0.44.0 and support FZD bindings. Use a compatible distro package or --fzf-version VERSION --fzf-sha256 SHA256 (see README).'
   fi
+  local locate_probe
+  plocate --version >/dev/null 2>&1 || die 'plocate is installed but cannot execute'
+  local -a locate_command=(plocate) locate_args=(--count --limit 1)
+  if have timeout; then locate_command=(timeout --kill-after=1 3 plocate); fi
+  [[ -z ${FZD_LOCATE_DBS:-} ]] || locate_args+=(-d "$FZD_LOCATE_DBS")
+  if ! locate_probe=$("${locate_command[@]}" "${locate_args[@]}" -- / 2>/dev/null) || [[ ! $locate_probe =~ ^[1-9][0-9]*$ ]]; then
+    warn 'plocate index is missing, empty or unreadable; global search will retain its filesystem fallback.'
+    warn 'Review /etc/updatedb.conf and your distribution indexing schedule. If appropriate, initialize it yourself with sudo updatedb. FZD does not run updatedb or change exclusions/timers.'
+  fi
+  ensure_recommended
   local zoxide_version
   zoxide_version=$(zoxide --version) || die 'zoxide could not execute'
   version_ge "${zoxide_version#zoxide }" 0.9.0 || die 'zoxide >= 0.9.0 is required; upgrade your distribution package'

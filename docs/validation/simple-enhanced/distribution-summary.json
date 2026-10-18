@@ -1,0 +1,22 @@
+{
+  "ubuntu": {
+    "exit_status": 125,
+    "result": "blocked before container launch",
+    "log": "distribution-ubuntu.log"
+  },
+  "debian": {
+    "exit_status": 125,
+    "result": "blocked before container launch",
+    "log": "distribution-debian.log"
+  },
+  "arch": {
+    "exit_status": 125,
+    "result": "blocked before container launch",
+    "log": "distribution-arch.log"
+  },
+  "fedora": {
+    "exit_status": 125,
+    "result": "blocked before container launch",
+    "log": "distribution-fedora.log"
+  }
+}

@@ -27,17 +27,22 @@ if [ -n "${BASH_VERSION:-}" ]; then
     fi
     _fzd_loaded_blesh=1
   fi
-  bleopt complete_auto_complete=1
-  # Retain unrelated options while enabling noninteractive completion suggestions.
-  _fzd_inline_opts=":${bleopt_complete_auto_complete_opts:-}:"
-  for _fzd_inline_flag in syntax-disabled syntax-unique syntax-suppress-ambiguous; do
-    _fzd_inline_opts=${_fzd_inline_opts//:$_fzd_inline_flag:/:}
-  done
-  _fzd_inline_opts=${_fzd_inline_opts#:}
-  _fzd_inline_opts=${_fzd_inline_opts%:}
-  bleopt "complete_auto_complete_opts=$_fzd_inline_opts"
-  # New engines get gray ghost text. Existing custom engine colors are retained.
-  [ "$_fzd_loaded_blesh" -eq 0 ] || ble-face -s auto_complete fg=242
+  # Preserve already active engines and explicit upstream configuration,
+  # including opt-outs, suppression options, and faces from .blerc/themes.
+  if [ "$_fzd_loaded_blesh" -eq 1 ] &&
+    [ ! -e "$HOME/.blerc" ] && [ ! -e "${XDG_CONFIG_HOME:-$HOME/.config}/blesh/init.sh" ] &&
+    [ ! -s "${_ble_base_rcfile:-/dev/null}" ]; then
+    bleopt complete_auto_complete=1
+    # Retain unrelated options while enabling noninteractive completion suggestions.
+    _fzd_inline_opts=":${bleopt_complete_auto_complete_opts:-}:"
+    for _fzd_inline_flag in syntax-disabled syntax-unique syntax-suppress-ambiguous; do
+      _fzd_inline_opts=${_fzd_inline_opts//:$_fzd_inline_flag:/:}
+    done
+    _fzd_inline_opts=${_fzd_inline_opts#:}
+    _fzd_inline_opts=${_fzd_inline_opts%:}
+    bleopt "complete_auto_complete_opts=$_fzd_inline_opts"
+    ble-face -s auto_complete fg=242
+  fi
   ble-attach
   unset _fzd_loaded_blesh _fzd_blesh _fzd_inline_opts _fzd_inline_flag
 elif [ -n "${ZSH_VERSION:-}" ]; then

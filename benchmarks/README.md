@@ -150,3 +150,28 @@ The second measures normal `lf` through the real shell wrapper and fzf terminal,
 including startup and directory navigation. To compare a historical checkout,
 set both the integration and executable paths to that checkout. Use the same
 fzf and otherwise idle host; PTY observations have 10 ms clock granularity.
+
+For a direct PTY comparison without a tmux server socket:
+
+```bash
+mkdir -p .test-work/install-baseline
+git archive 68686cf | tar -xf - -C .test-work/install-baseline
+python3 benchmarks/install-experience.py .test-work/install-baseline \
+  .test-work/install-pty-results 15
+```
+
+Run with all tests, builds and containers stopped. This uses a fresh private home
+per session, the actual shell wrapper and real fzf. It alternates baseline/current
+order, keeps one warmup per revision and size, and records 15 measured sessions
+at each of 10, 1,000 and 10,000 entries. It observes the completed list count,
+query-to-first-text-preview, Down-arrow-to-next-preview, and Esc-to-shell exit
+using Python's monotonic clock. Raw terminal streams stay in the output directory;
+timings are written incrementally. Measurements describe observed response time,
+including query work and scheduling, not physical rendering or selected fonts.
+[Installation experience results](results/simple-enhanced/README.md) retain the
+full timing arrays, versions and limitations.
+
+For the Omarchy integration workload, set `FZD_BENCH_OMARCHY=1` when invoking the
+same runner. It stages the current upstream theme utility and Tokyo Night palette
+in each private home. The [Omarchy results](results/omarchy/README.md) retain normal
+and themed trials, exact provenance, and WSL2 limitations.

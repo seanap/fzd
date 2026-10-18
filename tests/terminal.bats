@@ -171,3 +171,30 @@ SH
     rm -f "$FZD_PTY_STATUS" "$FZD_PTY_RESULT"
   done
 }
+
+@test "real fzf directory preview captures eza glyphs even though eza stdout is a pipe" {
+  command -v eza >/dev/null || skip 'install eza for real fzf icon regression'
+  mkdir -p "$FIXTURE_ROOT/icon-target"
+  printf text >"$FIXTURE_ROOT/icon-target/icon-preview.rs"
+  local eza_bin
+  eza_bin=$(command -v eza)
+  export FZD_TEST_EZA="$eza_bin" FZD_TEST_ICON_CAPTURE="$BATS_TEST_TMPDIR/eza-capture"
+  cat >"$TEST_BIN/eza" <<'SH'
+#!/bin/bash
+# tee retains a captured copy of precisely what fzf receives from real eza.
+"$FZD_TEST_EZA" "$@" | tee "$FZD_TEST_ICON_CAPTURE"
+SH
+  chmod +x "$TEST_BIN/eza"
+  export PATH="$TEST_BIN:$PATH" FZD_ICONS=1
+  # Restore real fzf, shadowed by the common fixture's controlled picker.
+  rm "$TEST_BIN/fzf"
+  start_terminal
+  tmux -S "$SOCKET" send-keys -l icon-target
+  wait_screen icon-preview.rs
+  wait_file "$FZD_TEST_ICON_CAPTURE"
+  local captured
+  captured=$(cat "$FZD_TEST_ICON_CAPTURE")
+  [[ "$captured" == *[$'\xee\xef\xf3']* ]]
+  tmux -S "$SOCKET" send-keys Escape
+  wait_file "$FZD_PTY_STATUS"
+}

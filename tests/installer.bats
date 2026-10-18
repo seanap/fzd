@@ -365,7 +365,7 @@ STUB
   cp "$REPO/installer/"*.bash "$source/installer/"
   cp "$REPO/shell/"* "$source/shell/"
   printf '\n# fixture update\n' >>"$source/fzd.sh"
-  run bash "$source/install.sh" --noninteractive
+  run bash "$source/install.sh" --noninteractive --deps none
   [ "$status" -eq 0 ]
   cmp "$source/fzd.sh" "$PREFIX/bin/fzd"
   install_fzd --verify

@@ -24,7 +24,7 @@ jobs:
       - name: Install development dependencies on disposable runner
         run: |
           sudo apt-get update
-          sudo apt-get install --no-install-recommends -y fzf zoxide fd-find bat tree micro zsh bats shellcheck shfmt tmux bubblewrap file curl ca-certificates dpkg-dev lintian plocate git make gawk xz-utils procps zsh-autosuggestions
+          sudo apt-get install --no-install-recommends -y python3 chafa fzf zoxide eza fd-find bat tree micro zsh bats shellcheck shfmt tmux bubblewrap file curl ca-certificates dpkg-dev lintian plocate git make gawk xz-utils procps zsh-autosuggestions
           if [[ -e /proc/sys/kernel/apparmor_restrict_unprivileged_userns ]]; then
             sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
           fi

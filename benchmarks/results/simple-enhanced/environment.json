@@ -1,0 +1,16 @@
+{
+  "baseline": "68686cf",
+  "candidate": "262198ef5207c6f2c5236b6ee3f3e1de48b491bb",
+  "platform": "Linux-6.6.87.2-microsoft-standard-WSL2-x86_64-with-glibc2.39",
+  "fzf": "0.44.1 (debian)",
+  "bat": "bat 0.24.0",
+  "clock": "time.perf_counter_ns",
+  "trials_per_revision_and_size": 15,
+  "warmups_per_revision_and_size": 1,
+  "renderers": "bat 0.24.0 and tree 2.1.1; eza not installed",
+  "sha256": {
+    "fzd.sh": "d1c74e80a2ce855e410345d960bbf7c42447cce97745e87ba303c969b02eb2db",
+    "shell/integration.sh": "c09d1794377de7939a6c3afbfecb796bb8015bfcbc52a2a4af1b74982c06be2a",
+    "benchmarks/install-experience.py": "bddbb5d656e32f20c016477a77171f33776390caf461984cf2c8d7e6356025da"
+  }
+}

@@ -6,6 +6,10 @@ hash_file() {
 }
 record() {
   local previous
+  if [[ $1 == shell ]]; then
+    for previous in "${RECORDED_SHELL[@]}"; do [[ $previous != "$2" ]] || return 0; done
+    RECORDED_SHELL+=("$2")
+  fi
   if [[ $1 == rc ]]; then
     for previous in "${RECORDED_RC[@]}"; do [[ $previous != "$2" ]] || return 0; done
     RECORDED_RC+=("$2")
@@ -14,7 +18,9 @@ record() {
 }
 
 begin_transaction() {
+  local path
   RECORDED_RC=()
+  RECORDED_SHELL=()
   PENDING_PATHS=()
   mkdir -p -- "$DATA"
   LOCK="$DATA/.install-lock"
@@ -25,6 +31,7 @@ begin_transaction() {
   : >"$TX/journal"
   : >"$TX/manifest"
   printf '%s\0' "$CFG" >"$TX/rc-targets"
+  for path in "${SHELL_PATHS[@]}" "${LAUNCHER_PATHS[@]}"; do printf '%s\0' "$path" >>"$TX/rc-targets"; done
   printf '%s\0' "$TX" >"$LOCK/transaction"
   COMMITTED=0
   trap finish_transaction EXIT
@@ -160,7 +167,7 @@ delete_file() {
 
 owned_file() {
   case "$1" in
-  "$PREFIX/bin/fzd" | "$PREFIX/bin/fzf" | "$DATA/integration.sh" | "$DATA/integration.zsh" | "$DATA/inline.sh" | "$DATA/fzd.conf.example" | "$DATA/LICENSE.txt" | "$DATA/install.sh" | "$DATA/installer/dependencies.bash" | "$DATA/installer/lifecycle.bash" | "$DATA/installer/inline.bash" | "$DATA/lib/state.bash" | "$DATA/lib/operations.bash" | "$DATA/lib/ui.bash") return 0 ;;
+  "$PREFIX/bin/fzd" | "$PREFIX/bin/fzf" | "$DATA/integration.sh" | "$DATA/integration.zsh" | "$DATA/inline.sh" | "$DATA/fzd.conf.example" | "$DATA/LICENSE.txt" | "$DATA/install.sh" | "$DATA/installer/dependencies.bash" | "$DATA/installer/lifecycle.bash" | "$DATA/installer/inline.bash" | "$DATA/installer/fonts.bash" | "$DATA/lib/state.bash" | "$DATA/lib/operations.bash" | "$DATA/launcher.bash" | "$DATA/launcher.conf" | "$DATA/installer/desktop.bash" | "$DATA/lib/ui.bash" | "$DATA/lib/command.bash" | "$DATA/lib/theme.bash" | "$DATA/lib/integrations.bash") return 0 ;;
   *) return 1 ;;
   esac
 }
@@ -169,6 +176,10 @@ load_manifest() {
   local kind path digest
   FILE_PATHS=()
   FILE_HASHES=()
+  LAUNCHER_PATHS=()
+  LAUNCHER_HASHES=()
+  SHELL_PATHS=()
+  SHELL_HASHES=()
   RC_PATHS=()
   RC_NEWLINES=()
   [[ -f $MANIFEST && ! -L $MANIFEST ]] || return 0
@@ -179,6 +190,16 @@ load_manifest() {
       if ! owned_file "$path" || [[ ! $digest =~ ^[a-f0-9]{64}$ ]]; then die 'Invalid file in install manifest'; fi
       FILE_PATHS+=("$path")
       FILE_HASHES+=("$digest")
+      ;;
+    launcher)
+      [[ $path == /* && /$path/ != */../* && $path == */applications/FZD.desktop && $digest =~ ^[a-f0-9]{64}$ ]] || die 'Invalid launcher in install manifest'
+      LAUNCHER_PATHS+=("$path")
+      LAUNCHER_HASHES+=("$digest")
+      ;;
+    shell)
+      [[ $path == /* && /$path/ != */../* && ($path == */fzd/shell.bash || $path == */fzd/shell.zsh) && ($digest == keep || $digest =~ ^[a-f0-9]{64}$) ]] || die 'Invalid shell configuration in install manifest'
+      SHELL_PATHS+=("$path")
+      SHELL_HASHES+=("$digest")
       ;;
     rc)
       [[ $path == /* && ($digest == 0 || $digest == 1) ]] || die 'Invalid shell path in install manifest'
@@ -210,6 +231,63 @@ install_owned() {
   record file "$target" "$REPLY"
 }
 
+# shellcheck disable=SC2016 # These literals are evaluated only in the future shell.
+prepare_shell_config() {
+  local target_shell=$1 legacy_block=$2 index matched=0 previous='' line
+  SHELL_CONFIG=$XDG_CONFIG_HOME/fzd/shell.$target_shell
+  (
+    umask 077
+    mkdir -p -- "$XDG_CONFIG_HOME/fzd"
+  )
+  printf '%s\0' "$SHELL_CONFIG" >>"$TX/rc-targets"
+  local content=$TX/shell-content
+  for index in "${!SHELL_PATHS[@]}"; do
+    if [[ ${SHELL_PATHS[index]} == "$SHELL_CONFIG" ]]; then
+      previous=${SHELL_HASHES[index]}
+      matched=1
+      break
+    fi
+  done
+  if [[ -e $SHELL_CONFIG || -L $SHELL_CONFIG ]]; then
+    [[ -f $SHELL_CONFIG && ! -L $SHELL_CONFIG && -O $SHELL_CONFIG ]] || die "Shell integration must be a user-owned regular file: $SHELL_CONFIG"
+    hash_file "$SHELL_CONFIG"
+    if ((matched == 0)) || [[ $REPLY != "$previous" ]]; then
+      warn "Preserving user-edited shell configuration: $SHELL_CONFIG"
+      [[ $INLINE_SUGGESTIONS == keep ]] || warn 'Apply inline preference changes in this file yourself; installer did not overwrite your settings'
+      record shell "$SHELL_CONFIG" "${previous:-keep}"
+      return 0
+    fi
+    # Read previous preferences as text only; never source startup/custom files.
+    legacy_block=$(cat -- "$SHELL_CONFIG")
+  fi
+  {
+    printf '# FZD shell integration. User edits are preserved on update and uninstall.\n'
+    if [[ $INLINE_SUGGESTIONS == 1 ]]; then
+      # Respect shell preferences established before this file is sourced.
+      printf ': "${FZD_INLINE_SUGGESTIONS:=1}"\n'
+      [[ $target_shell != bash ]] || printf 'if [ -z "${FZD_BLESH_PATH:-}" ]; then FZD_BLESH_PATH=%q; fi\n' "$BLESH_PATH"
+      [[ $target_shell != zsh ]] || printf 'if [ -z "${FZD_ZSH_AUTOSUGGESTIONS_PATH:-}" ]; then FZD_ZSH_AUTOSUGGESTIONS_PATH=%q; fi\n' "$AUTOSUGGEST_PATH"
+    elif [[ $INLINE_SUGGESTIONS == 0 ]]; then
+      printf 'FZD_INLINE_SUGGESTIONS=0\n'
+    else
+      while IFS= read -r line; do
+        case $line in
+        FZD_INLINE_SUGGESTIONS=* | FZD_BLESH_PATH=* | FZD_ZSH_AUTOSUGGESTIONS_PATH=* | ': "${FZD_INLINE_SUGGESTIONS:='* | 'if [ -z "${FZD_BLESH_PATH:-}" ]; then FZD_BLESH_PATH='* | 'if [ -z "${FZD_ZSH_AUTOSUGGESTIONS_PATH:-}" ]; then FZD_ZSH_AUTOSUGGESTIONS_PATH='*) printf '%s\n' "$line" ;;
+        esac
+      done <<<"$legacy_block"
+    fi
+    printf '_FZD_INSTALL_BIN=%q\n' "$PREFIX/bin/fzd"
+    # shellcheck disable=SC2016 # Expanded by the user's future shell.
+    printf 'if [ -z "${FZD_CONF_FILE:-}" ]; then FZD_CONF_FILE=%q; fi\nexport FZD_CONF_FILE\n' "$CFG"
+    # shellcheck disable=SC2016
+    printf 'case "$PATH" in %q|%q:*) ;; *) export PATH=%q:"$PATH" ;; esac\n' "$PREFIX/bin" "$PREFIX/bin" "$PREFIX/bin"
+    printf '[ ! -r %q ] || . %q\n' "$DATA/integration.sh" "$DATA/integration.sh"
+  } >"$content"
+  write_file "$content" "$SHELL_CONFIG" 644
+  hash_file "$SHELL_CONFIG"
+  record shell "$SHELL_CONFIG" "$REPLY"
+}
+
 edit_rc() {
   local target_shell=${3:-}
   local rc=$1 action=$2 line inside=0 count=0 found=0 newline ended_newline=1 index
@@ -224,6 +302,9 @@ edit_rc() {
     rc=${rc%$'\n'}
     [[ -f $rc ]] || die 'Shell configuration symlink must resolve to a regular file'
     [[ -O $rc ]] || die "Shell configuration target must belong to the installing user: $rc"
+  fi
+  if [[ $action == add && ($rc == /usr/share/omarchy/* || $rc == "${OMARCHY_PATH:-/usr/share/omarchy}/default/"*) ]]; then
+    die "Refusing to modify package-owned Omarchy startup: $rc; select your user startup file"
   fi
   printf '%s\0' "$rc" >>"$TX/rc-targets"
   : >"$temporary"
@@ -258,35 +339,26 @@ edit_rc() {
   for index in "${!RC_PATHS[@]}"; do
     [[ ${RC_PATHS[index]} != "$rc" ]] || original_newline=${RC_NEWLINES[index]}
   done
+  local owned_block=0 path
+  if [[ $block == *"$(printf %q "$DATA/integration.sh")"* ]]; then owned_block=1; fi
+  for path in "${SHELL_PATHS[@]}"; do
+    [[ $block != *"$(printf %q "$path")"* ]] || owned_block=1
+  done
+  if ((found && owned_block == 0)); then
+    if [[ $action == add ]]; then die "Existing FZD block belongs to another installation: $rc; remove it with its original installer first"; fi
+    warn "Preserving shell block that now belongs to a different installation: $rc"
+    return 0
+  fi
   if [[ $action == add ]]; then
+    prepare_shell_config "$target_shell" "$block"
     if [[ -s $temporary && $ended_newline == 0 ]]; then printf '\n' >>"$temporary"; fi
     {
       printf '# >>> fzd init >>>\n'
-      if [[ ${INLINE_SUGGESTIONS:-keep} == 1 ]]; then
-        printf 'FZD_INLINE_SUGGESTIONS=1\n'
-        [[ $target_shell != bash ]] || printf 'FZD_BLESH_PATH=%q\n' "$BLESH_PATH"
-        [[ $target_shell != zsh ]] || printf 'FZD_ZSH_AUTOSUGGESTIONS_PATH=%q\n' "$AUTOSUGGEST_PATH"
-      elif [[ ${INLINE_SUGGESTIONS:-keep} == 0 ]]; then
-        printf 'FZD_INLINE_SUGGESTIONS=0\n'
-      else
-        # Retain a previous opt-in during ordinary updates, without executing rc.
-        while IFS= read -r line; do
-          case $line in FZD_INLINE_SUGGESTIONS=* | FZD_BLESH_PATH=* | FZD_ZSH_AUTOSUGGESTIONS_PATH=*) printf '%s\n' "$line" ;; esac
-        done <<<"$block"
-      fi
-      printf '_FZD_INSTALL_BIN=%q\n' "$PREFIX/bin/fzd"
-      # shellcheck disable=SC2016 # Preserve an existing override in the user's shell.
-      printf 'if [ -z "${FZD_CONF_FILE:-}" ]; then FZD_CONF_FILE=%q; fi\nexport FZD_CONF_FILE\n' "$CFG"
-      # shellcheck disable=SC2016 # Expansion belongs to the user's future shell.
-      printf 'case "$PATH" in %q|%q:*) ;; *) export PATH=%q:"$PATH" ;; esac\n' "$PREFIX/bin" "$PREFIX/bin" "$PREFIX/bin"
-      printf '[ ! -r %q ] || . %q\n' "$DATA/integration.sh" "$DATA/integration.sh"
+      printf '[ ! -r %q ] || . %q\n' "$SHELL_CONFIG" "$SHELL_CONFIG"
       printf '# <<< fzd init <<<\n'
     } >>"$temporary"
     record rc "$rc" "$original_newline"
   elif ((found == 0)); then
-    return 0
-  elif [[ $block != *"$(printf %q "$DATA/integration.sh")"* ]]; then
-    warn "Preserving shell block that now belongs to a different installation: $rc"
     return 0
   fi
   if [[ $action == remove && $original_newline == 0 && $trailing_user == 0 && -s $temporary ]]; then
@@ -304,6 +376,23 @@ verify_installation() {
     [[ -f ${FILE_PATHS[index]} && ! -L ${FILE_PATHS[index]} ]] || die "Installed file missing: ${FILE_PATHS[index]}"
     hash_file "${FILE_PATHS[index]}"
     [[ $REPLY == "${FILE_HASHES[index]}" ]] || die "Installed file changed: ${FILE_PATHS[index]}"
+  done
+  for index in "${!SHELL_PATHS[@]}"; do
+    if [[ ${SHELL_PATHS[index]} == *.zsh ]]; then
+      if have zsh; then
+        zsh -f -n -- "${SHELL_PATHS[index]}" || die "Shell configuration has invalid syntax: ${SHELL_PATHS[index]}"
+      else
+        warn 'zsh is unavailable; skipping zsh shell configuration syntax check'
+      fi
+    else
+      bash -n "${SHELL_PATHS[index]}" || die "Shell configuration has invalid syntax: ${SHELL_PATHS[index]}"
+    fi
+  done
+  for index in "${!LAUNCHER_PATHS[@]}"; do
+    if [[ -f ${LAUNCHER_PATHS[index]} && ! -L ${LAUNCHER_PATHS[index]} ]]; then
+      hash_file "${LAUNCHER_PATHS[index]}"
+      [[ $REPLY == "${LAUNCHER_HASHES[index]}" ]] || warn "Launcher modified by user: ${LAUNCHER_PATHS[index]}"
+    else warn "Launcher missing or replaced: ${LAUNCHER_PATHS[index]}"; fi
   done
   bash -n "$PREFIX/bin/fzd"
   [[ ! -e $CFG ]] || bash -n "$CFG" || die "Configuration has invalid Bash syntax: $CFG"
@@ -331,6 +420,20 @@ uninstall_files() {
       fi
     elif [[ -e $path || -L $path ]]; then
       warn "Preserving replaced file: $path"
+    fi
+  done
+  for index in "${!SHELL_PATHS[@]}"; do
+    path=${SHELL_PATHS[index]}
+    if [[ -f $path && ! -L $path ]]; then
+      hash_file "$path"
+      if [[ $REPLY == "${SHELL_HASHES[index]}" ]]; then delete_file "$path"; else warn "Preserving modified shell configuration: $path"; fi
+    fi
+  done
+  for index in "${!LAUNCHER_PATHS[@]}"; do
+    path=${LAUNCHER_PATHS[index]}
+    if [[ -f $path && ! -L $path ]]; then
+      hash_file "$path"
+      if [[ $REPLY == "${LAUNCHER_HASHES[index]}" ]]; then delete_file "$path"; else warn "Preserving modified launcher: $path"; fi
     fi
   done
   delete_file "$MANIFEST"

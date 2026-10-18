@@ -80,7 +80,7 @@ _ui_name() {
   query=$REPLY
   _make_temp || return 1
   capture=$REPLY
-  printf 'Enter confirms · Esc cancels\n' | "$FZF_BIN" "${FZD_SCREEN_OPTS[@]}" \
+  printf 'Enter confirms · Esc cancels\n' | "$FZF_BIN" "${FZD_SCREEN_OPTS[@]}" "${FZD_THEME_OPTS[@]}" \
     --height=100% --layout=reverse --border --no-mouse --no-multi --no-expect \
     --disabled --no-sort --print-query --no-preview --query="$query" --prompt "$purpose > " \
     --header 'Name escapes: \n newline · \t tab · \xHH byte · \\ backslash' \
@@ -101,7 +101,7 @@ _ui_confirm_trash() {
   label+=$'\n'"In: $REPLY"
   _make_temp || return 1
   capture=$REPLY
-  printf 'Cancel\nMove to Trash\n' | "$FZF_BIN" "${FZD_SCREEN_OPTS[@]}" \
+  printf 'Cancel\nMove to Trash\n' | "$FZF_BIN" "${FZD_SCREEN_OPTS[@]}" "${FZD_THEME_OPTS[@]}" \
     --height=100% --layout=reverse --border --no-mouse --no-multi --no-expect \
     --no-sort --no-tac --no-print-query --no-preview --query='' --prompt 'Confirm > ' --header "$label" \
     --bind 'start:pos(1),load:pos(1),enter:accept,esc:abort' >"$capture" || rc=$?
@@ -126,7 +126,7 @@ _ui_recents() {
   done
   _make_temp || return 1
   capture=$REPLY
-  printf '%s\n' "${records[@]}" | "$FZF_BIN" "${FZD_SCREEN_OPTS[@]}" \
+  printf '%s\n' "${records[@]}" | "$FZF_BIN" "${FZD_SCREEN_OPTS[@]}" "${FZD_THEME_OPTS[@]}" \
     --height=100% --layout=reverse --border --no-mouse --no-multi --no-expect \
     --delimiter "$DELIM" --with-nth=2.. --no-tac --no-print-query --no-preview --query='' --prompt 'Recent > ' \
     --header 'Enter visits · Esc returns' --bind 'enter:accept,esc:abort' >"$capture" || rc=$?
@@ -167,10 +167,11 @@ _ui_help() {
       help+=('  F8               Move to Trash (confirmation required)')
     fi
   fi
+  help+=('Integrations' '  Alt+Y            Copy absolute path to system clipboard' '  Alt+G            Open selected Git working tree in Lazygit')
   help+=('Other' '  F1 / Esc         Close help')
   [[ $scope == global ]] || help+=('  Esc / Ctrl+G     Exit FZD')
   help+=('  Up / Down        Select; scroll this help')
-  printf '%s\n' "${help[@]}" | "$FZF_BIN" "${FZD_SCREEN_OPTS[@]}" \
+  printf '%s\n' "${help[@]}" | "$FZF_BIN" "${FZD_SCREEN_OPTS[@]}" "${FZD_THEME_OPTS[@]}" \
     --height=100% --layout=reverse --border --no-mouse --no-multi --no-expect \
     --disabled --no-sort --no-tac --no-print-query --no-preview --query='' --prompt 'Help > ' --bind 'f1:abort,esc:abort,enter:ignore' >/dev/null || true
 }

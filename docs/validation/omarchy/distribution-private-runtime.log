@@ -1,0 +1,2 @@
+time="2026-10-18T12:27:51-04:00" level=warning msg="\"/\" is not a shared mount, this could cause issues or missing mounts with rootless containers"
+Error: command required for rootless mode with multiple IDs: exec: "newuidmap": executable file not found in $PATH
