@@ -10,10 +10,11 @@ setup_fixture() {
   FZD_REAL_LOCATE=$(command -v plocate 2>/dev/null || true)
   FZD_REAL_UPDATEDB=$(command -v updatedb.plocate 2>/dev/null || command -v updatedb 2>/dev/null || true)
   FZD_REAL_ZSH=$(command -v zsh 2>/dev/null || true)
+  export HOME="$BATS_TEST_TMPDIR/home" XDG_DATA_HOME="$BATS_TEST_TMPDIR/data"
   FIXTURE_ROOT="$BATS_TEST_TMPDIR/files"
   TEST_BIN="$BATS_TEST_TMPDIR/bin"
   UTILITY_BIN="$BATS_TEST_TMPDIR/utilities"
-  mkdir -p "$FIXTURE_ROOT" "$TEST_BIN" "$UTILITY_BIN"
+  mkdir -p "$HOME" "$FIXTURE_ROOT" "$TEST_BIN" "$UTILITY_BIN"
   export FZD_CONF_FILE="$BATS_TEST_TMPDIR/fzd.conf"
   export XDG_CONFIG_HOME="$BATS_TEST_TMPDIR/config"
   export XDG_STATE_HOME="$BATS_TEST_TMPDIR/state"
@@ -26,6 +27,8 @@ setup_fixture() {
   export FZD_EXCLUDES=.git,node_modules FZD_GLOBAL_XEXCLUDES=proc,sys,dev,run
   export FZD_STUB_RESULTS="$BATS_TEST_TMPDIR/results"
   export FZD_STUB_LOG="$BATS_TEST_TMPDIR/backend-arguments"
+  unset FZD_THEME_READY FZD_THEME_SNAPSHOT FZD_OMARCHY_THEME FZD_OMARCHY_THEME_FILE
+  unset FZD_COLOR_BORDER FZD_COLOR_HIGHLIGHT FZD_COLOR_FG FZD_COLOR_BG
   unset FZD_ICONS FZD_GLOBAL_ROOTS FZD_LOCATE_DBS FZD_TMP_DIR
   export FZD_GLOBAL_FULLPATH=0
   unset FZD_INLINE_SUGGESTIONS FZD_AUTO_COMPLETION FZD_BLESH_PATH FZD_ZSH_AUTOSUGGESTIONS_PATH
