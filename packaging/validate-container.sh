@@ -126,17 +126,22 @@ cp /fixtures/fzf-0.65.2-linux_amd64.tar.gz "$source_root/.test-work/phase-three/
 cd "$source_root"
 # Optional inline setup: real native dependencies + official verified download.
 # This fixture home is separate from the package-preservation fixture above.
-if [[ $target == ubuntu || $target == debian || $target == arch ]]; then
+if [[ $target == ubuntu || $target == debian || $target == arch || $target == fedora ]]; then
   inline_home=/work/inline-home
   mkdir -p "$inline_home"
-  HOME=$inline_home ZDOTDIR=$inline_home bash install.sh --noninteractive --inline-suggestions
+  HOME=$inline_home ZDOTDIR=$inline_home bash install.sh --noninteractive --enhanced
   [[ -r $inline_home/.local/share/blesh/ble.sh ]]
   grep -q 'FZD_INLINE_SUGGESTIONS:=1' "$inline_home/.config/fzd/shell.bash"
   grep -q 'FZD_INLINE_SUGGESTIONS:=1' "$inline_home/.config/fzd/shell.zsh"
+  if [[ -z ${WSL_DISTRO_NAME:-}${WSL_INTEROP:-} && $(uname -r) != *[Mm]icrosoft* ]]; then
+    # Native container setup must provide actual NF3 coverage, reusing an
+    # existing compatible font or installing the checksum-verified release.
+    [[ -n $(HOME=$inline_home fc-list ':charset=f115 f15b e5ff f024b' family) ]]
+  fi
   HOME=$inline_home ZDOTDIR=$inline_home bash "$inline_home/.local/share/fzd/install.sh" --verify --inline-suggestions
   HOME=$inline_home ZDOTDIR=$inline_home bash "$inline_home/.local/share/fzd/install.sh" --uninstall
   [[ -r $inline_home/.local/share/blesh/ble.sh && ! -e $inline_home/.local/bin/fzd ]]
-  printf 'PASS: opt-in inline installer with native dependencies and pinned upstream ble.sh\n'
+  printf 'PASS: Enhanced installer with native dependencies, pinned upstream ble.sh and native/WSL font handling\n'
 fi
 
 test_files=()

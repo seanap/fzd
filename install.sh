@@ -260,6 +260,10 @@ if ((NO_CONFIG == 0)) && [[ ! -e $CFG && ! -L $CFG ]]; then
     bash -n "$source_config" || die 'Legacy FZD configuration contains invalid Bash syntax'
     log 'Copying legacy ~/.fzd/fzd.conf; the original is preserved'
   fi
+  (
+    umask 077
+    mkdir -p -- "${CFG%/*}"
+  )
   write_file "$source_config" "$CFG" 644
 fi
 for index in "${!RC_PATHS[@]}"; do record rc "${RC_PATHS[index]}" "${RC_NEWLINES[index]}"; done

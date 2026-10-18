@@ -15,7 +15,7 @@ _font_find_compatible() {
   local families
   # Verify representative eza glyph coverage as well as known family names.
   # This also accepts a custom verified font/fallback with the required glyphs.
-  families=$(fc-list ':charset=f115 f15b e5ff' family 2>/dev/null) || return 1
+  families=$(fc-list ':charset=f115 f15b e5ff f024b' family 2>/dev/null) || return 1
   [[ -n $families ]] || return 1
   log "Compatible font coverage found: ${families%%$'\n'*}; no font installed"
 }
@@ -43,14 +43,17 @@ _font_install() (
     warn 'Nerd Font SHA256 mismatch; downloaded font discarded'
     return 1
   }
-  mkdir "$work/fonts" || return 1
+  mkdir -m 700 "$work/fonts" || return 1
   tar -xOJf "$work/font.tar.xz" "$member" >"$work/fonts/$member" || return 1
   [[ -s $work/fonts/$member ]] || return 1
   chmod 644 "$work/fonts/$member" || return 1
   # Validate before publication; fc-scan is supplied by fontconfig.
   fc-scan --format '%{family}\n' "$work/fonts/$member" >"$work/family" || return 1
   [[ -s $work/family ]] || return 1
-  mkdir -p -- "${destination%/*}" || return 1
+  (
+    umask 077
+    mkdir -p -- "${destination%/*}"
+  ) || return 1
   mv -Tn -- "$work/fonts" "$destination" || return 1
   [[ ! -d $work/fonts ]] || {
     warn 'Font destination appeared; existing fonts preserved'

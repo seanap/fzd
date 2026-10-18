@@ -226,6 +226,10 @@ install_owned() {
 prepare_shell_config() {
   local target_shell=$1 legacy_block=$2 index matched=0 previous='' line
   SHELL_CONFIG=$XDG_CONFIG_HOME/fzd/shell.$target_shell
+  (
+    umask 077
+    mkdir -p -- "$XDG_CONFIG_HOME/fzd"
+  )
   printf '%s\0' "$SHELL_CONFIG" >>"$TX/rc-targets"
   local content=$TX/shell-content
   for index in "${!SHELL_PATHS[@]}"; do

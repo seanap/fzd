@@ -360,7 +360,7 @@ downloads, unsupported systems, missing font tools and cache refresh failures do
 not undo FZD. Simple never probes for or installs fonts.
 
 On native Linux, Enhanced queries fontconfig for a font covering representative
-eza directory/file glyphs (`f115`, `f15b`, `e5ff`). This recognizes JetBrainsMono,
+eza directory/file glyphs (`f115`, `f15b`, `e5ff`, and the Nerd Fonts 3 material glyph `f024b`). This recognizes JetBrainsMono,
 Cascadia/Caskaydia, FiraCode, Hack, Meslo and Symbols Only Nerd Fonts, as well as
 other fonts with verified coverage. Family names alone are not proof of coverage.
 Detection means the font is available to fontconfig; it cannot prove that every
@@ -388,7 +388,7 @@ On **WSL**, Enhanced detects WSL environment variables or the kernel identity an
 skips Linux font installation. Download a font from the
 [official font downloads](https://www.nerdfonts.com/font-downloads), extract and
 install it **on Windows**, then choose it in Windows Terminal → Settings → your
-profile → Appearance → Font face. Linux font availability does not configure the
+profile → [Appearance → Font face](https://learn.microsoft.com/en-us/windows/terminal/customize-settings/profile-appearance#font-face). Linux font availability does not configure the
 Windows host terminal. Other Windows terminal applications need their own font
 selector; FZD does not modify Windows settings.
 
@@ -445,7 +445,8 @@ by the user and not writable by other users; symlinks, including ancestor and
 dangling links, are rejected. An explicit invalid `FZD_TMP_DIR` fails with a
 diagnostic. Processes that use temporary storage create a fresh private `0700` `session.*` directory
 and uses it as TMPDIR; tracked files and the empty session directory are removed
-on success, failure, HUP, INT and TERM. Existing parent permissions are preserved.
+on success, failure, HUP, INT and TERM. New configuration/font directories are created privately (`0700`); existing
+parent permissions are preserved.
 SIGKILL/power loss cannot run cleanup; stale private session directories may be
 removed manually when no FZD process uses them. No file is recursively deleted
 from a user-supplied temporary path. Captured previews use no FZD temporary

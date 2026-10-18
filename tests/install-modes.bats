@@ -125,7 +125,7 @@ STUB
     [ "$status" -eq 0 ]
     [[ "$output" == *"$family"* ]]
   done
-  grep -q ':charset=f115 f15b e5ff family' "$CALLS.font-probe"
+  grep -q ':charset=f115 f15b e5ff f024b family' "$CALLS.font-probe"
 }
 
 @test "WSL Enhanced reports Windows font setup and never attempts Linux font installation" {
@@ -410,4 +410,14 @@ STUB
   run find "$HOME/font-tx" -mindepth 1
   [ -z "$output" ]
   [ ! -e "$XDG_DATA_HOME/fonts" ]
+}
+
+@test "new XDG configuration directories are private and existing directory modes stay unchanged" {
+  install_fzd
+  assert_installed
+  [ "$(stat -c %a "$XDG_CONFIG_HOME/fzd")" = 700 ]
+  chmod 750 "$XDG_CONFIG_HOME/fzd"
+  install_fzd
+  assert_installed
+  [ "$(stat -c %a "$XDG_CONFIG_HOME/fzd")" = 750 ]
 }
