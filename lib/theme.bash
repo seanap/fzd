@@ -30,6 +30,7 @@ _fzd_theme_init() {
   # Explicit empty overrides intentionally suppress automatic entry colors.
   [[ ${FZD_COLOR_DIR+x} || ! ${colors[blue]+x} ]] || FZD_COLOR_DIR=${colors[blue]}
   [[ ${FZD_COLOR_FILE+x} || ! ${colors[foreground]+x} ]] || FZD_COLOR_FILE=${colors[foreground]}
+  export FZD_COLOR_DIR FZD_COLOR_FILE
   # Honor fzf palettes in either inherited options surface. Never evaluate them.
   if [[ -f ${FZF_DEFAULT_OPTS_FILE:-/nonexistent} && -r ${FZF_DEFAULT_OPTS_FILE:-/nonexistent} ]]; then
     inherited+=$(<"$FZF_DEFAULT_OPTS_FILE")

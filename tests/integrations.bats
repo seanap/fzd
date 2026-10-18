@@ -50,7 +50,7 @@ theme_fixture() {
 @test "current light and dark Omarchy palettes apply once and explicit colors win" {
   for theme in tokyo-night catppuccin-latte; do
     theme_fixture "$theme"
-    run bash -euc 'source "$1/fzd.sh"; source "$1/lib/theme.bash"; _fzd_theme_init; [[ ${#FZD_THEME_OPTS[@]} -gt 5 && $FZD_COLOR_DIR == "$2" ]]; before=$FZD_THEME_SNAPSHOT; omarchy-theme-color() { printf called >>"$FZD_TEST_LOG"; return 99; }; _fzd_theme_init --_preview; [[ $before == "$FZD_THEME_SNAPSHOT" ]]; FZD_COLOR_DIR=""; FZD_COLOR_BORDER="#010203"; _fzd_theme_init --_preview; [[ $FZD_COLOR_DIR == "" && ${FZD_THEME_OPTS[-1]} == --color=border:#010203 ]]; FZD_THEME_SNAPSHOT=""; _fzd_theme_init --_preview; [[ ! -e $FZD_TEST_LOG ]]' _ "$FZD_REPO" "$([[ $theme == tokyo-night ]] && echo '#7aa2f7' || echo '#1e66f5')"
+    run bash -euc 'source "$1/fzd.sh"; source "$1/lib/theme.bash"; _fzd_theme_init; [[ ${#FZD_THEME_OPTS[@]} -gt 5 && $FZD_COLOR_DIR == "$2" ]]; bash -euc '"'"'[[ $FZD_COLOR_DIR == "$1" ]]'"'"' _ "$2"; before=$FZD_THEME_SNAPSHOT; omarchy-theme-color() { printf called >>"$FZD_TEST_LOG"; return 99; }; _fzd_theme_init --_preview; [[ $before == "$FZD_THEME_SNAPSHOT" ]]; FZD_COLOR_DIR=""; FZD_COLOR_BORDER="#010203"; _fzd_theme_init --_preview; [[ $FZD_COLOR_DIR == "" && ${FZD_THEME_OPTS[-1]} == --color=border:#010203 ]]; FZD_THEME_SNAPSHOT=""; _fzd_theme_init --_preview; [[ ! -e $FZD_TEST_LOG ]]' _ "$FZD_REPO" "$([[ $theme == tokyo-night ]] && echo '#7aa2f7' || echo '#1e66f5')"
     [ "$status" -eq 0 ]
   done
 }
@@ -156,6 +156,6 @@ theme_fixture() {
 }
 
 @test "ordinary startup and preview helpers avoid missing Omarchy utility PATH scans" {
-  run bash -euc 'source "$1/fzd.sh"; _fzd_paths; probed=0; _have() { if [[ $1 == omarchy-theme-color ]]; then probed=1; return 1; fi; command -v "$1" >/dev/null; }; _fzd_init --_preview; [[ $probed == 0 && ${#FZD_THEME_OPTS[@]} == 0 ]]' _ "$FZD_REPO"
+  run bash -euc 'source "$1/fzd.sh"; _fzd_paths; probed=0; _have() { if [[ $1 == omarchy-theme-color ]]; then probed=1; return 1; fi; command -v "$1" >/dev/null; }; _fzd_init --_preview; [[ $probed == 0 && ${#FZD_THEME_OPTS[@]} == 0 ]]; FZD_THEME_READY=1; FZD_COLOR_DIR="#010203"; _explorer_load() { printf called >>"$FZD_TEST_LOG"; return 1; }; _fzd_init --_preview; [[ ! -e $FZD_TEST_LOG && -n $c_dir ]]' _ "$FZD_REPO"
   [ "$status" -eq 0 ]
 }

@@ -113,9 +113,13 @@ _fzd_init() {
   : "${FZD_PREVIEW_TIMEOUT:=2}"
 
   FZD_THEME_OPTS=()
-  if [[ -n ${FZD_OMARCHY_THEME_FILE:-}${FZD_THEME_SNAPSHOT:-}${FZD_COLOR_BORDER:-}${FZD_COLOR_HIGHLIGHT:-}${FZD_COLOR_FG:-}${FZD_COLOR_BG:-} ]] ||
-    [[ -f $XDG_STATE_HOME/omarchy/current/theme/colors.toml || -f $HOME/.local/state/omarchy/current/theme/colors.toml || -f $XDG_CONFIG_HOME/omarchy/current/theme/colors.toml ]]; then
-    if _explorer_load theme; then _fzd_theme_init "${1:-}"; fi
+  # A parent session exports its resolved entry colors. Preview helpers need no
+  # fzf palette construction or module/path discovery on this frequent path.
+  if [[ ${1:-} != --_preview || ${FZD_THEME_READY:-0} != 1 ]]; then
+    if [[ -n ${FZD_OMARCHY_THEME_FILE:-}${FZD_THEME_SNAPSHOT:-}${FZD_COLOR_BORDER:-}${FZD_COLOR_HIGHLIGHT:-}${FZD_COLOR_FG:-}${FZD_COLOR_BG:-} ]] ||
+      [[ -f $XDG_STATE_HOME/omarchy/current/theme/colors.toml || -f $HOME/.local/state/omarchy/current/theme/colors.toml || -f $XDG_CONFIG_HOME/omarchy/current/theme/colors.toml ]]; then
+      if _explorer_load theme; then _fzd_theme_init "${1:-}"; fi
+    fi
   fi
   c_dir=""; c_file=""
   if [[ -n "${FZD_COLOR_DIR:-}" ]]; then c_dir="$(hex_to_ansi "$FZD_COLOR_DIR")"; fi
