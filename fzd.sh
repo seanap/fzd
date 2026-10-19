@@ -462,7 +462,8 @@ _glow_render() {
   # with an explicit user override for a built-in theme or JSON style file.
   # Glow validates its pager even with paging disabled. Captured previews use
   # cat so minimal installations do not need less just to render Markdown.
-  PAGER='cat' _timeout_wrap "$FZD_PREVIEW_TIMEOUT" glow --style "$style" --width "$width" --pager=false -- "$file"
+  # Ignore piped picker/launcher input: the selected file is the preview source.
+  PAGER='cat' _timeout_wrap "$FZD_PREVIEW_TIMEOUT" glow --style "$style" --width "$width" --pager=false -- "$file" </dev/null
 }
 
 _preview_file() {
