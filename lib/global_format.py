@@ -4,6 +4,7 @@
 Input is NUL-delimited filesystem paths. Arguments are cap, directory/file/reset
 colors, root count, roots, then simple exclusion globs. Bash dispatches complex
 patterns to its original formatter so their semantics remain unchanged.
+Exit status 10 means the requested result cap was reached successfully.
 """
 import base64
 import fnmatch
@@ -66,7 +67,7 @@ def main():
                     sys.stdout.buffer.flush()
                     batch.clear()
                 if count == cap:
-                    return
+                    return 10
         if batch:
             sys.stdout.buffer.write(b"".join(batch))
             sys.stdout.buffer.flush()
@@ -76,4 +77,4 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())

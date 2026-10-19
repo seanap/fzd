@@ -460,7 +460,9 @@ _glow_render() {
   # Glow replaces even a configured theme with its plain "notty" style when
   # stdout is captured unless --style is explicit. Keep auto light/dark choice,
   # with an explicit user override for a built-in theme or JSON style file.
-  _timeout_wrap "$FZD_PREVIEW_TIMEOUT" glow --style "$style" --width "$width" --pager=false -- "$file"
+  # Glow validates its pager even with paging disabled. Captured previews use
+  # cat so minimal installations do not need less just to render Markdown.
+  PAGER='cat' _timeout_wrap "$FZD_PREVIEW_TIMEOUT" glow --style "$style" --width "$width" --pager=false -- "$file"
 }
 
 _preview_file() {
@@ -733,6 +735,7 @@ _global_live_list() {
 _global_index() {
   _global_prepare || return
   local python pattern simple=1 rc=0
+  local statuses=(0 0)
   # Python is an optional accelerator for whole snapshots, never a startup
   # requirement. Leave arbitrary Bash glob syntax on the original formatter.
   for pattern in "${GLOBAL_EXCLUDES[@]}"; do
@@ -742,7 +745,16 @@ _global_index() {
   if ((simple)) && [[ -n $python ]] && _explorer_load state && [[ -r $FZD_EXPLORER_LIB/global_format.py ]]; then
     _global_live_candidates "" | "$python" "$FZD_EXPLORER_LIB/global_format.py" \
       "$FZD_GLOBAL_MAXRESULTS" "$c_dir" "$c_file" "$c_reset" \
-      "${#GLOBAL_ROOTS[@]}" "${GLOBAL_ROOTS[@]}" "${GLOBAL_EXCLUDES[@]}" || rc=$?
+      "${#GLOBAL_ROOTS[@]}" "${GLOBAL_ROOTS[@]}" "${GLOBAL_EXCLUDES[@]}" || statuses=("${PIPESTATUS[@]}")
+    # fd versions differ on a closed output pipe (0, 1 or SIGPIPE). Only
+    # tolerate status 1 when the formatter explicitly reached the requested cap.
+    if ((statuses[1] == 10)); then
+      rc=${statuses[0]}
+      ((rc != 1)) || rc=0
+    else
+      rc=${statuses[1]}
+      ((rc != 0)) || rc=${statuses[0]}
+    fi
     if ((rc != 0 && rc != 141)); then
       printf 'fzd: filesystem snapshot failed (status %s)\n' "$rc" >&2
       return "$rc"

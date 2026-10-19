@@ -80,6 +80,26 @@ SH
   done
 }
 
+@test "accelerated snapshots report producer failures unless the result cap was satisfied" {
+  ln -s "$FZD_NATIVE_PYTHON" "$TEST_BIN/python3"
+  touch "$FIXTURE_ROOT/entry"
+  cat >"$TEST_BIN/fd" <<'SH'
+#!/usr/bin/env bash
+printf '%s\0' "$FZD_GLOBAL_PATHS/entry"
+exit 1
+SH
+  chmod +x "$TEST_BIN/fd"
+  export FZD_GLOBAL_MAXRESULTS=2
+  run --separate-stderr bash "$FZD_SCRIPT" --_global_index
+  [ "$status" -eq 1 ]
+  [[ "$stderr" == *'filesystem snapshot failed'* ]]
+  export FZD_GLOBAL_MAXRESULTS=1
+  run --separate-stderr bash "$FZD_SCRIPT" --_global_index
+  [ "$status" -eq 0 ]
+  [ "${#lines[@]}" -eq 1 ]
+  [ -z "$stderr" ]
+}
+
 @test "optional formatter handles NUL records split across arbitrary input blocks" {
   run "$FZD_NATIVE_PYTHON" - "$FZD_REPO/lib/global_format.py" "$FIXTURE_ROOT" <<'PY'
 import base64, os, subprocess, sys
