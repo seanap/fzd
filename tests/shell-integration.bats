@@ -35,6 +35,27 @@ check_shell_cancel() {
   check_shell_cd bash bash
 }
 
+@test "WSL startup command probes avoid Windows mounts and preserve the user's PATH" {
+  extract_init bash
+  run bash --noprofile --norc -euc '
+    export WSL_DISTRO_NAME=Fixture
+    PATH="$PATH:/mnt/c/unresponsive-windows/bin:/mnt/z/another-drive"
+    before=$PATH
+    command() {
+      case "${2:-}" in fzd_cd|fzd_find|lf|lff)
+        [[ $PATH != *"/mnt/c/"* && $PATH != *"/mnt/z/"* ]] || exit 64 ;;
+      esac
+      builtin command "$@"
+    }
+    source "$1"
+    [[ $PATH == "$before" ]]
+    declare -F lf lff fzd_cd fzd_find
+    _fzd_shell_has_command bash
+    [[ $PATH == "$before" ]]
+  ' _ "$BATS_TEST_TMPDIR/init"
+  [ "$status" -eq 0 ]
+}
+
 @test "existing zsh integration changes directory with quotes Unicode and embedded newline" {
   [ -n "$FZD_REAL_ZSH" ] || skip 'zsh is not installed'
   check_shell_cd zsh "$FZD_REAL_ZSH"

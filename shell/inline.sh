@@ -5,7 +5,7 @@ case $- in *i*) ;; *) return 0 ;; esac
 
 if [ -n "${BASH_VERSION:-}" ]; then
   _fzd_loaded_blesh=0
-  if ! command -v bleopt >/dev/null 2>&1; then
+  if ! declare -F bleopt >/dev/null 2>&1; then
     _fzd_blesh=${FZD_BLESH_PATH:-}
     if [ -z "$_fzd_blesh" ]; then
       for _fzd_blesh in "${XDG_DATA_HOME:-$HOME/.local/share}/blesh/ble.sh" \

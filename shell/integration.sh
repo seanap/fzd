@@ -2,6 +2,35 @@
 # shellcheck disable=SC2178,SC2128 # PROMPT_COMMAND supports both scalar and array forms.
 # FZD shell integration: source from Bash or zsh. No configuration is executed.
 # FZD_BIN may select a different executable; installers set _FZD_INSTALL_BIN.
+function _fzd_shell_has_command {
+  local fzd_wsl=${WSL_DISTRO_NAME:-${WSL_INTEROP:-}} fzd_kernel=''
+  local fzd_rest=$PATH fzd_part fzd_lookup_path='' fzd_separator=''
+  if [ -z "$fzd_wsl" ] && [ -r /proc/sys/kernel/osrelease ]; then
+    IFS= read -r fzd_kernel </proc/sys/kernel/osrelease || fzd_kernel=''
+    case $fzd_kernel in *[Mm]icrosoft*) fzd_wsl=1 ;; esac
+  fi
+  if [ -z "$fzd_wsl" ]; then
+    command -v "$1"
+    return
+  fi
+  # A missing shell function must not traverse stalled Windows drive mounts.
+  # Limit only FZD's startup probes; the user's PATH stays unchanged.
+  while :; do
+    fzd_part=${fzd_rest%%:*}
+    case $fzd_part in
+    /mnt/[a-zA-Z] | /mnt/[a-zA-Z]/*) ;;
+    *)
+      fzd_lookup_path=$fzd_lookup_path$fzd_separator$fzd_part
+      fzd_separator=:
+      ;;
+    esac
+    [ "$fzd_rest" != "${fzd_rest#*:}" ] || break
+    fzd_rest=${fzd_rest#*:}
+  done
+  [ -n "$fzd_separator" ] || fzd_lookup_path=/dev/null
+  PATH="$fzd_lookup_path" command -v "$1"
+}
+
 function _fzd_run_and_cd {
   local fzd_result fzd_status
   # A sentinel preserves every trailing newline. Remove only FZD's one protocol
@@ -41,7 +70,7 @@ function _fzd_require_zoxide {
 }
 
 function _fzd_shell_learns {
-  command -v __zoxide_hook >/dev/null 2>&1 || return 1
+  _fzd_shell_has_command __zoxide_hook >/dev/null 2>&1 || return 1
   [[ "${PROMPT_COMMAND[*]:-} ${__vsc_original_prompt_command[*]:-}" == *'__zoxide_hook'* ]]
 }
 
@@ -121,7 +150,7 @@ function _fzd_init_zoxide {
       [ "$fzd_prompt" != _fzd_init_zoxide ] || fzd_prompt=''
       PROMPT_COMMAND=$fzd_prompt
     fi
-    { command -v __zoxide_hook >/dev/null 2>&1 || command -v __zoxide_z >/dev/null 2>&1; } && return 0
+    { declare -F __zoxide_hook >/dev/null 2>&1 || declare -F __zoxide_z >/dev/null 2>&1; } && return 0
     fzd_init=$(command zoxide init bash --no-cmd --hook pwd) || return
     # Older upstream zoxide versions only understand scalar PROMPT_COMMAND.
     # Restore its exact type/contents and append the generated hook once.
@@ -137,16 +166,16 @@ function _fzd_init_zoxide {
 }
 
 # Preserve existing functions, aliases, builtins and executables in both shells.
-if ! command -v fzd_cd >/dev/null 2>&1; then
+if ! _fzd_shell_has_command fzd_cd >/dev/null 2>&1; then
   function fzd_cd { _fzd_jump "$@"; }
 fi
-if ! command -v lf >/dev/null 2>&1; then
+if ! _fzd_shell_has_command lf >/dev/null 2>&1; then
   function lf { _fzd_jump "$@"; }
 fi
-if ! command -v fzd_find >/dev/null 2>&1; then
+if ! _fzd_shell_has_command fzd_find >/dev/null 2>&1; then
   function fzd_find { _fzd_find "$@"; }
 fi
-if ! command -v lff >/dev/null 2>&1; then
+if ! _fzd_shell_has_command lff >/dev/null 2>&1; then
   function lff { _fzd_find "$@"; }
 fi
 
@@ -172,7 +201,7 @@ if [ -n "${BASH_VERSION:-}" ]; then
   unset _fzd_cmd
   case $- in
   *i*)
-    if command -v zoxide >/dev/null 2>&1 && ! command -v __zoxide_hook >/dev/null 2>&1 && ! command -v __zoxide_z >/dev/null 2>&1; then
+    if command -v zoxide >/dev/null 2>&1 && ! declare -F __zoxide_hook >/dev/null 2>&1 && ! declare -F __zoxide_z >/dev/null 2>&1; then
       if [[ $(declare -p PROMPT_COMMAND 2>/dev/null) == 'declare -a'* ]]; then
         [[ " ${PROMPT_COMMAND[*]} " == *' _fzd_init_zoxide '* ]] || PROMPT_COMMAND+=(_fzd_init_zoxide)
       elif [[ ${PROMPT_COMMAND:-} != *'_fzd_init_zoxide'* ]]; then

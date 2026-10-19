@@ -627,6 +627,13 @@ Open a new terminal afterward to clear previously loaded functions.
   uses your distribution settings. The installer initializes an unavailable default
   index unless `--no-updatedb` or `--deps none` is used; runtime search never runs
   updatedb.
+- **WSL terminal stalls before the prompt:** FZD startup command probes skip
+  Windows drive PATH entries without changing your PATH. To isolate an inline
+  engine problem, reinstall with `--enhanced --no-inline-suggestions`. If WSL
+  processes remain in uninterruptible filesystem waits even with a kill signal
+  pending, save work and terminate the affected distribution from Windows
+  PowerShell (`wsl --terminate DISTRO_NAME`), then reopen it. This stops all
+  processes in that distribution; do not run it from the session being repaired.
 - **Explorer state busy:** another FZD instance may be completing a file
   operation. Retry when it finishes. Invalid state is reported without replacing
   it; close FZD and move the affected state file aside before retrying.
