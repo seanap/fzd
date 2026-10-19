@@ -1,7 +1,9 @@
 # ~/.config/fzd/fzd.conf
 
 # --- Global search tuning ---
-FZD_GLOBAL_BACKEND=auto            # auto|locate|cache|live
+FZD_GLOBAL_BACKEND=cache           # cache (in-memory fuzzy)|auto|locate|live
+# Load filenames once per global overlay, then fuzzy-filter each key in fzf.
+# Use auto or locate for indexed literal queries over larger search scopes.
 FZD_GLOBAL_MINLEN=2
 FZD_GLOBAL_MAXDEPTH=6
 FZD_GLOBAL_MAXRESULTS=5000

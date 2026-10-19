@@ -27,6 +27,8 @@ load helpers/installer
   install_fzd
   assert_installed
   [ -f "$XDG_CONFIG_HOME/fzd/fzd.conf" ]
+  cmp "$REPO/fzd.conf.example" "$XDG_CONFIG_HOME/fzd/fzd.conf"
+  cmp "$REPO/lib/global_format.py" "$DATA/lib/global_format.py"
   install_fzd --verify
   [ "$status" -eq 0 ]
   [[ "$output" == *'configuration was not executed'* ]]
@@ -360,7 +362,7 @@ STUB
   assert_installed
   local source="$BATS_TEST_TMPDIR/source"
   mkdir -p "$source/installer" "$source/shell" "$source/lib"
-  cp "$REPO/lib/"*.bash "$source/lib/"
+  cp "$REPO/lib/"*.bash "$REPO/lib/"*.py "$source/lib/"
   cp "$REPO/install.sh" "$REPO/fzd.sh" "$REPO/fzd.conf.example" "$REPO/LICENSE.txt" "$source/"
   cp "$REPO/installer/"*.bash "$source/installer/"
   cp "$REPO/shell/"* "$source/shell/"
@@ -368,6 +370,7 @@ STUB
   run bash "$source/install.sh" --noninteractive --deps none
   [ "$status" -eq 0 ]
   cmp "$source/fzd.sh" "$PREFIX/bin/fzd"
+  cmp "$source/lib/global_format.py" "$DATA/lib/global_format.py"
   install_fzd --verify
   [ "$status" -eq 0 ]
 }

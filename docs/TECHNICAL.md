@@ -147,7 +147,7 @@ The current checkout provides two choices:
 
 | Mode | Command | Behavior |
 | --- | --- | --- |
-| Simple (default) | `bash install.sh` | Required tools plus recommended eza, fd, bat, tree and file; shell integration and native Tab completion |
+| Simple (default) | `bash install.sh` | Required tools plus recommended Python 3, eza, fd, bat, tree and file; shell integration and native Tab completion |
 | Enhanced (opt-in) | `bash install.sh --enhanced` | Simple plus Chafa, Glow, a display clipboard provider, compatible inline engines and optional user font setup |
 
 Simple creates no fonts, terminal appearance changes or shell-wide suggestion engine.
@@ -316,7 +316,7 @@ filesystem index or background process. Uninstallation preserves this state.
 | Level | Tools |
 | --- | --- |
 | Required | Bash 4.4+, fzf >= 0.44.0 with the tested bindings, zoxide >= 0.9.0, plocate, GNU coreutils, findutils, flock (util-linux), standard Linux text utilities, and an editor |
-| Recommended | eza, fd/fdfind, bat/batcat, file, tree |
+| Recommended | Python 3 for faster global snapshots, eza, fd/fdfind, bat/batcat, file, tree |
 | Optional | Chafa, Glow, display clipboard provider, separately installed Lazygit, gio or trash-put for Trash, a compatible icon font, hexdump, tput |
 | Optional download | curl, CA certificates, tar, gzip |
 
@@ -469,7 +469,7 @@ is trusted **Bash code**, read by FZD rather than by zsh or the shell integratio
 Installation checks syntax without executing it.
 
 ```bash
-FZD_GLOBAL_BACKEND=auto           # auto | locate | cache | live
+FZD_GLOBAL_BACKEND=cache          # cache (default) | auto | locate | live
 FZD_GLOBAL_ROOTS=("$HOME" "/srv/media with spaces")
 FZD_GLOBAL_MINLEN=2
 FZD_GLOBAL_MAXDEPTH=6
@@ -477,16 +477,43 @@ FZD_GLOBAL_MAXRESULTS=5000
 FZD_EXCLUDES=".git,node_modules,.cache,.venv,dist,build"
 ```
 
-`auto` prefers locate, otherwise a fresh fd/find snapshot. `cache` filters that
-snapshot with fzf; `live` and `locate` reload literal case-insensitive queries.
+`cache` is the default: it prepares a fresh fd/find snapshot once per global
+overlay, then fuzzy-filters each keystroke in fzf without a query subprocess.
+Fresh installs and the runtime without a configuration file use the same Linux
+roots (`/etc`, `/opt`, `/srv`, `/home/$USER`), six-level depth, exclusions and
+5,000-result cap. Snapshots apply the cap before matching, so deeper, ignored or
+capped-out paths are outside that overlay; use a narrower root list, raise the
+limits or select indexed search for broader discovery.
+`auto` prefers locate, otherwise a fresh snapshot; `live` and `locate` reload
+literal case-insensitive queries. Existing user configurations keep their chosen
+backend on update.
 An unavailable or failed locate backend falls back to fd/find. Runtime search
 never rebuilds the system index. Plocate queries constrain their candidates to
 the configured roots before checking directory visibility, so unrelated Windows
 or network mounts do not hold up a Linux-root query. Candidate output is
 validated before formatting; existing paths are checked after scope/exclusion
-filtering, and formatted results stream into fzf. Scoped regular expressions
-require a database scan, trading some index-only query speed for predictable
-mount access. Prefer Linux roots under WSL; scanning Windows mounts
+filtering, and formatted results stream into fzf. Selective queries of at least
+four bytes use scoped indexed globs. A bounded 129-candidate probe detects
+queries that mostly match a common parent directory; those queries, and shorter
+queries, use the scoped regular-expression scan. The probe ceiling never replaces
+the configured result cap or truncates search coverage. Overlapping roots are
+deduplicated before querying. Seeded searches feed their initial results directly
+to fzf instead of triggering a second startup reload.
+Global data helpers reuse the parent session's resolved palette, like previews;
+they do not invoke Omarchy's theme utility again on every query.
+
+Whole fd/find snapshots use an optional Python 3 formatter for common exclusion
+globs. It emits the same path identities, escaped labels, colors and bounded
+batches as the Bash formatter. When Python or its installed helper is absent,
+or exclusions contain bracket, backslash or extended-glob syntax, FZD uses Bash.
+Python is not needed to open `lf`, run selective indexed searches, or use any
+existing feature. No snapshot is persisted between overlays. The snapshot depth,
+ignore-file behavior and pre-query result cap remain the same, so increasing
+preparation speed does not expand its coverage.
+See the [first-use performance report](../benchmarks/results/global-first-result/README.md)
+for measured opening costs, individual-key response and indexed-search tradeoffs.
+
+Prefer Linux roots under WSL; scanning Windows mounts
 can be slower. `FZD_GLOBAL_PATHS` remains supported; use `FZD_GLOBAL_ROOTS` for
 paths containing whitespace. A legacy `~/.fzd/fzd.conf` is copied only when the
 current configuration does not exist, leaving the original intact.

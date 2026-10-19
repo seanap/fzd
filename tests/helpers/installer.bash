@@ -30,7 +30,7 @@ setup() {
   local tool
   export _ZO_DATA_DIR="$BATS_TEST_TMPDIR/zoxide"
   unset _ZO_EXCLUDE_DIRS _ZO_RESOLVE_SYMLINKS _ZO_MAXAGE
-  for tool in zoxide bash sh env cat base64 sort mktemp install sha256sum readlink truncate find file tree micro cp mv rm rmdir mkdir chmod cmp tail uname tar gzip xz ps curl sleep kill wc grep head ln touch date tr awk sed cut ls timeout basename dirname realpath flock stat; do
+  for tool in python3 zoxide bash sh env cat base64 sort mktemp install sha256sum readlink truncate find file tree micro cp mv rm rmdir mkdir chmod cmp tail uname tar gzip xz ps curl sleep kill wc grep head ln touch date tr awk sed cut ls timeout basename dirname realpath flock stat; do
     ln -s "$(command -v "$tool")" "$TEST_BIN/$tool"
   done
   # shellcheck disable=SC2016 # Variables belong to the generated plocate stub.

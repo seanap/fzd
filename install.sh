@@ -190,7 +190,7 @@ if [[ -n $STAGE ]]; then
   install -Dm644 "$SCRIPT_DIR/shell/integration.sh" "$STAGE$PREFIX/share/fzd/integration.sh"
   install -Dm644 "$SCRIPT_DIR/shell/integration.zsh" "$STAGE$PREFIX/share/fzd/integration.zsh"
   install -Dm644 "$SCRIPT_DIR/shell/inline.sh" "$STAGE$PREFIX/share/fzd/inline.sh"
-  for module in "$SCRIPT_DIR/lib/"*.bash; do
+  for module in "$SCRIPT_DIR/lib/"*.bash "$SCRIPT_DIR/lib/"*.py; do
     install -Dm644 "$module" "$STAGE$PREFIX/share/fzd/lib/${module##*/}"
   done
   install -Dm644 "$SCRIPT_DIR/fzd.conf.example" "$STAGE$PREFIX/share/fzd/fzd.conf.example"
@@ -247,8 +247,8 @@ install_owned "$SCRIPT_DIR/fzd.sh" "$PREFIX/bin/fzd" 755
 install_owned "$SCRIPT_DIR/shell/integration.sh" "$DATA/integration.sh" 644
 install_owned "$SCRIPT_DIR/shell/integration.zsh" "$DATA/integration.zsh" 644
 install_owned "$SCRIPT_DIR/shell/inline.sh" "$DATA/inline.sh" 644
-for module in "$SCRIPT_DIR/lib/"*.bash; do
-  bash -n "$module"
+for module in "$SCRIPT_DIR/lib/"*.bash "$SCRIPT_DIR/lib/"*.py; do
+  [[ $module != *.bash ]] || bash -n "$module"
   install_owned "$module" "$DATA/lib/${module##*/}" 644
 done
 install_owned "$SCRIPT_DIR/fzd.conf.example" "$DATA/fzd.conf.example" 644

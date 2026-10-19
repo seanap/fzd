@@ -56,12 +56,13 @@ SH
   grep -q 'https://github.com/charmbracelet/glow/releases/download/v3.0.0/' "$CALLS"
   grep -q -- "--proto =https" "$CALLS"
   printf '# Glow fixture\n\n**Rendered Markdown**\n' >"$HOME/doc.md"
-  run "$PREFIX/bin/glow" --style dark --width 70 --pager=false -- "$HOME/doc.md"
+  run env PAGER=cat "$PREFIX/bin/glow" --style dark --width 70 --pager=false -- "$HOME/doc.md" </dev/null
   [ "$status" -eq 0 ]
   [[ "$output" == *'Glow'* && "$output" == *'fixture'* && "$output" == *$'\e['* && "$output" != *'# Glow fixture'* ]]
   export PATH="$PREFIX/bin:$PATH"
   export FZD_GLOW_STYLE=dark
-  run bash -euc 'source "$1"; FZD_PREVIEW_TIMEOUT=2; _glow_render 70 "$2"' _ "$REPO/fzd.sh" "$HOME/doc.md"
+  unset PAGER
+  run bash -euc 'source "$1"; FZD_PREVIEW_TIMEOUT=2; _glow_render 70 "$2"' _ "$REPO/fzd.sh" "$HOME/doc.md" <<<'unrelated piped input'
   [ "$status" -eq 0 ]
   [[ "$output" == *'Rendered Markdown'* && "$output" == *$'\e['* ]]
   run "$PREFIX/bin/fzd" --_preview "$(printf %s "$HOME/doc.md" | base64 | tr -d '\n')"

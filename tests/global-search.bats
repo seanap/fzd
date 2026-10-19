@@ -241,7 +241,7 @@ STUB
   run --separate-stderr bash "$FZD_SCRIPT" --_global_list --q needle
   [ "$status" -eq 0 ]
   assert_record_path "$FIXTURE_ROOT/needle"
-  run bash -euc 'mapfile -d "" -t args <"$1"; [[ " ${args[*]} " == *" --regex "* ]]; [[ " ${args[*]} " != *" -e "* ]]; [[ $2 =~ ${args[-2]} ]]; [[ ! /mnt/windows/needle =~ ${args[-2]} ]]; [[ ${args[-1]} == *needle* ]]' _ "$FZD_STUB_LOG" "$FIXTURE_ROOT"
+  run bash -euc 'mapfile -d "" -t args <"$1"; [[ " ${args[*]} " != *" --regex "* ]]; [[ " ${args[*]} " != *" -e "* ]]; [[ $2/needle == ${args[-1]} ]]; [[ /mnt/windows/needle != ${args[-1]} ]]; [[ $2-sibling/needle != ${args[-1]} ]]' _ "$FZD_STUB_LOG" "$FIXTURE_ROOT"
   [ "$status" -eq 0 ]
 }
 
@@ -262,5 +262,91 @@ STUB
     kill -0 "$producer"
     wait "$producer"
   ' _ "$FZD_SCRIPT" "$BATS_TEST_TMPDIR/streamed"
+  [ "$status" -eq 0 ]
+}
+
+@test "compiled scope and exclusions agree with literal roots and legacy glob policies" {
+  run bash -euc '
+    source "$1"
+    FZD_GLOBAL_ROOTS=("$2" "$2/other[1]|(literal)")
+    mkdir -p "${FZD_GLOBAL_ROOTS[@]}"
+    FZD_GLOBAL_FULLPATH=0
+    for exclusions in ".git,node_modules,proc/*,skip this" "@(skip|drop),literal|pipe"; do
+      FZD_EXCLUDES=$exclusions
+      _global_prepare
+      for path in "$2/file" "$2/.git/file" "$2/proc/a/file" "$2/skip this/file" "$2/skip/file" "$2/literal|pipe/file" "$2-sibling/file" "$2/other[1]|(literal)/file"; do
+        expected=1
+        for root in "${GLOBAL_ROOTS[@]}"; do
+          if [[ $path == "$root" || $path == "$root/"* ]]; then expected=0; break; fi
+        done
+        for pattern in "${GLOBAL_EXCLUDES[@]}"; do
+          pattern=${pattern%/}
+          if [[ -n $pattern && "$path/" == */$pattern/* ]]; then expected=1; fi
+        done
+        actual=0; _global_allowed "$path" || actual=$?
+        [[ $actual == "$expected" ]] || { printf "Mismatch: %s\n" "$path"; exit 1; }
+      done
+    done
+  ' _ "$FZD_SCRIPT" "$FIXTURE_ROOT"
+  [ "$status" -eq 0 ]
+}
+
+@test "a later scoped producer failure discards earlier results before live fallback" {
+  mkdir -p "$FIXTURE_ROOT/one/a/b/c/d/e/f" "$FIXTURE_ROOT/two"
+  local indexed="$FIXTURE_ROOT/one/a/b/c/d/e/f/needle-indexed-only"
+  touch "$indexed" "$FIXTURE_ROOT/two/needle-live"
+  printf 'FZD_GLOBAL_ROOTS=(%q %q)\n' "$FIXTURE_ROOT/one" "$FIXTURE_ROOT/two" >"$FZD_CONF_FILE"
+  export FZD_GLOBAL_BACKEND=locate FZD_PARTIAL_RESULT="$indexed" FZD_FAIL_ROOT="$FIXTURE_ROOT/two"
+  cat >"$TEST_BIN/plocate" <<'SH'
+#!/usr/bin/env bash
+last=${!#}
+[[ $last != "$FZD_FAIL_ROOT/"* ]] || exit 2
+printf '%s\0' "$FZD_PARTIAL_RESULT"
+SH
+  chmod +x "$TEST_BIN/plocate"
+  run --separate-stderr bash "$FZD_SCRIPT" --_global_list --q needle
+  [ "$status" -eq 0 ]
+  [ "${#lines[@]}" -eq 1 ]
+  assert_record_path "$FIXTURE_ROOT/two/needle-live"
+  assert_no_record_path "$indexed"
+  [[ "$stderr" == *'falling back'* ]]
+}
+
+@test "indexed probes close descriptors and reap producers after repeated searches" {
+  use_locate_stub
+  export FZD_GLOBAL_BACKEND=locate
+  touch "$FIXTURE_ROOT/needle"
+  set_results "$FIXTURE_ROOT/needle"
+  run bash -euc '
+    source "$1"; RECENT_PENDING=(); FZD_TEMP_FILES=()
+    _fzd_paths; _fzd_init --_global_list
+    trap _cleanup EXIT
+    before=(/proc/$$/fd/*)
+    for attempt in {1..10}; do _global_list needle >/dev/null; done
+    after=(/proc/$$/fd/*)
+    [[ ${#before[@]} == ${#after[@]} ]]
+    [[ -z $(jobs -pr) && -z ${FZD_GLOBAL_PRODUCER:-} ]]
+  ' _ "$FZD_SCRIPT"
+  [ "$status" -eq 0 ]
+}
+
+@test "cancelling an indexed query terminates and reaps its active producer" {
+  export FZD_GLOBAL_BACKEND=locate FZD_PRODUCER_PID="$BATS_TEST_TMPDIR/producer.pid"
+  cat >"$TEST_BIN/plocate" <<'SH'
+#!/usr/bin/env bash
+printf '%s\n' "$$" >"$FZD_PRODUCER_PID"
+exec sleep 30
+SH
+  chmod +x "$TEST_BIN/plocate"
+  run bash -euc '
+    bash "$1" --_global_list --q needle >/dev/null 2>&1 & helper=$!
+    trap '\''kill "$helper" "${producer:-$helper}" 2>/dev/null || true'\'' EXIT
+    for attempt in {1..100}; do [[ ! -s $FZD_PRODUCER_PID ]] || break; sleep .01; done
+    read -r producer <"$FZD_PRODUCER_PID"
+    kill -TERM "$helper"
+    wait "$helper" || true
+    ! kill -0 "$producer" 2>/dev/null
+    trap - EXIT
+  ' _ "$FZD_SCRIPT"
   [ "$status" -eq 0 ]
 }

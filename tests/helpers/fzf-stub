@@ -4,6 +4,9 @@ for arg; do
   case "$arg" in --select-1 | --filter=*) exit 0 ;; esac
 done
 if [[ -n ${FZD_STUB_FZF_LOG:-} ]]; then printf '%s\n' "$@" >>"$FZD_STUB_FZF_LOG"; fi
+# Model a loaded picker before performing the scripted selection. Returning
+# before its seeded input arrives races background diagnostics into test output.
+cat >/dev/null
 if [[ -n ${FZD_STUB_PLAN:-} ]]; then
   IFS=$'\t' read -r FZD_STUB_ACTION encoded <"$FZD_STUB_PLAN" || exit 130
   tail -n +2 "$FZD_STUB_PLAN" >"$FZD_STUB_PLAN.next"

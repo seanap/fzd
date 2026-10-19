@@ -10,7 +10,7 @@ arch=('any')
 url='https://github.com/seanap/fzd'
 license=('MIT')
 depends=('plocate' 'bash>=4.4' 'fzf>=0.44.0' 'zoxide>=0.9.0' 'coreutils>=8.28' 'findutils' 'util-linux' 'grep' 'sed' 'gawk' 'micro')
-optdepends=('eza: recommended icon and color directory previews' 'fd: fast filesystem search' 'bat: colorized file previews'
+optdepends=('python: faster global search snapshots' 'eza: recommended icon and color directory previews' 'fd: fast filesystem search' 'bat: colorized file previews'
   'file: file type detection' 'tree: directory previews'
   'glib2: recoverable Trash through gio' 'trash-cli: alternative Trash provider'
   'chafa: image previews' 'glow: Markdown previews' 'wl-clipboard: Wayland clipboard' 'xclip: X11 clipboard')

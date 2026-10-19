@@ -11,8 +11,9 @@ dpkg-deb -x "$package" "$output/root"
 app=$output/root/usr/bin/fzd
 diff <(tail -n +2 "$repo/fzd.sh") <(tail -n +2 "$app")
 for module in state operations ui; do cmp "$repo/lib/$module.bash" "$output/root/usr/share/fzd/lib/$module.bash"; done
+cmp "$repo/lib/global_format.py" "$output/root/usr/share/fzd/lib/global_format.py"
 cmp "$repo/shell/integration.sh" "$output/root/usr/share/fzd/integration.sh"
-sha256sum "$package" "$app" "$repo/fzd.sh" "$output/root/usr/share/fzd/lib/"*.bash >"$output/runtime.sha256"
+sha256sum "$package" "$app" "$repo/fzd.sh" "$output/root/usr/share/fzd/lib/"*.bash "$output/root/usr/share/fzd/lib/"*.py >"$output/runtime.sha256"
 for count in 10 100 1000 10000; do bash "$repo/benchmarks/local.sh" "$app" "$count" prepare; done
 for component in candidates local; do
   printf -v source_command 'bash %q %q {count}' "$repo/benchmarks/$component.sh" "$repo/fzd.sh"
