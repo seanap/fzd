@@ -232,3 +232,35 @@ STUB
   [ "${#lines[@]}" -eq 1 ]
   assert_record_path "$FZD_PARTIAL_RESULT"
 }
+
+@test "plocate restricts visibility checks to configured roots without requesting global existence checks" {
+  use_locate_stub
+  export FZD_GLOBAL_BACKEND=locate FZD_GLOBAL_PATHS="$FIXTURE_ROOT"
+  printf text >"$FIXTURE_ROOT/needle"
+  set_results "$FIXTURE_ROOT/needle"
+  run --separate-stderr bash "$FZD_SCRIPT" --_global_list --q needle
+  [ "$status" -eq 0 ]
+  assert_record_path "$FIXTURE_ROOT/needle"
+  run bash -euc 'mapfile -d "" -t args <"$1"; [[ " ${args[*]} " == *" --regex "* ]]; [[ " ${args[*]} " != *" -e "* ]]; [[ $2 =~ ${args[-2]} ]]; [[ ! /mnt/windows/needle =~ ${args[-2]} ]]; [[ ${args[-1]} == *needle* ]]' _ "$FZD_STUB_LOG" "$FIXTURE_ROOT"
+  [ "$status" -eq 0 ]
+}
+
+@test "validated locate results stream before later filesystem metadata checks finish" {
+  use_locate_stub
+  export FZD_GLOBAL_BACKEND=locate
+  touch "$FIXTURE_ROOT/needle-first" "$FIXTURE_ROOT/needle-slow"
+  set_results "$FIXTURE_ROOT/needle-first" "$FIXTURE_ROOT/needle-slow"
+  run bash -euc '
+    source "$1"
+    RECENT_PENDING=(); FZD_TEMP_FILES=()
+    _fzd_paths; _fzd_init --_global_list
+    trap _cleanup EXIT
+    _global_allowed() { [[ $1 != *-slow ]] || sleep 2; }
+    _global_list needle >"$2" & producer=$!
+    for attempt in {1..20}; do [[ ! -s $2 ]] || break; sleep .05; done
+    [[ -s $2 ]] || { kill "$producer"; wait "$producer" || true; exit 1; }
+    kill -0 "$producer"
+    wait "$producer"
+  ' _ "$FZD_SCRIPT" "$BATS_TEST_TMPDIR/streamed"
+  [ "$status" -eq 0 ]
+}

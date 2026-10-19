@@ -450,6 +450,14 @@ _preview_dir() {
   fi
   ls -A -- "$dir"
 }
+_glow_render() {
+  local width=$1 file=$2 style=${FZD_GLOW_STYLE:-${GLOW_STYLE:-auto}}
+  # Glow replaces even a configured theme with its plain "notty" style when
+  # stdout is captured unless --style is explicit. Keep auto light/dark choice,
+  # with an explicit user override for a built-in theme or JSON style file.
+  _timeout_wrap "$FZD_PREVIEW_TIMEOUT" glow --style "$style" --width "$width" --pager=false -- "$file"
+}
+
 _preview_file() {
   local file="$1" mime=''
   local is_text=0
@@ -478,7 +486,7 @@ _preview_file() {
     case ${file,,} in *.md|*.markdown|*.mdown|*.mkd)
       if _have glow && [[ $(stat -c %s -- "$file" 2>/dev/null) =~ ^[0-9]+$ ]] &&
         (( $(stat -c %s -- "$file") <= 1048576 )) &&
-        rendered=$(_timeout_wrap "$FZD_PREVIEW_TIMEOUT" glow --width "$width" --pager=false -- "$file" 2>/dev/null); then
+        rendered=$(_glow_render "$width" "$file" 2>/dev/null); then
         printf '%s\n' "$rendered"; return 0
       fi ;;
     esac
@@ -694,29 +702,61 @@ _global_index() {
   _global_live_list ""
 }
 
+_global_regex_quote() {
+  local value=$1 char index
+  REPLY=''
+  for ((index=0; index<${#value}; index++)); do
+    char=${value:index:1}
+    case "$char" in
+      '.'|'['|']'|'('|')'|'{'|'}'|'*'|'+'|'?'|'^'|'$'|'|'|\\) REPLY+=\\ ;;
+    esac
+    REPLY+=$char
+  done
+}
+
 _global_list() {
-  local query=$* locate_bin='' source_file error_file pattern rc=0
+  local query=$* locate_bin='' source_file error_file pattern root scope='' rc=0
   _global_prepare || return
   ((${#query} >= FZD_GLOBAL_MINLEN)) || return 0
   if [[ "$FZD_GLOBAL_BACKEND" != live && "$FZD_GLOBAL_BACKEND" != cache ]]; then
     locate_bin=$(command -v plocate 2>/dev/null || command -v locate 2>/dev/null || true)
   fi
   if [[ "$FZD_GLOBAL_BACKEND" != live && "$FZD_GLOBAL_BACKEND" != cache && -n "$locate_bin" ]]; then
-    local arguments=() statuses=()
+    local arguments=()
     [[ -n "$FZD_LOCATE_DBS" ]] && arguments+=(-d "$FZD_LOCATE_DBS")
-    [[ "$FZD_GLOBAL_FULLPATH" == 0 ]] && arguments+=(-b)
     # Locate glob syntax is escaped so every backend searches a literal substring.
     pattern=${query//\\/\\\\}; pattern=${pattern//\*/\\*}; pattern=${pattern//\?/\\?}
     pattern=${pattern//\[/\\[}; pattern=${pattern//\]/\\]}
+    if [[ ${locate_bin##*/} == plocate ]]; then
+      # plocate checks directory visibility even without -e. Restrict its
+      # candidates before those checks, avoiding unrelated WSL/network mounts.
+      for root in "${GLOBAL_ROOTS[@]}"; do
+        _global_regex_quote "$root"
+        [[ -z $scope ]] || scope+='|'
+        if [[ $root == / ]]; then scope+='/'; else scope+="$REPLY($|/)"; fi
+      done
+      _global_regex_quote "$query"
+      pattern=$REPLY
+      [[ $FZD_GLOBAL_FULLPATH == 1 ]] || pattern="(^|/)[^/]*${pattern}[^/]*$"
+      # Multiple plocate patterns are ANDed. Both are literal escaped EREs.
+      arguments+=(-0 -i --regex -- "^($scope)" "$pattern")
+    else
+      [[ "$FZD_GLOBAL_FULLPATH" == 0 ]] && arguments+=(-b)
+      arguments+=(-0 -i -- "*$pattern*")
+    fi
     _make_temp || return 1; source_file=$REPLY
     _make_temp || return 1; error_file=$REPLY
-    if env -u LOCATE_PATH "$locate_bin" "${arguments[@]}" -0 -i -e -- "*$pattern*" 2> "$error_file" | _global_format "$query" > "$source_file"; then
+    # Do not ask locate to stat every match across the system. In particular,
+    # Windows/network mounts can stall WSL before we discard out-of-scope paths.
+    # Validate the producer first, then stream formatting; _global_format checks
+    # existence only after roots/exclusions have been applied.
+    if env -u LOCATE_PATH "$locate_bin" "${arguments[@]}" > "$source_file" 2> "$error_file"; then
       rc=0
     else
-      statuses=("${PIPESTATUS[@]}")
+      rc=$?
       # plocate uses 1 for both no matches and database errors. Diagnostics
       # distinguish an empty search from a failed producer requiring fallback.
-      if ((statuses[1] == 0)) && { ((statuses[0] == 141)) || { ((statuses[0] == 1)) && [[ ! -s "$error_file" ]]; }; }; then
+      if ((rc == 1)) && [[ ! -s "$error_file" ]]; then
         rc=0
       else
         rc=1
@@ -725,7 +765,7 @@ _global_list() {
     cat -- "$error_file" >&2
     _remove_temp "$error_file"
     if ((rc == 0)); then
-      cat -- "$source_file"
+      _global_format "$query" < "$source_file"
       _remove_temp "$source_file"
       return 0
     fi

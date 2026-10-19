@@ -98,7 +98,7 @@ _font_setup() {
         package_for "$tool"
         mapped+=("$REPLY")
       done
-      install_packages "${mapped[@]}"
+      install_packages "${mapped[@]}" || return 1
     fi
     # Installing fontconfig may reveal an already installed compatible font.
     _font_find_compatible || _font_install || {

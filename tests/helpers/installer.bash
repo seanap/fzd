@@ -53,7 +53,7 @@ assert_installed() {
 }
 dependency_shell() {
   # Function-level package-manager tests use real installer logic and stubs.
-  run bash -c 'set -euo pipefail; die() { printf "%s\n" "$*"; exit 1; }; log() { :; }; source "$1/installer/dependencies.bash"; PM=$2; NONINTERACTIVE=$3; install_packages fzf fzf tree' _ "$REPO" "$1" "${2:-1}"
+  run bash -c 'set -euo pipefail; die() { printf "%s\n" "$*"; exit 1; }; warn() { printf "%s\n" "$*" >&2; }; log() { :; }; source "$1/installer/dependencies.bash"; PM=$2; NONINTERACTIVE=$3; install_packages fzf fzf tree' _ "$REPO" "$1" "${2:-1}"
 }
 
 inject_fault() {

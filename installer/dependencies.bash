@@ -69,23 +69,47 @@ install_packages() {
   ((${#packages[@]})) || return 0
   log "Package transaction ($PM): ${packages[*]}"
   if ((EUID != 0)); then
-    have sudo || die "sudo is unavailable. Install these packages as root: ${packages[*]}"
+    have sudo || {
+      warn "sudo is unavailable. Install these packages as root: ${packages[*]}"
+      return 1
+    }
     if ((NONINTERACTIVE)); then
-      sudo -n -v || die "sudo authentication is required. Run sudo -v first, or install packages manually: ${packages[*]}"
+      sudo -n -v || {
+        warn "sudo authentication is required. Run sudo -v first, or install packages manually: ${packages[*]}"
+        return 1
+      }
       privilege=(sudo -n)
     else
-      sudo -v || die 'sudo authentication failed; no FZD files were changed'
+      sudo -v || {
+        warn 'sudo authentication failed; no FZD files were changed'
+        return 1
+      }
       privilege=(sudo)
     fi
   fi
   case "$PM" in
   apt)
-    "${privilege[@]}" env DEBIAN_FRONTEND=noninteractive apt-get update </dev/null || die 'apt metadata refresh failed'
+    if [[ ${APT_REFRESHED:-0} != 1 ]]; then
+      "${privilege[@]}" env DEBIAN_FRONTEND=noninteractive apt-get update </dev/null || {
+        warn 'apt metadata refresh failed'
+        return 1
+      }
+      APT_REFRESHED=1
+    fi
     "${privilege[@]}" env DEBIAN_FRONTEND=noninteractive apt-get install --no-install-recommends -y "${packages[@]}" \
-      -o Dpkg::Options::=--force-confdef -o Dpkg::Options::=--force-confold </dev/null || die 'apt installation failed'
+      -o Dpkg::Options::=--force-confdef -o Dpkg::Options::=--force-confold </dev/null || {
+      warn 'apt installation failed'
+      return 1
+    }
     ;;
-  pacman) "${privilege[@]}" pacman -S --needed --noconfirm "${packages[@]}" </dev/null || die 'pacman installation failed (refresh/upgrade the system separately)' ;;
-  dnf) "${privilege[@]}" dnf install -y "${packages[@]}" </dev/null || die 'dnf installation failed' ;;
+  pacman) "${privilege[@]}" pacman -S --needed --noconfirm "${packages[@]}" </dev/null || {
+    warn 'pacman installation failed (refresh/upgrade the system separately)'
+    return 1
+  } ;;
+  dnf) "${privilege[@]}" dnf install -y "${packages[@]}" </dev/null || {
+    warn 'dnf installation failed'
+    return 1
+  } ;;
   esac
 }
 
@@ -140,16 +164,27 @@ ensure_recommended() {
   detect_pm
   for tool in "${optional[@]}"; do
     package_for "$tool"
+    if [[ $tool == glow && $PM == apt ]] && have apt-cache && ! apt-cache show glow >/dev/null 2>&1; then
+      GLOW_BOOTSTRAP=1
+      log 'Glow is unavailable in the configured APT repositories; using a verified upstream binary.'
+      continue
+    fi
     packages+=("$REPLY")
   done
-  if ! (install_packages "${packages[@]}"); then
+  if ! install_packages "${packages[@]}"; then
     for tool in "${optional[@]}"; do
       package_for "$tool"
-      (install_packages "$REPLY") || warn "Optional $tool unavailable; keeping the existing fallback"
+      [[ $tool != glow || ${GLOW_BOOTSTRAP:-0} != 1 ]] || continue
+      install_packages "$REPLY" || warn "Optional $tool unavailable; keeping the existing fallback"
     done
   fi
   collect_recommended
-  ((${#MISSING[@]} == 0)) || warn "Recommended tools still missing: ${MISSING[*]} (FZD will use available fallbacks)"
+  local -a remaining=()
+  for tool in "${MISSING[@]}"; do
+    [[ $tool != glow || ${GLOW_BOOTSTRAP:-0} != 1 ]] || continue
+    remaining+=("$tool")
+  done
+  ((${#remaining[@]} == 0)) || warn "Recommended tools still missing: ${remaining[*]} (FZD will use available fallbacks)"
   return 0
 }
 
@@ -164,7 +199,7 @@ ensure_dependencies() {
       package_for "$tool"
       packages+=("$REPLY")
     done
-    install_packages "${packages[@]}"
+    install_packages "${packages[@]}" || die 'Required dependency installation failed; no FZD files were changed'
     collect_missing
     ((${#MISSING[@]} == 0)) || die "Still missing after package installation: ${MISSING[*]}"
   fi
@@ -179,6 +214,51 @@ ensure_dependencies() {
   version_ge "${zoxide_version#zoxide }" 0.9.0 || die 'zoxide >= 0.9.0 is required; upgrade your distribution package'
   if ! printf '' | base64 -w 0 >/dev/null 2>&1; then die 'GNU-compatible base64 with -w 0 is required; install coreutils'; fi
   if ! printf '\0' | sort -zf >/dev/null 2>&1; then die 'GNU-compatible sort with -zf is required; install coreutils'; fi
+}
+
+download_glow() {
+  local arch digest expected member
+  arch=$(uname -m)
+  case "$arch" in
+  x86_64) expected=13e05e4b2acc18d2aee44291aefe6325b077ec321b631a0cfa780e8e3bc33f78 ;;
+  aarch64)
+    arch=arm64
+    expected=810c39f4691feb75e675a5f5f54b9fa091354e7599d9cf9c9fc9b97e47a99759
+    ;;
+  *)
+    warn 'No pinned Glow binary for this architecture'
+    return 1
+    ;;
+  esac
+  # The digest is pinned in FZD, not read from the downloaded archive.
+  member=glow_3.0.0_Linux_$arch/glow
+  have curl && have tar && have gzip || return 1
+  curl --fail --location --proto '=https' --proto-redir '=https' --tlsv1.2 \
+    --connect-timeout 15 --max-time 120 --retry 2 --output "$TX/glow.tar.gz" \
+    "https://github.com/charmbracelet/glow/releases/download/v3.0.0/glow_3.0.0_Linux_$arch.tar.gz" || return 1
+  digest=$(sha256sum <"$TX/glow.tar.gz") || return 1
+  [[ ${digest%% *} == "$expected" ]] || {
+    warn 'Glow SHA256 mismatch; download discarded'
+    return 1
+  }
+  tar -xOzf "$TX/glow.tar.gz" "$member" >"$TX/glow" || return 1
+  chmod 755 "$TX/glow" || return 1
+  XDG_CONFIG_HOME="$TX/glow-probe" "$TX/glow" --version >/dev/null 2>&1 || return 1
+}
+
+install_glow() {
+  [[ ${GLOW_BOOTSTRAP:-0} == 1 ]] || return 0
+  # Never replace an unrelated executable or nonexecutable user file.
+  if [[ -e $PREFIX/bin/glow || -L $PREFIX/bin/glow ]]; then
+    warn "Existing $PREFIX/bin/glow preserved; install Glow manually to enable Markdown rendering"
+    return 0
+  fi
+  if ! download_glow; then
+    warn 'Optional Glow download failed; keeping Markdown preview fallback'
+    return 0
+  fi
+  install_owned "$TX/glow" "$PREFIX/bin/glow" 755
+  log "Installed checksum-verified Glow 3.0.0 at $PREFIX/bin/glow"
 }
 
 locate_index_ready() {

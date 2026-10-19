@@ -63,6 +63,7 @@ PREFIX=${HOME:?HOME must be set}/.local
 [[ $SCRIPT_DIR != */share/fzd ]] || PREFIX=${SCRIPT_DIR%/share/fzd}
 PREFIX_SET=0 DEPS=recommended DEPS_SET=0 NONINTERACTIVE=1 SHELL_TARGET=both NO_CONFIG=0 ADOPT=0
 INLINE_SUGGESTIONS=keep BLESH_PATH='' AUTOSUGGEST_PATH='' ENHANCED=0 OMARCHY_LAUNCHER=none NO_UPDATEDB=0
+APT_REFRESHED=0 GLOW_BOOTSTRAP=0
 BASH_RC=${FZD_BASH_RC:-$HOME/.bashrc}
 ZSH_RC=${FZD_ZSH_RC:-${ZDOTDIR:-$HOME}/.zshrc}
 MODE=install STAGE='' FZF_VERSION='' FZF_SHA256='' JOURNAL_COUNT=0
@@ -239,6 +240,7 @@ fi
 ensure_dependencies
 load_manifest
 begin_transaction
+install_glow
 [[ -z $FZF_VERSION ]] || download_fzf
 [[ $INLINE_SUGGESTIONS != 1 ]] || _inline_install_blesh
 install_owned "$SCRIPT_DIR/fzd.sh" "$PREFIX/bin/fzd" 755
@@ -271,6 +273,9 @@ else
     [[ ${FILE_PATHS[index]} != "$PREFIX/bin/fzf" ]] || record file "${FILE_PATHS[index]}" "${FILE_HASHES[index]}"
   done
 fi
+for index in "${!FILE_PATHS[@]}"; do
+  [[ ${FILE_PATHS[index]} != "$PREFIX/bin/glow" ]] || record file "${FILE_PATHS[index]}" "${FILE_HASHES[index]}"
+done
 
 if ((NO_CONFIG == 0)) && [[ ! -e $CFG && ! -L $CFG ]]; then
   source_config=$SCRIPT_DIR/fzd.conf.example

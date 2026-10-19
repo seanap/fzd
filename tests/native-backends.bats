@@ -56,6 +56,19 @@ setup() { setup_fixture; }
   [ -z "$stderr" ]
 }
 
+@test "scoped plocate escapes regex characters in roots and queries and retains newline names" {
+  FIXTURE_ROOT+='/literal[1].(a)+$^|?'
+  mkdir -p "$FIXTURE_ROOT"
+  local path="$FIXTURE_ROOT/"$'needle[2].(b)+$^|?\nlast'
+  touch "$path"
+  export FZD_GLOBAL_PATHS="$FIXTURE_ROOT"
+  private_locate
+  run --separate-stderr bash "$FZD_SCRIPT" --_global_list --q 'needle[2].(b)+$^|?'
+  [ "$status" -eq 0 ]
+  assert_record_path "$path"
+  [ -z "$stderr" ]
+}
+
 @test "real plocate missing database falls back to the filesystem" {
   printf text >"$FIXTURE_ROOT/needle-file"
   private_locate

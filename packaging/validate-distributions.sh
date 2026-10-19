@@ -30,6 +30,10 @@ compat="$repo/.test-work/compat"
   printf 'Prepare suggestion fixtures first: bash dev/prepare-shell-compat.sh\n' >&2
   exit 2
 }
+[[ -f $compat/glow_3.0.0_Linux_x86_64.tar.gz ]] || {
+  printf 'Prepare Glow fixture first: bash dev/prepare-glow-test.sh\n' >&2
+  exit 2
+}
 [[ -f $fixture && $(uname -m) == x86_64 ]] || {
   printf 'Prepare the x86_64 fixture first: bash dev/prepare-fzf-test.sh\n' >&2
   exit 2

@@ -75,6 +75,9 @@ with `updatedb` when needed. Existing indexing exclusions and schedules stay in
 place. Use `--no-updatedb` to skip installer-triggered initialization; see the
 [indexing guidance](docs/TECHNICAL.md#plocate-readiness-and-package-indexing).
 
+On Ubuntu/Debian, Enhanced uses a checksum-verified Glow download when your
+configured repositories do not provide it; no additional APT repository is added.
+
 <details>
 <summary>Packages, manual installation, updates and removal</summary>
 

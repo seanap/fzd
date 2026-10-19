@@ -108,10 +108,12 @@ theme_fixture() {
   printf '#!/bin/sh\nprintf "%%s\\n" "$@" >"$FZD_TEST_LOG"\necho markdown\nif [ "${RENDER_SLEEP:-0}" = 1 ]; then sleep 3; fi\nexit "${RENDER_STATUS:-0}"\n' >"$TEST_BIN/glow"
   chmod +x "$TEST_BIN/glow"
   export FZF_PREVIEW_COLUMNS=90
+  export GLOW_STYLE=user-style.json
   run bash -euc 'source "$1/fzd.sh"; FZD_PREVIEW_TIMEOUT=1; FZD_PREVIEW_MAX_LINES=200; _preview_file "$2"' _ "$FZD_REPO" "$FIXTURE_ROOT/README.md"
   [ "$status" -eq 0 ]
   [ "$output" = markdown ]
-  ! grep -q style "$FZD_TEST_LOG"
+  grep -q -- '--style' "$FZD_TEST_LOG"
+  grep -q 'user-style.json' "$FZD_TEST_LOG"
   grep -q -- '--pager=false' "$FZD_TEST_LOG"
   for variable in RENDER_STATUS RENDER_SLEEP; do
     export "$variable=1"

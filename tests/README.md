@@ -49,6 +49,7 @@ plocate, and assert that successful locate checks did not silently fall back.
 | filesystem.bats | NUL-safe local listing, byte-exact paths, previews, permissions, root navigation |
 | global-search.bats | Injection, scope, excludes, labels, limits, fallback, symlinks, unusual names |
 | native-backends.bats | Real fd and private plocate databases, literal queries, depth, failures |
+| glow-installer.bats | Verified upstream Glow installation when APT lacks a package, real Markdown rendering, checksum/download failures, reuse and rollback |
 | navigation.bats | Deterministic action sequences, stale results, selection restoration, exit codes |
 | preview.bats | MIME policy, renderer options, exact paths, binary fallback and missing optional tools |
 | recovery.bats | Failed runtime creation, failed mktemp, normal cleanup, interrupted search |
@@ -115,6 +116,17 @@ extracts plocate/liburing under `.test-work/tools/`. Tests build databases roote
 only at disposable fixtures, with all system pruning policies explicitly
 overridden. They never rebuild the system locate database. A system installation
 of plocate/updatedb also works; preparation is not run automatically.
+
+To prepare the checksum-verified Glow 3.0.0 x86_64 fixture without installing it:
+
+```bash
+bash dev/prepare-glow-test.sh
+bash tests/run.sh tests/glow-installer.bats
+```
+
+The archive stays under `.test-work/compat/`. Hosted CI prepares it for both fzf
+configurations and all distribution containers; the tests redirect downloads to
+that local archive and install only into disposable homes and prefixes.
 
 The filename-injection regression uses `$(printf hit > FZD_INJECTION_MARKER)` in
 a filename. The original indexer created that marker in its disposable working

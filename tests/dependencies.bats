@@ -159,3 +159,11 @@ load helpers/installer
   grep -q '<Dpkg::Options::=--force-confdef>' "$CALLS"
   grep -q '<Dpkg::Options::=--force-confold>' "$CALLS"
 }
+
+@test "required optional and retry transactions share one APT metadata refresh" {
+  stub_managers
+  run bash -euc 'source "$1/installer/dependencies.bash"; warn() { echo "$*"; }; log() { :; }; PM=apt; NONINTERACTIVE=1; install_packages plocate; install_packages eza chafa; install_packages tree' _ "$REPO"
+  [ "$status" -eq 0 ]
+  [ "$(grep -c 'apt-get <update>' "$CALLS")" -eq 1 ]
+  [ "$(grep -c 'apt-get <install>' "$CALLS")" -eq 3 ]
+}

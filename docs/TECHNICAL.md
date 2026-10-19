@@ -479,8 +479,14 @@ FZD_EXCLUDES=".git,node_modules,.cache,.venv,dist,build"
 
 `auto` prefers locate, otherwise a fresh fd/find snapshot. `cache` filters that
 snapshot with fzf; `live` and `locate` reload literal case-insensitive queries.
-An unavailable or failed locate backend falls back to fd/find. No system index
-is built automatically. Prefer Linux roots under WSL; scanning Windows mounts
+An unavailable or failed locate backend falls back to fd/find. Runtime search
+never rebuilds the system index. Plocate queries constrain their candidates to
+the configured roots before checking directory visibility, so unrelated Windows
+or network mounts do not hold up a Linux-root query. Candidate output is
+validated before formatting; existing paths are checked after scope/exclusion
+filtering, and formatted results stream into fzf. Scoped regular expressions
+require a database scan, trading some index-only query speed for predictable
+mount access. Prefer Linux roots under WSL; scanning Windows mounts
 can be slower. `FZD_GLOBAL_PATHS` remains supported; use `FZD_GLOBAL_ROOTS` for
 paths containing whitespace. A legacy `~/.fzd/fzd.conf` is copied only when the
 current configuration does not exist, leaving the original intact.
@@ -746,18 +752,27 @@ Chafa uses `--format=symbols --polite=on --animate=off`, disabling probes with
 terminal-specific pixel protocols and tmux passthrough. This is portable across
 Foot, Alacritty, Ghostty and Kitty, but native GUI rendering on these terminals
 still needs platform validation. Unsupported Chafa versions or failed renderers
-fall back cleanly. SVG is left to existing file/text handling. Glow preserves
-user style/configuration; no hard-coded light/dark theme is forced. Renderer
+fall back cleanly. SVG is left to existing file/text handling. Glow receives an
+explicit `auto` style so captured output renders Markdown instead of its plain
+non-terminal style. Set `FZD_GLOW_STYLE` in fzd.conf (or export `GLOW_STYLE`) to
+select `dark`, `light` or a custom JSON style file. The preview flag takes
+precedence over Glow's YAML style setting; other Glow configuration remains
+available. No hard-coded light/dark theme is forced. Renderer
 output is buffered until success so failures/timeouts do not mix partial output
 with fallback text. Preview timeout and size limits remain in force. See the
 [Chafa manual](https://hpjansson.org/chafa/man/) and
 [Glow documentation](https://github.com/charmbracelet/glow#usage).
 
 Enhanced attempts missing Chafa/Glow and an appropriate clipboard provider through
-the native package manager. On repositories lacking a package (notably Glow on
-some Debian/Ubuntu releases), it reports the missing optional tool and preserves
-the core install; it never adds a third-party repository. Install that utility
-through its upstream instructions to activate the feature. Headless installs skip
+the native package manager. When APT has no Glow package, Enhanced downloads
+the official Glow 3.0.0 Linux archive for x86_64 or arm64 and verifies its pinned
+SHA256 before extracting or executing the binary. The download goes under the
+installation transaction, and the binary is installed at `PREFIX/bin/glow`;
+later failures roll it back. Updates reuse existing Glow tools, and FZD uninstall
+retains the shared binary. No third-party repository is added. A download failure
+or unsupported architecture keeps the core installation and bat/head fallback.
+`--deps none` disables this automatic download. APT metadata is refreshed once
+per installer run, including optional package retries. Headless installs skip
 clipboard packages. Existing fonts and suggestions are reused as described above.
 
 ## Plocate readiness and package indexing

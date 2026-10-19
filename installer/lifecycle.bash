@@ -167,6 +167,7 @@ delete_file() {
 
 owned_file() {
   case "$1" in
+  "$PREFIX/bin/glow") return 0 ;;
   "$PREFIX/bin/fzd" | "$PREFIX/bin/fzf" | "$DATA/integration.sh" | "$DATA/integration.zsh" | "$DATA/inline.sh" | "$DATA/fzd.conf.example" | "$DATA/LICENSE.txt" | "$DATA/install.sh" | "$DATA/installer/dependencies.bash" | "$DATA/installer/lifecycle.bash" | "$DATA/installer/inline.bash" | "$DATA/installer/fonts.bash" | "$DATA/lib/state.bash" | "$DATA/lib/operations.bash" | "$DATA/launcher.bash" | "$DATA/launcher.conf" | "$DATA/installer/desktop.bash" | "$DATA/lib/ui.bash" | "$DATA/lib/command.bash" | "$DATA/lib/theme.bash" | "$DATA/lib/integrations.bash") return 0 ;;
   *) return 1 ;;
   esac
@@ -407,8 +408,8 @@ uninstall_files() {
   for path in "${RC_PATHS[@]}"; do edit_rc "$path" remove; done
   for index in "${!FILE_PATHS[@]}"; do
     path=${FILE_PATHS[index]}
-    if [[ $path == "$PREFIX/bin/fzf" ]]; then
-      log "Preserving user-local fzf dependency: $path"
+    if [[ $path == "$PREFIX/bin/fzf" || $path == "$PREFIX/bin/glow" ]]; then
+      log "Preserving user-local ${path##*/} dependency: $path"
       continue
     fi
     if [[ -f $path && ! -L $path ]]; then
