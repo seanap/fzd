@@ -70,6 +70,11 @@ FZD lives under `~/.local`,
 Shell setup in `~/.config/fzd/shell.bash` or `shell.zsh`. 
 Missing system packages need root or cached sudo authorization (`sudo -v`).
 
+Both modes install missing plocate tools and initialize the default search index
+with `updatedb` when needed. Existing indexing exclusions and schedules stay in
+place. Use `--no-updatedb` to skip installer-triggered initialization; see the
+[indexing guidance](docs/TECHNICAL.md#plocate-readiness-and-package-indexing).
+
 <details>
 <summary>Packages, manual installation, updates and removal</summary>
 

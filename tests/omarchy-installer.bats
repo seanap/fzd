@@ -19,7 +19,7 @@ omarchy_tools() {
   export SHELL=/bin/bash
 }
 
-@test "plocate is mandatory while an uninitialized index yields actionable guidance without indexing" {
+@test "plocate is mandatory while deps none leaves an uninitialized index untouched" {
   export PLOCATE_COUNT=0 PLOCATE_STATUS=1
   install_fzd
   assert_installed
@@ -31,21 +31,29 @@ omarchy_tools() {
   [[ "$output" == *'Missing prerequisites: plocate'* ]]
 }
 
-@test "native first plocate installs require authorization for package-managed indexing" {
-  rm "$TEST_BIN/plocate"
-  stub_managers
-  # Function-level manager fixtures; no native package transaction is performed.
-  local manager
-  for manager in apt dnf pacman; do
-    run bash -c 'set -euo pipefail; source "$1/installer/dependencies.bash"; die() { echo "$*"; exit 1; }; test_pm=$2; detect_pm() { PM=$test_pm; }; DEPS=required; FZF_VERSION=""; ensure_dependencies' _ "$REPO" "$manager"
-    [ "$status" -ne 0 ]
-    [[ "$output" == *'--allow-package-indexing'* ]]
-    [ ! -e "$CALLS" ]
-  done
+stub_indexer() {
+  cat >"$TEST_BIN/updatedb" <<'SH'
+#!/bin/bash
+printf 'updatedb' >>"$CALLS"
+for arg; do printf ' <%s>' "$arg" >>"$CALLS"; done
+printf '\n' >>"$CALLS"
+[[ ${UPDATEDB_STATUS:-0} == 0 ]] || exit "$UPDATEDB_STATUS"
+touch "$HOME/index-ready"
+SH
+  chmod +x "$TEST_BIN/updatedb"
+  cat >"$TEST_BIN/plocate" <<'SH'
+#!/bin/bash
+[[ $1 != --version ]] || { echo 'plocate 1.1.19'; exit; }
+[[ -f $HOME/index-ready ]] || exit 1
+echo 1
+SH
+  chmod +x "$TEST_BIN/plocate"
 }
 
-@test "required plocate installs through mapped package transactions when indexing is authorized" {
-  rm "$TEST_BIN/plocate"
+@test "Simple and Enhanced install missing plocate and initialize its index without an extra flag" {
+  enhancement_tools
+  stub_indexer
+  cp "$TEST_BIN/plocate" "$HOME/plocate-fixture"
   stub_managers
   local manager
   for manager in apt-get pacman dnf; do
@@ -53,15 +61,94 @@ omarchy_tools() {
     cat >>"$TEST_BIN/$manager" <<'SH'
 for arg; do
   if [[ $arg == plocate ]]; then
-    printf '#!/bin/sh\ncase "$1" in --version) echo "plocate 1.1.19" ;; *) echo 1 ;; esac\n' >"$TEST_BIN/plocate"
+    cp "$HOME/plocate-fixture" "$TEST_BIN/plocate"
     chmod +x "$TEST_BIN/plocate"
   fi
 done
 SH
   done
-  install_fzd --deps required --allow-package-indexing
+  local mode
+  for mode in simple enhanced; do
+    rm -f "$TEST_BIN/plocate" "$HOME/index-ready" "$CALLS"
+    if [[ $mode == simple ]]; then
+      run bash "$REPO/install.sh"
+    else
+      run bash "$REPO/install.sh" --enhanced
+    fi
+    assert_installed
+    grep -q '<plocate>' "$CALLS"
+    [ "$(grep -c '^updatedb$' "$CALLS")" -eq 1 ]
+    [[ "$output" != *'index is missing, empty or unreadable'* ]]
+  done
+}
+
+@test "index initialization uses distro defaults and reuses a ready index on subsequent installs" {
+  stub_managers
+  stub_indexer
+  install_fzd --deps required
   assert_installed
-  grep -q '<plocate>' "$CALLS"
+  install_fzd --deps required
+  assert_installed
+  [ "$(grep -c '^updatedb$' "$CALLS")" -eq 1 ]
+  # No arguments override distro exclusions; no policy or service tools run.
+  ! grep -q 'systemctl\|PRUNEPATHS\|PRUNEFS\|--output\|--database' "$CALLS"
+}
+
+@test "missing updatedb warns and the plocate-specific executable can initialize the index" {
+  stub_managers
+  stub_indexer
+  mv "$TEST_BIN/updatedb" "$HOME/updatedb-fixture"
+  install_fzd --deps required
+  assert_installed
+  [[ "$output" == *'updatedb is unavailable'* ]]
+  [ ! -e "$CALLS" ]
+  mv "$HOME/updatedb-fixture" "$TEST_BIN/updatedb.plocate"
+  install_fzd --deps required
+  assert_installed
+  [ "$(grep -c '^updatedb$' "$CALLS")" -eq 1 ]
+}
+
+@test "no-updatedb deps none and custom databases skip initialization" {
+  stub_managers
+  stub_indexer
+  install_fzd --deps required --no-updatedb
+  assert_installed
+  [ ! -e "$CALLS" ]
+  install_fzd
+  assert_installed
+  [ ! -e "$CALLS" ]
+  export FZD_LOCATE_DBS="$HOME/custom.db"
+  install_fzd --deps required
+  assert_installed
+  [ ! -e "$CALLS" ]
+  [[ "$output" == *'index is missing, empty or unreadable'* ]]
+}
+
+@test "failed index initialization preserves a usable install and reports the fallback" {
+  stub_managers
+  stub_indexer
+  export UPDATEDB_STATUS=42
+  install_fzd --deps required
+  assert_installed
+  [[ "$output" == *'Index initialization failed'* ]]
+  [[ "$output" == *'filesystem fallback'* ]]
+  [ "$(grep -c '^updatedb$' "$CALLS")" -eq 1 ]
+}
+
+@test "index initialization without sudo authorization continues without running updatedb" {
+  ((EUID != 0)) || skip 'sudo authorization check requires an unprivileged user'
+  stub_managers
+  stub_indexer
+  export SUDO_STATUS=1
+  install_fzd --deps required
+  assert_installed
+  [[ "$output" == *'without sudo authorization'* ]]
+  ! grep -q '^updatedb' "$CALLS"
+}
+
+@test "legacy package indexing flag remains accepted without being required" {
+  install_fzd --allow-package-indexing
+  assert_installed
 }
 
 @test "Enhanced reuses rich preview clipboard and editor tools and never installs Lazygit" {

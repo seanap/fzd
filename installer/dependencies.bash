@@ -164,11 +164,6 @@ ensure_dependencies() {
       package_for "$tool"
       packages+=("$REPLY")
     done
-    # APT can run updatedb directly, Fedora starts its service, and Arch ships
-    # an enabled timer. Never hide first-time indexing inside package setup.
-    if [[ ${ALLOW_PACKAGE_INDEXING:-0} != 1 ]] && ! have plocate; then
-      die 'The distro plocate package may initialize an index or enable its indexing schedule. Review /etc/updatedb.conf, then install plocate yourself or explicitly authorize package setup with --allow-package-indexing. No FZD files were changed.'
-    fi
     install_packages "${packages[@]}"
     collect_missing
     ((${#MISSING[@]} == 0)) || die "Still missing after package installation: ${MISSING[*]}"
@@ -176,21 +171,56 @@ ensure_dependencies() {
   if [[ -z $FZF_VERSION ]]; then
     check_fzf "$(command -v fzf)" || die 'fzf must be >= 0.44.0 and support FZD bindings. Use a compatible distro package or --fzf-version VERSION --fzf-sha256 SHA256 (see README).'
   fi
-  local locate_probe
   plocate --version >/dev/null 2>&1 || die 'plocate is installed but cannot execute'
-  local -a locate_command=(plocate) locate_args=(--count --limit 1)
-  if have timeout; then locate_command=(timeout --kill-after=1 3 plocate); fi
-  [[ -z ${FZD_LOCATE_DBS:-} ]] || locate_args+=(-d "$FZD_LOCATE_DBS")
-  if ! locate_probe=$("${locate_command[@]}" "${locate_args[@]}" -- / 2>/dev/null) || [[ ! $locate_probe =~ ^[1-9][0-9]*$ ]]; then
-    warn 'plocate index is missing, empty or unreadable; global search will retain its filesystem fallback.'
-    warn 'Review /etc/updatedb.conf and your distribution indexing schedule. If appropriate, initialize it yourself with sudo updatedb. FZD does not run updatedb or change exclusions/timers.'
-  fi
+  ensure_locate_index
   ensure_recommended
   local zoxide_version
   zoxide_version=$(zoxide --version) || die 'zoxide could not execute'
   version_ge "${zoxide_version#zoxide }" 0.9.0 || die 'zoxide >= 0.9.0 is required; upgrade your distribution package'
   if ! printf '' | base64 -w 0 >/dev/null 2>&1; then die 'GNU-compatible base64 with -w 0 is required; install coreutils'; fi
   if ! printf '\0' | sort -zf >/dev/null 2>&1; then die 'GNU-compatible sort with -zf is required; install coreutils'; fi
+}
+
+locate_index_ready() {
+  local locate_probe
+  local -a locate_command=(plocate) locate_args=(--count --limit 1)
+  if have timeout; then locate_command=(timeout --kill-after=1 3 plocate); fi
+  [[ -z ${FZD_LOCATE_DBS:-} ]] || locate_args+=(-d "$FZD_LOCATE_DBS")
+  locate_probe=$("${locate_command[@]}" "${locate_args[@]}" -- / 2>/dev/null) && [[ $locate_probe =~ ^[1-9][0-9]*$ ]]
+}
+
+ensure_locate_index() {
+  locate_index_ready && return 0
+  # Use distro defaults only. Never rewrite exclusions, configure services or
+  # initialize databases explicitly selected by the caller.
+  if [[ ${DEPS:-none} != none && ${NO_UPDATEDB:-0} != 1 && -z ${FZD_LOCATE_DBS:-} ]]; then
+    local updater=''
+    local -a privilege=()
+    if have updatedb; then updater=updatedb; elif have updatedb.plocate; then updater=updatedb.plocate; fi
+    if [[ -n $updater ]]; then
+      if ((EUID != 0)); then
+        if have sudo && sudo -n -v; then
+          privilege=(sudo -n)
+        else
+          warn 'Cannot initialize the plocate index without sudo authorization; run sudo updatedb when ready.'
+          updater=''
+        fi
+      fi
+      if [[ -n $updater ]]; then
+        log 'Initializing the default plocate index with existing system exclusions; this may take a while.'
+        if ! "${privilege[@]}" "$updater" </dev/null; then
+          warn 'Index initialization failed; continuing with the filesystem search fallback.'
+        fi
+      fi
+    else
+      warn 'updatedb is unavailable; the plocate package normally provides it.'
+    fi
+  fi
+  if ! locate_index_ready; then
+    warn 'plocate index is missing, empty or unreadable; global search will retain its filesystem fallback.'
+    warn 'Initialize it with sudo updatedb or wait for your distribution indexing schedule. FZD leaves indexing exclusions, services and timers unchanged.'
+  fi
+  return 0
 }
 
 download_fzf() {

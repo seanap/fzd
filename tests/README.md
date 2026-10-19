@@ -55,6 +55,7 @@ plocate, and assert that successful locate checks did not silently fall back.
 | dependencies.bats | Version/capability checks, executable aliases, package mappings, sudo and bounded package-manager transactions |
 | distributions.bats | Full installer with Ubuntu/Debian/Fedora/Arch metadata and manager stubs in a bubblewrap namespace; host read-only, network isolated |
 | install-modes.bats | Simple/Enhanced defaults, optional dependencies/fonts, native/WSL behavior, preservation, v2 migration, minimal and custom startup files |
+| omarchy-installer.bats | First-install plocate setup in Simple/Enhanced, default index initialization and reuse, indexing opt-outs and failures, custom database preservation, Omarchy launcher ownership and rollback |
 | xdg.bats | Absolute and relative XDG paths, runtime ownership/modes, temporary symlinks, isolated sessions and cleanup |
 | inline-installer.bats | Verified engine download, conditional dependencies, existing engines, explicit opt-in, updates, disable, rollback and shared-dependency retention |
 | installer.bats | Fresh install/update/verify/uninstall, preservation, XDG/ZDOTDIR, staging, download failures, TERM/KILL recovery, installed-wrapper PTYs |

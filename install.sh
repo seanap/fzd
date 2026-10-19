@@ -23,7 +23,7 @@ Advanced options (automation and compatibility):
   --enhanced               Add inline suggestions and optional Nerd Font setup
                            Default: Simple (recommended tools, native Tab)
   --omarchy-launcher float|tile  Optional Enhanced Omarchy terminal launcher
-  --allow-package-indexing  Authorize distro plocate package initial indexing
+  --allow-package-indexing  Accepted compatibility option; no longer required
   --prefix DIR             User installation prefix (default: ~/.local)
   --deps none|required|recommended
                            Default recommended; includes eza, fd, bat, tree, file
@@ -44,7 +44,7 @@ Advanced options (automation and compatibility):
   --recover                Roll back an interrupted transaction (no live owner)
   --stage DIR              Package staging root: --prefix is required; no deps,
                            home edits, lifecycle metadata or bundled fzf
-  --no-updatedb            Accepted legacy option; updatedb is never run
+  --no-updatedb            Skip initialization of a missing default locate index
   -h, --help
 
 Update: git pull --ff-only, then repeat installation from the checkout.
@@ -62,7 +62,7 @@ SCRIPT_DIR=${SCRIPT_DIR%.}
 PREFIX=${HOME:?HOME must be set}/.local
 [[ $SCRIPT_DIR != */share/fzd ]] || PREFIX=${SCRIPT_DIR%/share/fzd}
 PREFIX_SET=0 DEPS=recommended DEPS_SET=0 NONINTERACTIVE=1 SHELL_TARGET=both NO_CONFIG=0 ADOPT=0
-INLINE_SUGGESTIONS=keep BLESH_PATH='' AUTOSUGGEST_PATH='' ENHANCED=0 OMARCHY_LAUNCHER=none ALLOW_PACKAGE_INDEXING=0
+INLINE_SUGGESTIONS=keep BLESH_PATH='' AUTOSUGGEST_PATH='' ENHANCED=0 OMARCHY_LAUNCHER=none NO_UPDATEDB=0
 BASH_RC=${FZD_BASH_RC:-$HOME/.bashrc}
 ZSH_RC=${FZD_ZSH_RC:-${ZDOTDIR:-$HOME}/.zshrc}
 MODE=install STAGE='' FZF_VERSION='' FZF_SHA256='' JOURNAL_COUNT=0
@@ -93,10 +93,7 @@ while (($#)); do
     NONINTERACTIVE=1
     shift
     ;;
-  --allow-package-indexing)
-    ALLOW_PACKAGE_INDEXING=1
-    shift
-    ;;
+  --allow-package-indexing) shift ;;
   --enhanced)
     ENHANCED=1
     [[ $INLINE_SUGGESTIONS != keep ]] || INLINE_SUGGESTIONS=1
@@ -123,7 +120,10 @@ while (($#)); do
     MODE=${1#--}
     shift
     ;;
-  --no-updatedb) shift ;;
+  --no-updatedb)
+    NO_UPDATEDB=1
+    shift
+    ;;
   -h | --help)
     usage
     exit 0

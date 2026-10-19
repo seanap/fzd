@@ -32,13 +32,13 @@ provenance; it does not claim an independent cryptographic signature.
 ## Versioning
 
 `VERSION` is MAJOR.MINOR.PATCH, optionally `-rc.N`. The current release is
-`2.1.0`, following the previous public stable release `v2.0.0`. The build creates
+`2.1.1`, following the previous public stable release `v2.1.0`. The build creates
 no tag. Existing tags and the historical `v0.1.0-rc.1` draft remain unchanged.
 
 | Upstream | Debian | Arch |
 | --- | --- | --- |
-| `2.1.0` | `2.1.0-1` | `2.1.0-1` |
-| `2.1.0-rc.1` (example) | `2.1.0~rc.1-1` | `2.1.0rc.1-1` |
+| `2.1.1` | `2.1.1-1` | `2.1.1-1` |
+| `2.1.1-rc.1` (example) | `2.1.1~rc.1-1` | `2.1.1rc.1-1` |
 
 Prereleases sort below the final release. Packaging-only rebuilds increment the
 distribution revision; application releases increment VERSION. The Debian builder
@@ -47,7 +47,7 @@ published archive at the same version. Checksums identify the exact source commi
 
 Downloadable Debian files use `fzd-VERSION-debian-all.deb`, independently of the
 internal Debian version and packaging revision. The stable filename is
-`fzd-2.1.0-debian-all.deb`, while `dpkg-deb -f FILE Version` returns `2.1.0-1`.
+`fzd-2.1.1-debian-all.deb`, while `dpkg-deb -f FILE Version` returns `2.1.1-1`.
 For prereleases, Debian's tilde keeps the candidate below the final version;
 GitHub normalizes tildes in asset names, so downloadable filenames never use them.
 The builders emit the final filename directly and generate matching manifest
@@ -88,11 +88,12 @@ install manifests/lifecycle scripts are excluded from packages.
 | Required index search | plocate | plocate | plocate |
 
 Micro is explicit because the runtime uses it when EDITOR/VISUAL is
-absent/unavailable. No editor variables or locate databases are changed by FZD.
-plocate is required; its distribution package can initialize indexing or enable
-a schedule. The source installer requires `--allow-package-indexing` before
-installing a missing plocate package; ordinary package installation follows the
-distribution's dependency setup policy. See the
+absent/unavailable. No editor variables are changed by FZD.
+plocate is required and provides the indexing tools. Simple and Enhanced install
+it without an additional flag and run `updatedb` if the default index is not ready.
+`--no-updatedb` skips that installer step. Native package setup can independently
+initialize indexing or enable its distribution schedule. FZD never edits indexing
+exclusions, timers or services, and leaves custom databases untouched. See the
 [indexing guidance](TECHNICAL.md#plocate-readiness-and-package-indexing).
 Debian recommends preview/search tools and Trash; normal APT installs these,
 `--no-install-recommends` does not. Arch optdepends are explicit user choices.
@@ -101,15 +102,15 @@ Permanent deletion is never substituted.
 
 ## Install, integrate, update and remove
 
-Download `fzd-2.1.0-debian-all.deb`, `SHA256SUMS` and `SOURCE` from the
-`v2.1.0` entry on [GitHub Releases](https://github.com/seanap/fzd/releases).
+Download `fzd-2.1.1-debian-all.deb`, `SHA256SUMS` and `SOURCE` from the
+`v2.1.1` entry on [GitHub Releases](https://github.com/seanap/fzd/releases).
 FZD is not in the official Ubuntu/Debian repositories; APT installs the
 downloaded file and its dependencies.
 
 ```bash
 sha256sum --ignore-missing -c SHA256SUMS
 cat SOURCE
-sudo apt install ./fzd-2.1.0-debian-all.deb
+sudo apt install ./fzd-2.1.1-debian-all.deb
 ```
 
 On fully updated Arch, download `PKGBUILD` from the same release into a clean

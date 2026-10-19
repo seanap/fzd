@@ -150,41 +150,43 @@ The current checkout provides two choices:
 | Simple (default) | `bash install.sh` | Required tools plus recommended eza, fd, bat, tree and file; shell integration and native Tab completion |
 | Enhanced (opt-in) | `bash install.sh --enhanced` | Simple plus Chafa, Glow, a display clipboard provider, compatible inline engines and optional user font setup |
 
-Simple creates no fonts, terminal appearance changes, shell-wide suggestion engine,
-or locate index. On updates it preserves an existing Enhanced inline preference.
+Simple creates no fonts, terminal appearance changes or shell-wide suggestion engine.
+On updates it preserves an existing Enhanced inline preference.
 Only `--no-inline-suggestions` explicitly disables FZD's managed engine setup.
 Enhanced respects inline preferences set earlier in shell startup; an explicit
 `FZD_INLINE_SUGGESTIONS=0` there continues to win. User-edited integration files
 are preserved even with explicit flags, with guidance to apply changes manually.
-Both modes require plocate and reuse an existing installation. Neither mode runs
-updatedb or changes exclusions/timers. Some distro packages index during setup;
-see [the explicit authorization requirement](#plocate-readiness-and-package-indexing).
+Both modes install missing plocate tools and initialize the default locate index
+with `updatedb` when needed, using existing system exclusions. FZD never changes
+indexing exclusions, services or timers. Use `--no-updatedb` to skip initialization;
+see [indexing setup](#plocate-readiness-and-package-indexing).
 
 Missing recommended packages are attempted through the native package manager.
 If a repository lacks eza (or another recommendation), core installation succeeds
 with fallback guidance; no external apt repository, binary replacement, or
 third-party configuration is introduced. `--deps required` omits recommendations;
-`--deps none` forbids all package transactions and downloads except an explicitly
-requested, checksum-verified fzf bootstrap. Enhanced with `--deps none` requires
+`--deps none` skips index initialization and forbids all package transactions and
+downloads except an explicitly requested, checksum-verified fzf bootstrap.
+Enhanced with `--deps none` requires
 existing engines; optional fonts can be downloaded if font tools already exist.
 The legacy `--inline-suggestions`, `--noninteractive`, `--no-updatedb` and all
 lifecycle, prefix, shell, staging and verified-fzf flags remain supported.
 
-**Release: `v2.1.0`.** Get its packages, source archive and checksums from
-[GitHub Releases](https://github.com/seanap/fzd/releases/tag/v2.1.0). FZD is not
+**Release: `v2.1.1`.** Get its packages, source archive and checksums from
+[GitHub Releases](https://github.com/seanap/fzd/releases/tag/v2.1.1). FZD is not
 available in the official Ubuntu or Debian repositories.
 
 Tested on Linux x86_64: Ubuntu 24.04, Debian 13 and current Arch Linux. Fedora 44
 has staged-runtime validation, not an RPM package. ARM64 is not yet validated.
 
-For Ubuntu/Debian, download `fzd-2.1.0-debian-all.deb`, `SHA256SUMS` and `SOURCE`
+For Ubuntu/Debian, download `fzd-2.1.1-debian-all.deb`, `SHA256SUMS` and `SOURCE`
 into a clean directory. Verify the checksum and source revision, then install
 with APT so dependencies are resolved:
 
 ```bash
 sha256sum --ignore-missing -c SHA256SUMS
 cat SOURCE
-sudo apt install ./fzd-2.1.0-debian-all.deb
+sudo apt install ./fzd-2.1.1-debian-all.deb
 ```
 
 For Arch, download `PKGBUILD` from the same release into a clean directory and
@@ -216,15 +218,15 @@ supported. The source installer is separate from package installation; it owns
 only its user-local files. Other Linux systems can use the manual installation
 below. See [Packaging](packaging.md) for build and validation details.
 
-Download the custom `fzd-2.1.0.tar.gz`, `SHA256SUMS` and `SOURCE` from the
+Download the custom `fzd-2.1.1.tar.gz`, `SHA256SUMS` and `SOURCE` from the
 same release. GitHub's automatically generated source links are different archives.
 Extract the custom archive and install as your normal user:
 
 ```bash
 sha256sum --ignore-missing -c SHA256SUMS
 cat SOURCE
-tar -xzf fzd-2.1.0.tar.gz
-cd fzd-2.1.0
+tar -xzf fzd-2.1.1.tar.gz
+cd fzd-2.1.1
 bash install.sh
 ```
 
@@ -616,7 +618,9 @@ Open a new terminal afterward to clear previously loaded functions.
   durability guarantee.
 - **Global search slow / empty:** check roots, exclusions and permissions. Use
   `FZD_GLOBAL_BACKEND=live` to bypass a stale locate database. Database maintenance
-  belongs to your distribution; FZD never invokes sudo updatedb.
+  uses your distribution settings. The installer initializes an unavailable default
+  index unless `--no-updatedb` or `--deps none` is used; runtime search never runs
+  updatedb.
 - **Explorer state busy:** another FZD instance may be completing a file
   operation. Retry when it finishes. Invalid state is reported without replacing
   it; close FZD and move the affected state file aside before retrying.
@@ -761,41 +765,39 @@ clipboard packages. Existing fonts and suggestions are reused as described above
 Plocate is required by the source installer and Debian/Arch package metadata.
 Existing installations are reused. A bounded `plocate --count --limit 1 -- /`
 probe checks whether an accessible populated index is available, respecting an
-exported `FZD_LOCATE_DBS`. Missing/empty/unreadable indexes produce guidance,
-without failing an otherwise usable installation. Runtime discovery retains its
+exported `FZD_LOCATE_DBS`. Indexes still missing, empty or unreadable after setup
+produce guidance without failing an otherwise usable installation. Runtime discovery retains its
 existing locate-first behavior and filesystem fallbacks for failures or manual
 installations. No global search redesign is involved.
 
-**First-install package limitation:** Debian/Ubuntu can invoke `updatedb` directly
-in `postinst`; Fedora starts the indexing service after installation; Arch ships
-a timer enabled by its package. When plocate is missing, FZD stops before the
-package transaction rather than authorizing indexing implicitly. Review `/etc/updatedb.conf` and your distribution's scheduled indexing,
-then either install plocate yourself or explicitly authorize package setup:
+Simple and Enhanced install missing plocate packages without an extra authorization
+flag. The package supplies `plocate` and `updatedb`; native setup may itself build
+an index or enable the distribution's indexing schedule.
+
+If the default index is still missing, empty or unreadable after package setup,
+the installer runs `updatedb` once using the existing system configuration and
+exclusions. Existing populated indexes are reused. Initial indexing can take some
+time on large filesystems. Root or cached sudo authorization (`sudo -v`) is
+required; if initialization is unavailable or fails, installation continues with
+filesystem search fallback and guidance to run `sudo updatedb` later.
 
 ```bash
-bash install.sh --enhanced --allow-package-indexing
+bash install.sh                 # Simple, including index initialization if needed
+bash install.sh --enhanced      # Enhanced, with the same indexing setup
+bash install.sh --no-updatedb   # Skip FZD-triggered index initialization
 ```
 
-This advanced flag authorizes distro package setup, not changes to exclusion
-rules or a separate FZD-triggered updatedb. FZD never changes timers, services,
-indexing exclusions, or invokes updatedb itself. After explicit authorization, native distribution setup and schedules are
-retained. An installed but unpopulated
-index needs user-directed initialization (usually `sudo updatedb`, after review)
-or the existing distribution schedule. A completely automatic first installation
-with these native packages is incompatible with the no-implicit-indexing guarantee;
-the installer reports this explicitly and does not prompt or partially install
-FZD. Package-manager installation of the Debian/Arch artifacts follows distro dependency
-setup policy independently of the source installer.
+`--deps none` also skips initialization. Neither option prevents a native package
+post-install script from indexing or enabling its own schedule when packages are
+installed. The former `--allow-package-indexing` option remains accepted for
+compatibility and is no longer required.
 
+FZD never edits `/etc/updatedb.conf`, indexing exclusions, service settings or
+timers. It does not enable, disable or reschedule indexing independently of the
+package manager. An exported `FZD_LOCATE_DBS` is probed but its custom databases
+are never initialized or rewritten by the installer. Runtime searches never run
+`updatedb`; they retain locate-first discovery and filesystem fallbacks.
 
-Indexing side effects were checked against the Ubuntu 24.04 plocate package
-postinst and current official
-[Arch PKGBUILD](https://gitlab.archlinux.org/archlinux/packaging/packages/plocate/-/blob/main/PKGBUILD)
-and [Fedora 44 spec](https://src.fedoraproject.org/rpms/plocate/blob/f44/f/plocate.spec).
-The authorization guard covers all supported native package managers, including
-schedules enabled during package setup. An existing plocate needs no authorization
-flag and FZD leaves its indexing policy intact.
-
-See the [Omarchy implementation and validation report](validation/omarchy/README.md)
-for the complete test outcomes, measured performance, indexing authorization
-exception, and unexecuted hosted/native platform checks.
+The [Omarchy implementation and validation report](validation/omarchy/README.md)
+retains historical release evidence, including the earlier authorization guard
+that this installer behavior replaces.

@@ -62,7 +62,16 @@ Their MIT license, retrieval date and exact hashes are retained under
 Omarchy installation claim. The current upstream README banner and branding from
 `c3bf90b` were preserved; image/GIF assets were not redesigned.
 
-## Indexing authorization is a deliberate first-install limitation
+## Historical indexing authorization limitation
+
+The following describes the original v2.1.0 validation. The current installer
+removes this extra authorization requirement: Simple and Enhanced install missing
+plocate tools and initialize an unavailable default index with `updatedb`, using
+the existing system configuration. `--no-updatedb` skips FZD-triggered indexing;
+custom databases and indexing policies remain untouched. See the current
+[indexing guidance](../../TECHNICAL.md#plocate-readiness-and-package-indexing).
+
+### Original validated behavior
 
 Native packages have indexing side effects: Ubuntu/Debian can invoke updatedb
 in postinst, Fedora starts its service after installation, and Arch ships an
