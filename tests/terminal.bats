@@ -54,6 +54,26 @@ check_global_navigation() {
   check_global_navigation
 }
 
+@test "real terminal default global search matches fuzzy subsequences with locate installed" {
+  command -v plocate >/dev/null || skip 'plocate is unavailable'
+  unset FZD_GLOBAL_BACKEND
+  mkdir -p "$FIXTURE_ROOT/global_format.py"
+  printf text >"$FIXTURE_ROOT/global_format.py/inside.txt"
+  start_terminal
+  tmux -S "$SOCKET" send-keys C-f
+  wait_screen 'global:/ >'
+  tmux -S "$SOCKET" send-keys -l glbfrmtpy
+  wait_screen '1/'
+  wait_screen 'global_format.py/'
+  tmux -S "$SOCKET" send-keys Right
+  wait_screen '2/2'
+  wait_screen inside.txt
+  tmux -S "$SOCKET" send-keys Enter
+  wait_file "$FZD_PTY_STATUS"
+  [ "$(cat "$FZD_PTY_STATUS")" -eq 0 ]
+  [ "$(cat "$FZD_PTY_RESULT")" = "$FIXTURE_ROOT/global_format.py" ]
+}
+
 @test "real terminal Ctrl-F live search Right and Enter keep their controls" {
   export FZD_GLOBAL_BACKEND=live
   check_global_navigation

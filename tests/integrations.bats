@@ -157,7 +157,19 @@ theme_fixture() {
   [ -n "$output" ]
 }
 
-@test "ordinary startup and preview helpers avoid missing Omarchy utility PATH scans" {
-  run bash -euc 'source "$1/fzd.sh"; _fzd_paths; probed=0; _have() { if [[ $1 == omarchy-theme-color ]]; then probed=1; return 1; fi; command -v "$1" >/dev/null; }; _fzd_init --_preview; [[ $probed == 0 && ${#FZD_THEME_OPTS[@]} == 0 ]]; FZD_THEME_READY=1; FZD_COLOR_DIR="#010203"; _explorer_load() { printf called >>"$FZD_TEST_LOG"; return 1; }; _fzd_init --_preview; [[ ! -e $FZD_TEST_LOG && -n $c_dir ]]' _ "$FZD_REPO"
+@test "ordinary startup and internal helpers reuse resolved colors without Omarchy utility probes" {
+  run bash -euc '
+    source "$1/fzd.sh"; _fzd_paths; probed=0
+    _have() { if [[ $1 == omarchy-theme-color ]]; then probed=1; return 1; fi; command -v "$1" >/dev/null; }
+    _fzd_init --_preview
+    [[ $probed == 0 && ${#FZD_THEME_OPTS[@]} == 0 ]]
+    FZD_THEME_READY=1; FZD_COLOR_DIR="#010203"; FZD_COLOR_FILE="#040506"
+    FZD_OMARCHY_THEME_FILE=$HOME/colors.toml
+    _explorer_load() { printf called >>"$FZD_TEST_LOG"; return 1; }
+    for helper in --_preview --_global_list --_global_index; do
+      _fzd_init "$helper"
+      [[ ! -e $FZD_TEST_LOG && -n $c_dir && -n $c_file && ${#FZD_THEME_OPTS[@]} == 0 ]]
+    done
+  ' _ "$FZD_REPO"
   [ "$status" -eq 0 ]
 }

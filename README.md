@@ -36,6 +36,13 @@ Already know the path? `lf /srv/docker/immich` takes you there directly.
 
 Use `lff immich` on its own to start a fresh global search.
 
+Global search defaults to an optimized snapshot: filenames load once, then fzf
+fuzzy-filters each keystroke in memory. Simple and Enhanced installs include the
+recommended Python accelerator when available. The default scope covers Linux
+roots with a depth of six and up to 5,000 results; larger scopes can use indexed
+search by setting `FZD_GLOBAL_BACKEND=auto` in `~/.config/fzd/fzd.conf`.
+See the [measured search performance](benchmarks/results/global-first-result/README.md).
+
 ## Why FZD exists
 
 After years of using Linux, I still found myself asking: where did that project

@@ -1,0 +1,195 @@
+{
+  "indexed-fzf044": {
+    "date_utc": "2026-10-19T19:09:22Z",
+    "platform": [
+      "Linux",
+      "HTPC-Win11",
+      "6.6.87.2-microsoft-standard-WSL2",
+      "#1 SMP PREEMPT_DYNAMIC Thu Jun  5 18:30:46 UTC 2025",
+      "x86_64"
+    ],
+    "trials": 7,
+    "backend": "auto",
+    "fzf": "0.44.1 (debian)",
+    "fzf_executable": "/usr/bin/fzf",
+    "apps": {
+      "before": {
+        "path": "/home/htpc/fzd/.test-work/global-fast/before/fzd.sh",
+        "sha256": "2697c8bf9734d45c029e65d46ebc711aaa4b20b2821d01989f0623a386cf6dfe"
+      },
+      "after": {
+        "path": "/home/htpc/fzd/fzd.sh",
+        "sha256": "1ea19e1418f23b3366ee76d5b7d726641c4869a580b85b8d4ef6298157471bb6"
+      }
+    },
+    "limitations": [
+      "Fresh private application state every PTY session; warm OS caches.",
+      "No dropped caches, reboot or native-Linux measurement.",
+      "Actual wrapper and terminal bytes, not physical screen paint.",
+      "Broad first-result probe identifies the visible query result row."
+    ]
+  },
+  "indexed-fzf065": {
+    "date_utc": "2026-10-19T19:10:46Z",
+    "platform": [
+      "Linux",
+      "HTPC-Win11",
+      "6.6.87.2-microsoft-standard-WSL2",
+      "#1 SMP PREEMPT_DYNAMIC Thu Jun  5 18:30:46 UTC 2025",
+      "x86_64"
+    ],
+    "trials": 7,
+    "backend": "auto",
+    "fzf": "0.65.2 (416aff86)",
+    "fzf_executable": "/home/htpc/fzd/.test-work/two-tier/fzf-065/fzf",
+    "apps": {
+      "before": {
+        "path": "/home/htpc/fzd/.test-work/global-fast/before/fzd.sh",
+        "sha256": "2697c8bf9734d45c029e65d46ebc711aaa4b20b2821d01989f0623a386cf6dfe"
+      },
+      "after": {
+        "path": "/home/htpc/fzd/fzd.sh",
+        "sha256": "1ea19e1418f23b3366ee76d5b7d726641c4869a580b85b8d4ef6298157471bb6"
+      }
+    },
+    "limitations": [
+      "Fresh private application state every PTY session; warm OS caches.",
+      "No dropped caches, reboot or native-Linux measurement.",
+      "Actual wrapper and terminal bytes, not physical screen paint.",
+      "Broad first-result probe identifies the visible query result row."
+    ]
+  },
+  "snapshot-fzf044": {
+    "date_utc": "2026-10-19T19:01:56Z",
+    "platform": [
+      "Linux",
+      "HTPC-Win11",
+      "6.6.87.2-microsoft-standard-WSL2",
+      "#1 SMP PREEMPT_DYNAMIC Thu Jun  5 18:30:46 UTC 2025",
+      "x86_64"
+    ],
+    "trials": 3,
+    "backend": "cache",
+    "fzf": "0.44.1 (debian)",
+    "apps": {
+      "before": {
+        "path": "/home/htpc/fzd/.test-work/global-fast/before/fzd.sh",
+        "sha256": "2697c8bf9734d45c029e65d46ebc711aaa4b20b2821d01989f0623a386cf6dfe"
+      },
+      "after": {
+        "path": "/home/htpc/fzd/fzd.sh",
+        "sha256": "6fd4b803cad27b91259d13e52a6ba4a857f9a2b6f75465a19001ddb1df1bafc8"
+      }
+    },
+    "limitations": [
+      "Fresh private application state every PTY session; warm OS caches.",
+      "No dropped caches, reboot or native-Linux measurement.",
+      "Actual wrapper and terminal bytes, not physical screen paint.",
+      "Broad first-result probe identifies the visible query result row."
+    ]
+  },
+  "omarchy-indexed-fzf065": {
+    "date_utc": "2026-10-19T19:17:17Z",
+    "platform": [
+      "Linux",
+      "HTPC-Win11",
+      "6.6.87.2-microsoft-standard-WSL2",
+      "#1 SMP PREEMPT_DYNAMIC Thu Jun  5 18:30:46 UTC 2025",
+      "x86_64"
+    ],
+    "trials": 3,
+    "backend": "auto",
+    "omarchy": true,
+    "fzf": "0.65.2 (416aff86)",
+    "fzf_executable": "/home/htpc/fzd/.test-work/two-tier/fzf-065/fzf",
+    "apps": {
+      "before": {
+        "path": "/home/htpc/fzd/.test-work/global-fast/before/fzd.sh",
+        "sha256": "2697c8bf9734d45c029e65d46ebc711aaa4b20b2821d01989f0623a386cf6dfe"
+      },
+      "after": {
+        "path": "/home/htpc/fzd/fzd.sh",
+        "sha256": "6e24819c35fc669ee906cff9d41d6ebb218ef6404c28f3b870dca9b55baed755"
+      }
+    },
+    "limitations": [
+      "Fresh private application state every PTY session; warm OS caches.",
+      "No dropped caches, reboot or native-Linux measurement.",
+      "Actual wrapper and terminal bytes, not physical screen paint.",
+      "Broad first-result probe identifies the visible query result row."
+    ]
+  },
+  "omarchy-snapshot-fzf065": {
+    "date_utc": "2026-10-19T19:17:27Z",
+    "platform": [
+      "Linux",
+      "HTPC-Win11",
+      "6.6.87.2-microsoft-standard-WSL2",
+      "#1 SMP PREEMPT_DYNAMIC Thu Jun  5 18:30:46 UTC 2025",
+      "x86_64"
+    ],
+    "trials": 3,
+    "backend": "cache",
+    "omarchy": true,
+    "fzf": "0.65.2 (416aff86)",
+    "fzf_executable": "/home/htpc/fzd/.test-work/two-tier/fzf-065/fzf",
+    "apps": {
+      "before": {
+        "path": "/home/htpc/fzd/.test-work/global-fast/before/fzd.sh",
+        "sha256": "2697c8bf9734d45c029e65d46ebc711aaa4b20b2821d01989f0623a386cf6dfe"
+      },
+      "after": {
+        "path": "/home/htpc/fzd/fzd.sh",
+        "sha256": "6e24819c35fc669ee906cff9d41d6ebb218ef6404c28f3b870dca9b55baed755"
+      }
+    },
+    "limitations": [
+      "Fresh private application state every PTY session; warm OS caches.",
+      "No dropped caches, reboot or native-Linux measurement.",
+      "Actual wrapper and terminal bytes, not physical screen paint.",
+      "Broad first-result probe identifies the visible query result row."
+    ]
+  },
+  "baseline_revision": "7b60f6af243d4582d79d7cabfb734b9d00db1d21",
+  "final_runtime_sha256": "6e24819c35fc669ee906cff9d41d6ebb218ef6404c28f3b870dca9b55baed755",
+  "formatter_sha256": "81b3c434269e67feaa0269e2a0731f84bf750e89ba86994017708deeaaf7f503",
+  "benchmark_sha256": "c3faff72628e17a690ba881b27c8104b47f135f7949ce17c72196d63fc77e50f",
+  "candidate_notes": {
+    "snapshot-fzf044": "Measured before the indexed-probe threshold and inherited-palette adjustments. Neither adjustment runs in these plain cache sessions. The exact candidate is retained at .test-work/global-fast/cache-candidate/. The Python formatter bytes match the final source.",
+    "indexed-fzf044": "Measured after the probe correction and before inherited-palette reuse. These private homes have no Omarchy palette. Exact candidate retained at .test-work/global-fast/plain-candidate/.",
+    "indexed-fzf065": "Same plain candidate, with an absolute fzf executable path.",
+    "omarchy": "Measured against the final runtime, with the pinned existing Omarchy fixture utility and Tokyo Night palette. Exactly one palette utility call per optimized session."
+  },
+  "historical-v2-cache-fzf044": {
+    "date_utc": "2026-10-19T19:22:19Z",
+    "platform": [
+      "Linux",
+      "HTPC-Win11",
+      "6.6.87.2-microsoft-standard-WSL2",
+      "#1 SMP PREEMPT_DYNAMIC Thu Jun  5 18:30:46 UTC 2025",
+      "x86_64"
+    ],
+    "trials": 3,
+    "backend": "cache",
+    "omarchy": false,
+    "fzf": "0.44.1 (debian)",
+    "fzf_executable": "/usr/bin/fzf",
+    "apps": {
+      "before": {
+        "path": "/home/htpc/fzd/.test-work/global-fast/v2-baseline/fzd.sh",
+        "sha256": "7ded805be18439b88f2c4605c64fe842ad59bd31c579d6ea390b1457f58ec861"
+      },
+      "after": {
+        "path": "/home/htpc/fzd/fzd.sh",
+        "sha256": "6e24819c35fc669ee906cff9d41d6ebb218ef6404c28f3b870dca9b55baed755"
+      }
+    },
+    "limitations": [
+      "Fresh private application state every PTY session; warm OS caches.",
+      "No dropped caches, reboot or native-Linux measurement.",
+      "Actual wrapper and terminal bytes, not physical screen paint.",
+      "Broad first-result probe identifies the visible query result row."
+    ],
+    "baseline_tag": "v2.0.0"
+  }
+}

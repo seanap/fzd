@@ -120,7 +120,7 @@ zsh -ic '[[ $(lf) == existing ]]; whence -w fzd_cd'
 cp /usr/bin/fzd "$source_root/fzd.sh"
 cp /usr/share/fzd/integration.* "$source_root/shell/"
 cp /usr/share/fzd/inline.sh "$source_root/shell/inline.sh"
-cp /usr/share/fzd/lib/*.bash "$source_root/lib/"
+cp /usr/share/fzd/lib/*.bash /usr/share/fzd/lib/*.py "$source_root/lib/"
 mkdir -p "$source_root/.test-work/phase-three"
 cp /fixtures/fzf-0.65.2-linux_amd64.tar.gz "$source_root/.test-work/phase-three/"
 cd "$source_root"

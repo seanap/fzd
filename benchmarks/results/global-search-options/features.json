@@ -1,0 +1,598 @@
+[
+  {
+    "scope": "host-count",
+    "name": "live",
+    "query": "immich",
+    "matches": 0,
+    "source_run": "run-1"
+  },
+  {
+    "scope": "host-count",
+    "name": "locate",
+    "query": "immich",
+    "matches": 3,
+    "source_run": "run-1"
+  },
+  {
+    "scope": "host-count",
+    "name": "cached-fzf-fuzzy",
+    "query": "immich",
+    "matches": 0,
+    "source_run": "run-1"
+  },
+  {
+    "scope": "host-count",
+    "name": "cached-fzf-exact",
+    "query": "immich",
+    "matches": 0,
+    "source_run": "run-1"
+  },
+  {
+    "scope": "host-count",
+    "name": "live",
+    "query": "docker",
+    "matches": 0,
+    "source_run": "run-1"
+  },
+  {
+    "scope": "host-count",
+    "name": "locate",
+    "query": "docker",
+    "matches": 10,
+    "source_run": "run-1"
+  },
+  {
+    "scope": "host-count",
+    "name": "cached-fzf-fuzzy",
+    "query": "docker",
+    "matches": 0,
+    "source_run": "run-1"
+  },
+  {
+    "scope": "host-count",
+    "name": "cached-fzf-exact",
+    "query": "docker",
+    "matches": 0,
+    "source_run": "run-1"
+  },
+  {
+    "scope": "host-count",
+    "name": "live",
+    "query": "co",
+    "matches": 502,
+    "source_run": "run-1"
+  },
+  {
+    "scope": "host-count",
+    "name": "locate",
+    "query": "co",
+    "matches": 2748,
+    "source_run": "run-1"
+  },
+  {
+    "scope": "host-count",
+    "name": "cached-fzf-fuzzy",
+    "query": "co",
+    "matches": 813,
+    "source_run": "run-1"
+  },
+  {
+    "scope": "host-count",
+    "name": "cached-fzf-exact",
+    "query": "co",
+    "matches": 502,
+    "source_run": "run-1"
+  },
+  {
+    "scope": "host-count",
+    "name": "live",
+    "query": "imch",
+    "matches": 0,
+    "source_run": "run-1"
+  },
+  {
+    "scope": "host-count",
+    "name": "locate",
+    "query": "imch",
+    "matches": 0,
+    "source_run": "run-1"
+  },
+  {
+    "scope": "host-count",
+    "name": "cached-fzf-fuzzy",
+    "query": "imch",
+    "matches": 3,
+    "source_run": "run-1"
+  },
+  {
+    "scope": "host-count",
+    "name": "cached-fzf-exact",
+    "query": "imch",
+    "matches": 0,
+    "source_run": "run-1"
+  },
+  {
+    "scope": "quality",
+    "name": "live",
+    "query": "immich",
+    "target": "immich-server.conf",
+    "matches": 2,
+    "target_rank": 2,
+    "source_run": "features-validated"
+  },
+  {
+    "scope": "quality",
+    "name": "locate",
+    "query": "immich",
+    "target": "immich-server.conf",
+    "matches": 2,
+    "target_rank": 2,
+    "source_run": "features-validated"
+  },
+  {
+    "scope": "quality",
+    "name": "cached-fzf-fuzzy",
+    "query": "immich",
+    "target": "immich-server.conf",
+    "matches": 2,
+    "target_rank": 2,
+    "source_run": "features-validated"
+  },
+  {
+    "scope": "quality",
+    "name": "cached-fzf-exact",
+    "query": "immich",
+    "target": "immich-server.conf",
+    "matches": 2,
+    "target_rank": 2,
+    "source_run": "features-validated"
+  },
+  {
+    "scope": "quality",
+    "name": "live",
+    "query": "imch",
+    "target": "immich-server.conf",
+    "matches": 0,
+    "target_rank": null,
+    "source_run": "features-validated"
+  },
+  {
+    "scope": "quality",
+    "name": "locate",
+    "query": "imch",
+    "target": "immich-server.conf",
+    "matches": 0,
+    "target_rank": null,
+    "source_run": "features-validated"
+  },
+  {
+    "scope": "quality",
+    "name": "cached-fzf-fuzzy",
+    "query": "imch",
+    "target": "immich-server.conf",
+    "matches": 2,
+    "target_rank": 2,
+    "source_run": "features-validated"
+  },
+  {
+    "scope": "quality",
+    "name": "cached-fzf-exact",
+    "query": "imch",
+    "target": "immich-server.conf",
+    "matches": 0,
+    "target_rank": null,
+    "source_run": "features-validated"
+  },
+  {
+    "scope": "quality",
+    "name": "live",
+    "query": "imm server",
+    "target": "immich-server.conf",
+    "matches": 0,
+    "target_rank": null,
+    "source_run": "features-validated"
+  },
+  {
+    "scope": "quality",
+    "name": "locate",
+    "query": "imm server",
+    "target": "immich-server.conf",
+    "matches": 0,
+    "target_rank": null,
+    "source_run": "features-validated"
+  },
+  {
+    "scope": "quality",
+    "name": "cached-fzf-fuzzy",
+    "query": "imm server",
+    "target": "immich-server.conf",
+    "matches": 1,
+    "target_rank": 1,
+    "source_run": "features-validated"
+  },
+  {
+    "scope": "quality",
+    "name": "cached-fzf-exact",
+    "query": "imm server",
+    "target": "immich-server.conf",
+    "matches": 1,
+    "target_rank": 1,
+    "source_run": "features-validated"
+  },
+  {
+    "scope": "quality",
+    "name": "live",
+    "query": "immcih",
+    "target": "immich-server.conf",
+    "matches": 0,
+    "target_rank": null,
+    "source_run": "features-validated"
+  },
+  {
+    "scope": "quality",
+    "name": "locate",
+    "query": "immcih",
+    "target": "immich-server.conf",
+    "matches": 0,
+    "target_rank": null,
+    "source_run": "features-validated"
+  },
+  {
+    "scope": "quality",
+    "name": "cached-fzf-fuzzy",
+    "query": "immcih",
+    "target": "immich-server.conf",
+    "matches": 0,
+    "target_rank": null,
+    "source_run": "features-validated"
+  },
+  {
+    "scope": "quality",
+    "name": "cached-fzf-exact",
+    "query": "immcih",
+    "target": "immich-server.conf",
+    "matches": 0,
+    "target_rank": null,
+    "source_run": "features-validated"
+  },
+  {
+    "scope": "quality",
+    "name": "live",
+    "query": "dcomp",
+    "target": "docker-compose.yaml",
+    "matches": 0,
+    "target_rank": null,
+    "source_run": "features-validated"
+  },
+  {
+    "scope": "quality",
+    "name": "locate",
+    "query": "dcomp",
+    "target": "docker-compose.yaml",
+    "matches": 0,
+    "target_rank": null,
+    "source_run": "features-validated"
+  },
+  {
+    "scope": "quality",
+    "name": "cached-fzf-fuzzy",
+    "query": "dcomp",
+    "target": "docker-compose.yaml",
+    "matches": 1,
+    "target_rank": 1,
+    "source_run": "features-validated"
+  },
+  {
+    "scope": "quality",
+    "name": "cached-fzf-exact",
+    "query": "dcomp",
+    "target": "docker-compose.yaml",
+    "matches": 0,
+    "target_rank": null,
+    "source_run": "features-validated"
+  },
+  {
+    "scope": "quality",
+    "name": "live",
+    "query": "an rpt",
+    "target": "annual-report.pdf",
+    "matches": 0,
+    "target_rank": null,
+    "source_run": "features-validated"
+  },
+  {
+    "scope": "quality",
+    "name": "locate",
+    "query": "an rpt",
+    "target": "annual-report.pdf",
+    "matches": 0,
+    "target_rank": null,
+    "source_run": "features-validated"
+  },
+  {
+    "scope": "quality",
+    "name": "cached-fzf-fuzzy",
+    "query": "an rpt",
+    "target": "annual-report.pdf",
+    "matches": 2,
+    "target_rank": 1,
+    "source_run": "features-validated"
+  },
+  {
+    "scope": "quality",
+    "name": "cached-fzf-exact",
+    "query": "an rpt",
+    "target": "annual-report.pdf",
+    "matches": 0,
+    "target_rank": null,
+    "source_run": "features-validated"
+  },
+  {
+    "scope": "quality",
+    "name": "live",
+    "query": "i",
+    "target": "immich-server.conf",
+    "matches": 0,
+    "target_rank": null,
+    "source_run": "features-validated"
+  },
+  {
+    "scope": "quality",
+    "name": "locate",
+    "query": "i",
+    "target": "immich-server.conf",
+    "matches": 0,
+    "target_rank": null,
+    "source_run": "features-validated"
+  },
+  {
+    "scope": "quality",
+    "name": "cached-fzf-fuzzy",
+    "query": "i",
+    "target": "immich-server.conf",
+    "matches": 3,
+    "target_rank": 2,
+    "source_run": "features-validated"
+  },
+  {
+    "scope": "quality",
+    "name": "cached-fzf-exact",
+    "query": "i",
+    "target": "immich-server.conf",
+    "matches": 3,
+    "target_rank": 2,
+    "source_run": "features-validated"
+  },
+  {
+    "scope": "coverage-cap",
+    "name": "cache-cap-10",
+    "all_candidates": 1008,
+    "retained": 10,
+    "omitted": 998,
+    "source_run": "features-validated"
+  },
+  {
+    "scope": "coverage",
+    "name": "live",
+    "query": "fresh-after-index",
+    "matches": 1,
+    "source_run": "features-validated"
+  },
+  {
+    "scope": "coverage",
+    "name": "locate-stale",
+    "query": "fresh-after-index",
+    "matches": 0,
+    "source_run": "features-validated"
+  },
+  {
+    "scope": "coverage",
+    "name": "locate-fresh",
+    "query": "fresh-after-index",
+    "matches": 1,
+    "source_run": "features-validated"
+  },
+  {
+    "scope": "coverage",
+    "name": "cache-rebuilt",
+    "query": "fresh-after-index",
+    "matches": 1,
+    "source_run": "features-validated"
+  },
+  {
+    "scope": "coverage",
+    "name": "cache-already-open",
+    "query": "fresh-after-index",
+    "matches": 0,
+    "source_run": "features-validated"
+  },
+  {
+    "scope": "coverage",
+    "name": "live",
+    "query": "hidden-by-gitignore",
+    "matches": 0,
+    "source_run": "features-validated"
+  },
+  {
+    "scope": "coverage",
+    "name": "locate-stale",
+    "query": "hidden-by-gitignore",
+    "matches": 0,
+    "source_run": "features-validated"
+  },
+  {
+    "scope": "coverage",
+    "name": "locate-fresh",
+    "query": "hidden-by-gitignore",
+    "matches": 1,
+    "source_run": "features-validated"
+  },
+  {
+    "scope": "coverage",
+    "name": "cache-rebuilt",
+    "query": "hidden-by-gitignore",
+    "matches": 0,
+    "source_run": "features-validated"
+  },
+  {
+    "scope": "coverage",
+    "name": "cache-already-open",
+    "query": "hidden-by-gitignore",
+    "matches": 0,
+    "source_run": "features-validated"
+  },
+  {
+    "scope": "coverage",
+    "name": "live",
+    "query": "deeper-than-six",
+    "matches": 0,
+    "source_run": "features-validated"
+  },
+  {
+    "scope": "coverage",
+    "name": "locate-stale",
+    "query": "deeper-than-six",
+    "matches": 0,
+    "source_run": "features-validated"
+  },
+  {
+    "scope": "coverage",
+    "name": "locate-fresh",
+    "query": "deeper-than-six",
+    "matches": 1,
+    "source_run": "features-validated"
+  },
+  {
+    "scope": "coverage",
+    "name": "cache-rebuilt",
+    "query": "deeper-than-six",
+    "matches": 0,
+    "source_run": "features-validated"
+  },
+  {
+    "scope": "coverage",
+    "name": "cache-already-open",
+    "query": "deeper-than-six",
+    "matches": 0,
+    "source_run": "features-validated"
+  },
+  {
+    "scope": "host-coverage",
+    "query": "immich",
+    "name": "locate",
+    "matches": 3,
+    "depths": [
+      7,
+      10,
+      10
+    ],
+    "source_run": "host-coverage-validated"
+  },
+  {
+    "scope": "host-coverage",
+    "query": "immich",
+    "name": "fd-depth-6-no-ignore-False",
+    "matches": 0,
+    "recovered_indexed": 0,
+    "status": 0,
+    "ms": 7.993943,
+    "warmup": false,
+    "source_run": "host-coverage-validated"
+  },
+  {
+    "scope": "host-coverage",
+    "query": "immich",
+    "name": "fd-depth-6-no-ignore-True",
+    "matches": 0,
+    "recovered_indexed": 0,
+    "status": 0,
+    "ms": 47.065279,
+    "warmup": false,
+    "source_run": "host-coverage-validated"
+  },
+  {
+    "scope": "host-coverage",
+    "query": "immich",
+    "name": "fd-depth-64-no-ignore-False",
+    "matches": 0,
+    "recovered_indexed": 0,
+    "status": 0,
+    "ms": 15.723654,
+    "warmup": false,
+    "source_run": "host-coverage-validated"
+  },
+  {
+    "scope": "host-coverage",
+    "query": "immich",
+    "name": "fd-depth-64-no-ignore-True",
+    "matches": 3,
+    "recovered_indexed": 3,
+    "status": 0,
+    "ms": 74.651404,
+    "warmup": false,
+    "source_run": "host-coverage-validated"
+  },
+  {
+    "scope": "host-coverage",
+    "query": "docker",
+    "name": "locate",
+    "matches": 10,
+    "depths": [
+      5,
+      6,
+      6,
+      9,
+      9,
+      9,
+      11,
+      11,
+      11,
+      11
+    ],
+    "source_run": "host-coverage-validated"
+  },
+  {
+    "scope": "host-coverage",
+    "query": "docker",
+    "name": "fd-depth-6-no-ignore-False",
+    "matches": 0,
+    "recovered_indexed": 0,
+    "status": 0,
+    "ms": 7.289214,
+    "warmup": false,
+    "source_run": "host-coverage-validated"
+  },
+  {
+    "scope": "host-coverage",
+    "query": "docker",
+    "name": "fd-depth-6-no-ignore-True",
+    "matches": 3,
+    "recovered_indexed": 3,
+    "status": 0,
+    "ms": 39.349485,
+    "warmup": false,
+    "source_run": "host-coverage-validated"
+  },
+  {
+    "scope": "host-coverage",
+    "query": "docker",
+    "name": "fd-depth-64-no-ignore-False",
+    "matches": 5,
+    "recovered_indexed": 5,
+    "status": 0,
+    "ms": 15.120211,
+    "warmup": false,
+    "source_run": "host-coverage-validated"
+  },
+  {
+    "scope": "host-coverage",
+    "query": "docker",
+    "name": "fd-depth-64-no-ignore-True",
+    "matches": 10,
+    "recovered_indexed": 10,
+    "status": 0,
+    "ms": 58.112959,
+    "warmup": false,
+    "source_run": "host-coverage-validated"
+  }
+]

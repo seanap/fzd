@@ -1,0 +1,351 @@
+1..350
+ok 1 invalid color overrides are ignored without terminating startup
+ok 2 hex colors accept optional hash and mixed case while rejecting invalid digits
+ok 3 explicit configuration path is loaded
+ok 4 XDG configuration path is loaded when no explicit file is set
+ok 5 legacy root variables expand without evaluating shell commands
+ok 6 legacy leading tilde roots expand without evaluating shell code
+ok 7 shipped configuration defines one backend and one root list
+ok 8 root arrays preserve spaces and override the legacy root string
+ok 9 root arrays retain quotes substitutions and trailing newlines as path data
+ok 10 configuration declarations retain top-level Bash scope
+ok 11 configured runtime paths are applied before creating storage
+ok 12 legacy root expansion never executes substitution text
+ok 13 invalid numeric settings fail with an actionable diagnostic
+ok 14 unknown backend fails before launching a picker
+ok 15 Explorer dependency detection reports missing flock and maps distribution providers
+ok 16 Ubuntu and Debian apt transaction authenticates once and refreshes metadata once
+ok 17 Fedora dnf and Arch pacman use bounded deduplicated package transactions
+ok 18 interactive sudo authenticates normally while noninteractive authentication failures stop
+ok 19 dependency package failures are propagated without continuing installation
+ok 20 dependency mappings and versions handle executable aliases and numerical comparison
+ok 21 fd bat executable aliases and an existing configured editor prevent unnecessary installs
+ok 22 fzf capability detection ignores hostile inherited defaults and rejects unsupported bindings
+ok 23 distribution detection uses os-release rather than an unrelated package manager on PATH
+ok 24 present but incompatible GNU serialization tools fail their capability checks
+ok 25 zoxide is required before installation and maps to each supported distribution package
+ok 26 source installer installs missing upstream zoxide through the native package manager
+ok 27 unsupported zoxide version is rejected before application files change
+ok 28 apt transactions are noninteractive and retain existing modified conffiles
+ok 29 required optional and retry transactions share one APT metadata refresh
+ok 30 filename labels escape every non-NUL ASCII control byte and DEL
+ok 31 filename display retains Unicode and distinguishes literal escapes from control bytes
+ok 32 local candidate labels are printable while control-character path identities remain exact
+ok 33 global candidate labels are printable while control-character path identities remain exact
+ok 34 isolated Ubuntu profile detects apt installs missing findutils and completes
+ok 35 isolated Debian profile detects apt installs missing findutils and completes
+ok 36 isolated Fedora profile detects dnf installs missing findutils and completes
+ok 37 isolated Arch profile detects pacman installs missing findutils and completes
+ok 38 batch encoding matches GNU base64 for every non-NUL byte and alignment
+ok 39 one encoder handles a thousand local records without per-path execution
+ok 40 truncated encoder output fails without publishing partial path identities
+ok 41 encoder failure after complete output is still propagated
+ok 42 global batches preserve order exact paths and caps across chunk boundaries
+ok 43 global serialization uses one encoder per bounded batch
+ok 44 repeated encoding closes descriptors and reaps its producers
+ok 45 global search emits the first match while its producer is still scanning
+ok 46 a competing destination created during rename is not replaced
+ok 47 name prompt codec roundtrips every non-NUL byte and keeps valid Unicode readable
+ok 48 rename preserves exact name bytes and unchanged names perform no move
+ok 49 directory rename rebases browser history recents clipboard and highlighted names
+ok 50 rename conflicts never replace files links or merge directories
+ok 51 mkdir accepts unusual bytes rejects invalid names and never replaces existing targets
+ok 52 rename permission failures preserve names and state
+ok 53 copy persists across sessions and preserves unusual filenames contents and permissions
+ok 54 recursive copy preserves directory permissions hardlinks and symlinks without touching targets
+ok 55 cut only records intent then successful paste moves and clears its clipboard
+ok 56 paste refuses its original location and directory descendants including symlink aliases
+ok 57 dangling symlinks can be listed copied and moved as links
+ok 58 existing destination files directories and symlinks are never replaced or merged
+ok 59 missing clipboard sources and synthetic navigation entries fail safely
+ok 60 failed copying cleans private staging while preserving the source and clipboard
+ok 61 a destination appearing during atomic copy publication is not overwritten or reported successful
+ok 62 permission failures preserve cut sources and allow retry
+ok 63 concurrent clipboard writers publish complete private records
+ok 64 cut paste works across an isolated tmpfs boundary
+ok 65 termination during copying cleans private staging and preserves clipboard and source
+ok 66 failed atomic publication retains the previous state and permits retry
+ok 67 invalid clipboard versions truncated records and extra fields are rejected
+ok 68 local Enter and global Enter persist the returned directory as most recent
+ok 69 browser history traverses without duplicates and discards the forward branch
+ok 70 browser history skips missing and inaccessible directories and is bounded
+ok 71 recent directories persist in MRU order with exact bytes and private permissions
+ok 72 recents discard stale paths and retain at most 25 unique directories
+ok 73 concurrent recent-directory updates retain each session without corrupting records
+ok 74 invalid state and symlinked state files fail without replacing unrelated data
+ok 75 real terminal preserves inherited initial query and colors while reserving operation keys
+ok 76 real terminal pickers ignore inherited queries and print-query without losing the local query
+ok 77 real terminal F8 requires explicit confirmation and keeps the application usable
+ok 78 real terminal Delete still edits the query and F1 help works at 60 by 16
+ok 79 real terminal F2 preserves an unusual name unchanged and Ctrl-R renames and restores highlighting
+ok 80 real terminal Ctrl-N and F7 validate cancel and create directories with escaped names
+ok 81 real terminal global F1 help restores the active global query
+ok 82 real terminal Ctrl-C Ctrl-X Ctrl-V copy cut and paste without aborting
+ok 83 real terminal Alt-C Alt-X Alt-V provide the same clipboard operations
+ok 84 real terminal can copy a selected global result and paste into the browsed directory
+ok 85 real terminal Alt arrows traverse local and global visits without replacing parent navigation
+ok 86 real terminal F1 and recent-directory cancellation restore the filtered view
+ok 87 real terminal recent picker navigates and session history includes that visit
+ok 88 missing Trash backend leaves data untouched without any permanent-delete fallback
+ok 89 Trash passes exact file directory and symlink arguments and never follows the link
+ok 90 trashing a directory clears affected clipboard and prunes recents and browser history
+ok 91 failed Trash operations retain source and clipboard and do not report success
+ok 92 trash-put is used when gio is unavailable
+ok 93 a changed item after confirmation is not trashed
+ok 94 real gio uses an isolated XDG Trash with recoverable metadata
+ok 95 sourcing exposes functions without configuration or filesystem side effects
+ok 96 local listing retains newlines hidden names and symlinks without duplicates
+ok 97 local records keep exact path bytes and escape display record separators
+ok 98 navigation preserves directory names with trailing newlines
+ok 99 Left at the filesystem root is a safe no-op under errexit
+ok 100 inaccessible directories are safe no-op transitions
+ok 101 an empty directory still offers the current-directory Enter shortcut
+ok 102 selection decoding retains every trailing newline byte
+ok 103 preview opens the exact filename including a trailing newline
+ok 104 callback shell quoting preserves spaces quotes substitutions and newlines
+ok 105 enumeration restores glob options and does not duplicate hidden entries
+ok 106 optional formatter preserves the Bash snapshot bytes for unusual names links exclusions and caps
+ok 107 complex user exclusion patterns retain the Bash formatter
+ok 108 accelerated snapshot caps safely close real fd and find producers
+ok 109 optional formatter handles NUL records split across arbitrary input blocks
+ok 110 global index does not execute command substitutions in filenames
+ok 111 cache sends configured roots and exclusions to fd
+ok 112 cache directory labels contain the directory basename
+ok 113 cache falls back to find when fd is unavailable
+ok 114 find search returns directories and files case insensitively
+ok 115 find honors exclusions with spaces without shell expansion
+ok 116 locate filters results outside configured roots
+ok 117 locate root slash admits descendants
+ok 118 failed locate database falls back to live filesystem search
+ok 119 explicit live mode does not call an available locate backend
+ok 120 query option characters are literal filename data
+ok 121 short queries return no records successfully
+ok 122 no matches is a successful empty search
+ok 123 all search producers preserve unusual path bytes without executing names
+ok 124 find honors depth and result limits
+ok 125 locate applies result cap after scope and exclusion filtering
+ok 126 basename and full-path policies agree across backends
+ok 127 missing results are omitted while live and dangling symlinks remain operable
+ok 128 a failed locate producer cannot leak partial results before fallback
+ok 129 plocate restricts visibility checks to configured roots without requesting global existence checks
+ok 130 validated locate results stream before later filesystem metadata checks finish
+ok 131 compiled scope and exclusions agree with literal roots and legacy glob policies
+ok 132 a later scoped producer failure discards earlier results before live fallback
+ok 133 indexed probes close descriptors and reap producers after repeated searches
+ok 134 cancelling an indexed query terminates and reaps its active producer
+ok 135 Enhanced installs verified Glow when APT has no package and renders real Markdown
+ok 136 Glow checksum rejection and download failure keep a usable core installation
+ok 137 existing Glow and nonexecutable user files are preserved
+ok 138 a later installer failure rolls back the downloaded Glow binary
+ok 139 Enhanced installs verified upstream Bash engine and configures both selected shells
+ok 140 ordinary updates preserve opt-in and explicit disable retains shared engines and user rc content
+ok 141 existing custom Bash engine is reused and paths through symlinked Bash rc files are correct
+ok 142 inline configuration requires explicit opt-in and never runs during noninteractive sourcing
+ok 143 inline with deps none requires engines already present and staging forbids shell setup
+ok 144 failed download and wrong checksum roll back FZD without installing downloaded code
+ok 145 existing incomplete engine directories are preserved and never adopted automatically
+ok 146 inline dependency detection includes zsh plugin and native ps package providers
+ok 147 opt-in zsh configuration retains existing strategy order and colors without duplicate completion entries
+ok 148 Enhanced Bash respects active engines and user blesh configuration including faces and opt-outs
+ok 149 plain Simple install uses present recommended tools and only minimal startup entries
+ok 150 Simple installs missing eza through the native package manager without replacing aliases
+ok 151 unavailable recommended packages leave a usable core installation and fallback guidance
+ok 152 default required package installation fails without prompting when sudo is unauthorized
+ok 153 clean Enhanced reuses existing engines and a compatible native font without executing custom code
+ok 154 font detection recognizes Nerd families and verified alternative glyph coverage
+ok 155 WSL Enhanced reports Windows font setup and never attempts Linux font installation
+ok 156 WSL kernel detection works without WSL environment variables
+ok 157 optional native font download failure keeps the core installation verified and cleans private downloads
+ok 158 font checksum mismatch discards download without overwriting fonts or rolling back FZD
+ok 159 font publication uses XDG data user scope and never clobbers a concurrent or existing destination
+ok 160 existing font destinations including symlinks are preserved
+ok 161 custom startup paths and ZDOTDIR preserve aliases hooks and shell preferences
+ok 162 edited shell configuration stays user-owned through update explicit preference changes and uninstall
+ok 163 preexisting user shell files are neither executed nor claimed for removal
+ok 164 v2 managed blocks migrate once retaining inline settings without evaluating them
+ok 165 unsafe installer overrides fail before writes while relative XDG homes use defaults
+ok 166 Enhanced package staging is forbidden and Simple staging never creates home files
+ok 167 shell config symlinks and foreign installation blocks never get overwritten
+ok 168 custom engine paths are quoted safely for both generated shell files and never evaluated during install
+ok 169 changing XDG config locations keeps all owned source entries recoverable on uninstall
+ok 170 optional font tooling package failures preserve a verified core install
+ok 171 font download termination cleans its private archive directory
+ok 172 new XDG configuration directories are private and existing directory modes stay unchanged
+ok 173 failed uninstall rolls back shell files at historic XDG locations outside HOME
+ok 174 installed Explorer modules load from share and uninstall removes only owned helpers
+ok 175 fresh noninteractive install verifies without root and matches the runtime exactly
+ok 176 reinstallation is idempotent and updates retain user configuration and shell contents
+ok 177 installed lifecycle script uninstalls without the checkout and preserves shared files
+ok 178 custom XDG ZDOTDIR prefix and configuration paths are preserved exactly
+ok 179 existing FZD configuration is checked but never executed or rewritten by install or verify
+ok 180 invalid configuration and invalid CLI options fail before any installation writes
+ok 181 missing dependencies and incompatible fzf fail with useful errors before user changes
+ok 182 available dependencies cause no sudo or package-manager calls
+ok 183 shell integration preserves existing lf executable editor settings and third-party themes
+ok 184 symbolic shell rc files keep their links mode and unrelated contents
+ok 185 malformed shell blocks roll back all application and configuration writes
+ok 186 unmanaged files require explicit adoption and keep recoverable originals
+ok 187 modified owned files block updates and are preserved on uninstall
+ok 188 legacy configuration migrates by copying without executing or deleting its source
+ok 189 manual mode installs no shell integration or user configuration
+ok 190 package staging separates distribution files from all user lifecycle state
+ok 191 download failures and checksum mismatch never publish fzf or application files
+ok 192 unverified downloads and relative install paths are rejected before transactions
+ok 193 failed file publication and SIGTERM restore prior shell and application files
+ok 194 SIGKILL leaves an explicit recoverable transaction and blocks concurrent installs
+ok 195 recovery refuses a live installer owner
+ok 196 installed Bash and zsh wrappers transport a real FZD selection ending with newlines
+ok 197 real pinned upstream fzf archive installs verifies and remains owned across updates
+ok 198 installer upgrades an owned runtime from a changed source checkout
+ok 199 uninstall preserves shell edits added after installation and foreign replacement blocks
+ok 200 unterminated shell files survive repeated installation and uninstall byte-for-byte
+ok 201 application destination symlinks and malformed manifests are never followed
+ok 202 canonical prefix paths keep installed lifecycle ownership consistent
+ok 203 recovery clears a stale lock after a completed transaction was archived
+ok 204 rc targets outside HOME also roll back safely through retained dotfile symlinks
+ok 205 installed Bash and zsh launchers change parent directory through a real fzf terminal
+ok 206 failed uninstall restores deleted files without replacing an unrelated temporary-looking file
+ok 207 real fzf preview pane receives eza Nerd glyphs ANSI colors and exclusions
+ok 208 Omarchy interactive launcher keeps selected directory after real fzf exits
+ok 209 real terminal clipboard and Lazygit actions return to local and global query sessions
+ok 210 editor parses arguments without eval and preserves unusual filenames
+ok 211 unsafe editor expressions are rejected without execution and fallback respects precedence
+ok 212 current Omarchy wrapper uses live selected editor and adds exactly one separator
+ok 213 current light and dark Omarchy palettes apply once and explicit colors win
+ok 214 inherited fzf colors and opt out preserve user palettes without parsing shell code
+ok 215 Wayland and X11 copy exact absolute bytes while headless and provider failures remain usable
+ok 216 Lazygit checks repositories on action and restores interactive terminal through common runner
+ok 217 Chafa uses bounded symbols rendering and discards partial failures
+ok 218 Glow preserves style and falls back on failure or timeout
+ok 219 optional action bindings preserve existing controls and local navigation
+ok 220 current upstream Omarchy Bash startup keeps aliases zoxide hooks and completion preferences
+ok 221 native Chafa renders a real PNG through captured FZD preview
+ok 222 ordinary startup and preview helpers avoid missing Omarchy utility PATH scans
+ok 223 real fd indexes configured roots and labels directories
+ok 224 real fd query preserves newline paths and literal option characters
+ok 225 real plocate private database preserves unusual names and directory labels
+ok 226 real plocate treats wildcard query characters literally
+ok 227 indexed plocate escapes glob characters in roots and queries and retains newline names
+ok 228 indexed plocate deduplicates overlapping roots without admitting siblings
+ok 229 indexed plocate retains an indexed search root itself
+ok 230 bounded indexed probe cannot hide late basename matches or consume the result cap
+ok 231 real plocate missing database falls back to the filesystem
+ok 232 real plocate no matches succeeds without a fallback scan
+ok 233 real fd honors relative roots containing dot components
+ok 234 real fd and find agree that depth zero yields no descendants
+ok 235 global Right on a file is a no-op and leaves FZD running
+ok 236 global Right on a disappeared result is a no-op
+ok 237 live overlay Right enters a directory with the existing controls
+ok 238 global Left retains its existing overlay-cancel behavior
+ok 239 local Right on a file does not terminate FZD
+ok 240 Left restores the child directory selection
+ok 241 Enter on the parent row preserves the current-directory shortcut
+ok 242 Esc exits with 130 and no directory output
+ok 243 plocate is mandatory while deps none leaves an uninitialized index untouched
+ok 244 Simple and Enhanced install missing plocate and initialize its index without an extra flag
+ok 245 index initialization uses distro defaults and reuses a ready index on subsequent installs
+ok 246 missing updatedb warns and the plocate-specific executable can initialize the index
+ok 247 no-updatedb deps none and custom databases skip initialization
+ok 248 failed index initialization preserves a usable install and reports the fallback
+ok 249 index initialization without sudo authorization continues without running updatedb
+ok 250 legacy package indexing flag remains accepted without being required
+ok 251 Enhanced reuses rich preview clipboard and editor tools and never installs Lazygit
+ok 252 Enhanced dependency collection selects display provider and excludes headless clipboard and Lazygit
+ok 253 Omarchy launcher uses upstream helper and interactive shell with idempotent ownership
+ok 254 unmanaged and modified Omarchy desktop entries are preserved even with adopt
+ok 255 launcher skips non Omarchy and unsupported shell and rejects accidental Simple registration
+ok 256 launcher rollback leaves an earlier desktop entry intact after later publication failure
+ok 257 package-owned Omarchy startup files cannot be selected through a user symlink
+ok 258 native desktop parser retains quoted special characters in custom launcher prefixes
+ok 259 Debian payload includes all Explorer modules and opt-in integration
+ok 260 Debian package has no maintainer scripts home files or source lifecycle
+ok 261 Debian dependencies explicitly cover interpreter fzf flock GNU tools and default editor
+ok 262 Debian downloadable filename is GitHub safe while metadata retains Debian prerelease ordering
+ok 263 Stable and future candidate builds automatically use GitHub safe Debian filenames
+ok 264 Debian build is byte reproducible with fixed source epoch
+ok 265 Debian revision supports ordered package upgrades
+ok 266 Build rejects invalid source epoch and package revisions
+ok 267 Immutable release build ignores untracked inputs and validates checksums
+ok 268 Release manifest uses exact GitHub safe asset names and pins matching Arch metadata
+ok 269 Current release installation documentation matches the generated Debian filename
+ok 270 Package files have only standard root ownership and data permissions
+ok 271 tree applies the list directory and file colors to its inherited palette
+ok 272 tree honors TREE_COLORS precedence and preserves unrelated entries
+ok 273 tree retains its palette without valid overrides and supports empty palettes
+ok 274 real tree renders configured directory and regular file colors
+ok 275 eza preserves the inherited palette without explicit overrides even with vivid installed
+ok 276 eza replaces only the requested directory color and retains separators
+ok 277 eza replaces adjacent directory and file colors including palette endpoints
+ok 278 eza appends missing override entries and handles an empty inherited palette
+ok 279 eza retains escaped colons backslashes and empty palette entries
+ok 280 invalid eza color overrides retain the inherited entries
+ok 281 preview preserves text MIME policy renderer options and exact filename
+ok 282 binary MIME and failed MIME detection retain binary previews
+ok 283 directory preview retains tree colors depth exclusions and path bytes
+ok 284 eza icons are explicitly forced or disabled in captured preview commands
+ok 285 eza retains its own palette while FZD explicit colors override only requested entries
+ok 286 real eza emits Nerd glyph bytes in captured FZD previews and honors icon disable
+ok 287 invalid icon settings fail with guidance before preview execution
+ok 288 unwritable runtime storage fails clearly before starting fzf
+ok 289 failed mktemp never launches a session with an empty control pathname
+ok 290 normal exit and Esc remove all control files
+ok 291 termination cleans a locate staging file and reports signal status
+ok 292 native Bash and zsh Tab complete learned names and preserve escaped local paths
+ok 293 ble.sh displays a learned directory as ghost text and Right accepts it
+ok 294 zsh-autosuggestions completion strategy displays ghost text and Right accepts it
+ok 295 Enter on an uncompleted partial query jumps in both real interactive shells
+ok 296 ordinary interactive cd is learned with only one upstream hook after repeated sourcing
+ok 297 upstream hook none stays disabled while explicit interactive FZD jumps still learn
+ok 298 installer-enabled Bash inline suggestions display gray ghost text with Right acceptance
+ok 299 installer-enabled zsh inline suggestions work on the first prompt without manual compinit or plugin setup
+ok 300 fresh zsh initializes compinit once and preserves a framework initialized later in startup
+ok 301 explicit completion opt-out preserves a zsh setup without compinit
+ok 302 installed inline engines preserve real FZD browsing and return to the parent shell
+ok 303 existing Bash integration changes directory with quotes Unicode and embedded newline
+ok 304 WSL startup command probes avoid Windows mounts and preserve the user's PATH
+ok 305 existing zsh integration changes directory with quotes Unicode and embedded newline
+ok 306 existing Bash integration treats Esc as a cancelled navigation
+ok 307 existing zsh integration treats Esc as a cancelled navigation
+ok 308 Bash and zsh wrappers preserve directories ending with multiple newlines
+ok 309 Bash and zsh wrappers preserve every legal non-NUL filename byte
+ok 310 shell integration leaves existing lf functions aliases and executables intact
+ok 311 shell integration preserves editor colors and never sources Bash user configuration in zsh
+ok 312 shell wrappers propagate failures safely under errexit and treat empty output as success
+ok 313 shell wrappers forward existing unexported editor and colors without changing the parent environment
+ok 314 real terminal Right Left and Enter restore the child selection
+ok 315 real terminal Ctrl-F cache search Right and Enter keep their controls
+ok 316 real terminal Ctrl-F live search Right and Enter keep their controls
+ok 317 real terminal Ctrl-F searches a private locate database
+ok 318 real terminal auto search survives a broken locate database
+ok 319 real terminal Enter opens exact unusual filename then Esc returns 130
+ok 320 real terminal remains usable after resizing to 60 columns and 16 rows
+ok 321 real terminal Ctrl-C refuses the navigation row and Esc leaves no control files
+ok 322 real fzf completes a delayed action write before navigation resumes
+ok 323 real terminal works without an alternate-screen restore capability
+ok 324 seeded global discovery produces results without typing on live cache and locate
+ok 325 real fzf directory preview captures eza glyphs even though eza stdout is a pipe
+ok 326 absolute XDG homes keep configuration state cache and temporary storage separate
+ok 327 relative XDG homes use freedesktop defaults without accessing relative paths
+ok 328 XDG traversal and relative FZD overrides fail before touching their targets
+ok 329 missing relative unsafe and non-directory runtime paths fall back to cache
+ok 330 runtime permissions are checked without repairing or changing user directories
+ok 331 runtime symlinks fall back while explicit temporary symlinks are rejected
+ok 332 temporary overrides create isolated private sessions retaining the user's parent mode
+ok 333 unsafe shared temporary override directories and dangling symlinks are rejected
+ok 334 success failure and signal cleanup remove session directories with their temporary files
+ok 335 unsafe runtime child paths fall back instead of following symlinks or shared directories
+ok 336 lf without arguments explores and lff always forwards one seeded global query
+ok 337 partial and multiple terms jump to upstream zoxide's highest-ranked directory
+ok 338 unmatched and option-like keywords fall back to discovery without executing shell data
+ok 339 direct paths symlinks spaces trailing newlines and dash navigation preserve shell behavior
+ok 340 upstream-excluded newline names fall back and ordinary direct jumps learn immediately
+ok 341 existing lff and fallback names are preserved together with their completion handlers
+ok 342 missing zoxide stops shell navigation and runtime with actionable diagnostics
+ok 343 completion offers ranked leaf names multiple terms and quoted local directories
+ok 344 completion lists accessible learned directories only and never launches fzf
+ok 345 Bash upstream initialization preserves scalar and array prompt commands and z/zi
+ok 346 existing upstream zoxide configuration wins when sourced before or after FZD
+ok 347 zsh upstream initialization retains chpwd hooks and key bindings and learns ordinary cd
+ok 348 FZD traversal and selected destinations are learned even when the explorer is cancelled
+ok 349 seeded discovery preserves literal queries without duplicate startup reloads
+ok 350 zoxide honors user database exclusions and symlink preferences without a second database

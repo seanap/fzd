@@ -62,6 +62,18 @@ load helpers/installer
   [ "$output" = $'apt:fd-find\ndnf:fd-find\npacman:fd' ]
 }
 
+@test "snapshot accelerator is recommended and maps to each distribution Python package" {
+  rm "$TEST_BIN/python3"
+  run bash -euc '
+    source "$1/installer/dependencies.bash"
+    collect_recommended
+    [[ " ${MISSING[*]} " == *" python3 "* ]]
+    for PM in apt dnf pacman; do package_for python3; printf "%s:%s\n" "$PM" "$REPLY"; done
+  ' _ "$REPO"
+  [ "$status" -eq 0 ]
+  [ "$output" = $'apt:python3\ndnf:python3\npacman:python' ]
+}
+
 @test "fd bat executable aliases and an existing configured editor prevent unnecessary installs" {
   ln -s /usr/bin/true "$TEST_BIN/fdfind"
   ln -s /usr/bin/true "$TEST_BIN/batcat"

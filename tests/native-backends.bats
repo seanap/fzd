@@ -56,7 +56,7 @@ setup() { setup_fixture; }
   [ -z "$stderr" ]
 }
 
-@test "scoped plocate escapes regex characters in roots and queries and retains newline names" {
+@test "indexed plocate escapes glob characters in roots and queries and retains newline names" {
   FIXTURE_ROOT+='/literal[1].(a)+$^|?'
   mkdir -p "$FIXTURE_ROOT"
   local path="$FIXTURE_ROOT/"$'needle[2].(b)+$^|?\nlast'
@@ -66,6 +66,47 @@ setup() { setup_fixture; }
   run --separate-stderr bash "$FZD_SCRIPT" --_global_list --q 'needle[2].(b)+$^|?'
   [ "$status" -eq 0 ]
   assert_record_path "$path"
+  [ -z "$stderr" ]
+}
+
+@test "indexed plocate deduplicates overlapping roots without admitting siblings" {
+  mkdir -p "$FIXTURE_ROOT/child" "$FIXTURE_ROOT-sibling"
+  touch "$FIXTURE_ROOT/needle-one" "$FIXTURE_ROOT/child/needle-two" "$FIXTURE_ROOT-sibling/needle-outside"
+  private_locate
+  printf 'FZD_GLOBAL_ROOTS=(%q %q %q)\n' "$FIXTURE_ROOT/child" "$FIXTURE_ROOT" "$FIXTURE_ROOT" >"$FZD_CONF_FILE"
+  run --separate-stderr bash "$FZD_SCRIPT" --_global_list --q needle
+  [ "$status" -eq 0 ]
+  [ "${#lines[@]}" -eq 2 ]
+  assert_record_path "$FIXTURE_ROOT/needle-one"
+  assert_record_path "$FIXTURE_ROOT/child/needle-two"
+  assert_no_record_path "$FIXTURE_ROOT-sibling/needle-outside"
+  [ -z "$stderr" ]
+}
+
+@test "indexed plocate retains an indexed search root itself" {
+  local root="$FIXTURE_ROOT/needle-root"
+  mkdir "$root"
+  private_locate
+  export FZD_GLOBAL_PATHS="$root"
+  run --separate-stderr bash "$FZD_SCRIPT" --_global_list --q needle
+  [ "$status" -eq 0 ]
+  [ "${#lines[@]}" -eq 1 ]
+  assert_record_path "$root"
+  [ -z "$stderr" ]
+}
+
+@test "bounded indexed probe cannot hide late basename matches or consume the result cap" {
+  mkdir "$FIXTURE_ROOT/needle-parent"
+  local i
+  for ((i = 0; i < 4100; i++)); do printf '' >"$FIXTURE_ROOT/needle-parent/entry-$i"; done
+  touch "$FIXTURE_ROOT/zz-needle-late"
+  private_locate
+  export FZD_GLOBAL_MAXRESULTS=2
+  run --separate-stderr bash "$FZD_SCRIPT" --_global_list --q needle
+  [ "$status" -eq 0 ]
+  [ "${#lines[@]}" -eq 2 ]
+  assert_record_path "$FIXTURE_ROOT/needle-parent"
+  assert_record_path "$FIXTURE_ROOT/zz-needle-late"
   [ -z "$stderr" ]
 }
 

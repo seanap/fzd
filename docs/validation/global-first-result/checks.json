@@ -1,0 +1,36 @@
+{
+  "full_suite": {
+    "tests": 350,
+    "passed": 350,
+    "runtime_sha256": "1ea19e1418f23b3366ee76d5b7d726641c4869a580b85b8d4ef6298157471bb6",
+    "note": "Full clean suite before the final palette-only helper optimization."
+  },
+  "final_targeted": {
+    "tests": 66,
+    "passed": 66,
+    "runtime_sha256": "6e24819c35fc669ee906cff9d41d6ebb218ef6404c28f3b870dca9b55baed755",
+    "note": "Integrations, real terminal controls, optional formatter, native backends, search safety and cancellation rerun after the final palette change."
+  },
+  "static": "packaging/check.sh passed after final runtime changes; Python AST syntax checked.",
+  "host_identity_pairs_checked": 40,
+  "indexed_probe_regression": "The larger exploratory probe regressed fzd first result; final mode uses scoped scans for queries under four bytes and a 129-candidate probe for longer queries. Rejected trials remain in .test-work/global-fast/final-auto-044/.",
+  "source_settings": "No search-depth, exclusion, ignore-file, minimum-query or result-cap defaults changed.",
+  "trials": 304,
+  "summary_groups": 50,
+  "installed": {
+    "path": "/home/htpc/.local/bin/fzd",
+    "runtime_matches_source": true,
+    "formatter_matches_source": true,
+    "verify": "passed",
+    "backend": "cache (explicitly selected after the optimized runtime installation)",
+    "snapshot_smoke": "passed: native accelerator selected; exact source/installed bytes for directory, regular files, control bytes and dangling symlink",
+    "configuration_and_startup_files_unchanged_at_runtime_install": true,
+    "backend_selection": {
+      "from": "auto",
+      "to": "cache",
+      "only_config_setting_changed": true,
+      "actual_host_terminal_trials": 5,
+      "evidence": "host-cache-switch.json"
+    }
+  }
+}

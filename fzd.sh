@@ -95,17 +95,17 @@ _fzd_init() {
   if [[ ${1:-} != --_preview ]]; then _fzd_temp_init "${1:-}"; fi
 
   # ----------------- CONFIG DEFAULTS -----------------
-  : "${FZD_GLOBAL_BACKEND:=auto}" # auto|locate|cache|live
+  : "${FZD_GLOBAL_BACKEND:=cache}" # cache (in-memory fuzzy)|auto|locate|live
   : "${FZD_GLOBAL_MINLEN:=2}"
   : "${FZD_GLOBAL_MAXDEPTH:=6}"
-  : "${FZD_GLOBAL_MAXRESULTS:=1200}"
-  : "${FZD_GLOBAL_PATHS:=/etc /opt /srv /mnt /home/$USER}"
+  : "${FZD_GLOBAL_MAXRESULTS:=5000}"
+  : "${FZD_GLOBAL_PATHS:=/etc /opt /srv /home/$USER}"
   : "${FZD_GLOBAL_FULLPATH:=0}"
   : "${FZD_LOCATE_DBS:=}"
-  : "${FZD_GLOBAL_XEXCLUDES:=proc,sys,dev,run,proc/*,sys/*,dev/*,run/*,snap,lost+found,var/lib/docker}"
+  : "${FZD_GLOBAL_XEXCLUDES:=mnt,proc,sys,dev,run,proc/*,sys/*,dev/*,run/*,snap,lost+found,var/lib/docker}"
   : "${FZD_DEBUG:=0}"
   : "${FZD_GLOBAL_ROOT:=/}" # filesystem root label for overlay prompt
-  : "${FZD_EXCLUDES:=.git,node_modules,.cache,.venv,__pycache__}"
+  : "${FZD_EXCLUDES:=.git,node_modules,.cache,.venv,.tox,dist,build,__pycache__,.DS_Store}"
   : "${FZD_ICONS:=1}" # 1 forces eza icons in captured previews; 0 disables them
   [[ $FZD_ICONS == 0 || $FZD_ICONS == 1 ]] || { printf 'fzd: FZD_ICONS must be 0 or 1\n' >&2; return 1; }
   : "${FZD_PREVIEW_DEPTH:=2}"
@@ -113,9 +113,9 @@ _fzd_init() {
   : "${FZD_PREVIEW_TIMEOUT:=2}"
 
   FZD_THEME_OPTS=()
-  # A parent session exports its resolved entry colors. Preview helpers need no
-  # fzf palette construction or module/path discovery on this frequent path.
-  if [[ ${1:-} != --_preview || ${FZD_THEME_READY:-0} != 1 ]]; then
+  # A parent session exports its resolved entry colors. Data/preview helpers
+  # need no palette construction or module discovery on each keystroke.
+  if [[ ${FZD_THEME_READY:-0} != 1 || ( ${1:-} != --_preview && ${1:-} != --_global_list && ${1:-} != --_global_index ) ]]; then
     if [[ -n ${FZD_OMARCHY_THEME_FILE:-}${FZD_THEME_SNAPSHOT:-}${FZD_COLOR_BORDER:-}${FZD_COLOR_HIGHLIGHT:-}${FZD_COLOR_FG:-}${FZD_COLOR_BG:-} ]] ||
       [[ -f $XDG_STATE_HOME/omarchy/current/theme/colors.toml || -f $HOME/.local/state/omarchy/current/theme/colors.toml || -f $XDG_CONFIG_HOME/omarchy/current/theme/colors.toml ]]; then
       if _explorer_load theme; then _fzd_theme_init "${1:-}"; fi
@@ -243,6 +243,11 @@ _remove_temp() {
 }
 _cleanup() {
   _restore_screen
+  if [[ -n ${FZD_GLOBAL_PRODUCER:-} ]]; then
+    kill "$FZD_GLOBAL_PRODUCER" 2>/dev/null || true
+    wait "$FZD_GLOBAL_PRODUCER" 2>/dev/null || true
+    FZD_GLOBAL_PRODUCER=''
+  fi
   # One upstream database transaction per session, outside the redraw loop.
   local zoxide_offset
   for ((zoxide_offset=0; zoxide_offset<${#FZD_ZOXIDE_PENDING[@]}; zoxide_offset+=128)); do
@@ -577,10 +582,32 @@ _global_prepare() {
     printf 'fzd: no accessible global search roots configured\n' >&2
     return 1
   fi
+  GLOBAL_SCOPE_PATTERN=''
+  for root in "${GLOBAL_ROOTS[@]}"; do
+    _global_glob_quote "$root"
+    REPLY=${REPLY//|/\\|}; REPLY=${REPLY//\(/\\(}; REPLY=${REPLY//\)/\\)}
+    [[ -z $GLOBAL_SCOPE_PATTERN ]] || GLOBAL_SCOPE_PATTERN+='|'
+    if [[ $root == / ]]; then GLOBAL_SCOPE_PATTERN+='/*'; else GLOBAL_SCOPE_PATTERN+="$REPLY|$REPLY/*"; fi
+  done
+  GLOBAL_SCOPE_PATTERN="@($GLOBAL_SCOPE_PATTERN)"
   local first=() second=()
   IFS=',' read -r -a first <<< "$FZD_EXCLUDES"
   IFS=',' read -r -a second <<< "$FZD_GLOBAL_XEXCLUDES"
   GLOBAL_EXCLUDES=("${first[@]}" "${second[@]}")
+  # Compile the common exclusion list once. [[ ... == pattern ]] supports
+  # extglob without changing the caller's shell options. Keep arbitrary user
+  # patterns on the original path rather than changing their grouping syntax.
+  GLOBAL_EXCLUDE_PATTERN=''
+  for root in "${GLOBAL_EXCLUDES[@]}"; do
+    root=${root%/}
+    [[ -n $root ]] || continue
+    if [[ $root == *['|()']* ]]; then GLOBAL_EXCLUDE_PATTERN='fallback'; break; fi
+    [[ -z $GLOBAL_EXCLUDE_PATTERN ]] || GLOBAL_EXCLUDE_PATTERN+='|'
+    GLOBAL_EXCLUDE_PATTERN+=$root
+  done
+  if [[ -n $GLOBAL_EXCLUDE_PATTERN && $GLOBAL_EXCLUDE_PATTERN != fallback ]]; then
+    GLOBAL_EXCLUDE_PATTERN="*/@($GLOBAL_EXCLUDE_PATTERN)/*"
+  fi
   for name in FZD_GLOBAL_MINLEN FZD_GLOBAL_MAXDEPTH; do
     if [[ ! ${!name} =~ ^(0|[1-9][0-9]*)$ ]]; then
       printf 'fzd: %s must be a nonnegative integer\n' "$name" >&2
@@ -603,14 +630,14 @@ _global_prepare() {
 }
 
 _global_allowed() {
-  local path=$1 root pattern inside=0
-  for root in "${GLOBAL_ROOTS[@]}"; do
-    if [[ "$root" == / || "$path" == "$root" || "$path" == "$root/"* ]]; then
-      inside=1
-      break
-    fi
-  done
-  ((inside)) || return 1
+  local path=$1 pattern
+  # shellcheck disable=SC2053 # Compiled pathname patterns, not literal strings.
+  [[ $path == $GLOBAL_SCOPE_PATTERN ]] || return 1
+  if [[ ${GLOBAL_EXCLUDE_PATTERN:-fallback} != fallback ]]; then
+    # shellcheck disable=SC2053 # Apply the compiled exclusion alternatives.
+    [[ -z $GLOBAL_EXCLUDE_PATTERN || "$path/" != $GLOBAL_EXCLUDE_PATTERN ]]
+    return
+  fi
   for pattern in "${GLOBAL_EXCLUDES[@]}"; do
     pattern=${pattern%/}
     [[ -z "$pattern" ]] && continue
@@ -683,6 +710,12 @@ _global_live_candidates() {
     done
     command+=(')' -prune -o '(' -type d -o -type f -o -type l ')' -print0)
   fi
+  # A launcher can pass down ignored SIGPIPE. Restore its normal disposition
+  # so reaching the result cap terminates find cleanly rather than producing
+  # a write-error diagnostic/status 1. Older env versions keep the old path.
+  if env --default-signal=PIPE --version >/dev/null 2>&1; then
+    command=(env --default-signal=PIPE "${command[@]}")
+  fi
   "${command[@]}"
 }
 
@@ -699,7 +732,30 @@ _global_live_list() {
 
 _global_index() {
   _global_prepare || return
+  local python pattern simple=1 rc=0
+  # Python is an optional accelerator for whole snapshots, never a startup
+  # requirement. Leave arbitrary Bash glob syntax on the original formatter.
+  for pattern in "${GLOBAL_EXCLUDES[@]}"; do
+    if [[ $pattern == *['[]\|()']* ]]; then simple=0; break; fi
+  done
+  python=$(command -v python3 2>/dev/null || true)
+  if ((simple)) && [[ -n $python ]] && _explorer_load state && [[ -r $FZD_EXPLORER_LIB/global_format.py ]]; then
+    _global_live_candidates "" | "$python" "$FZD_EXPLORER_LIB/global_format.py" \
+      "$FZD_GLOBAL_MAXRESULTS" "$c_dir" "$c_file" "$c_reset" \
+      "${#GLOBAL_ROOTS[@]}" "${GLOBAL_ROOTS[@]}" "${GLOBAL_EXCLUDES[@]}" || rc=$?
+    if ((rc != 0 && rc != 141)); then
+      printf 'fzd: filesystem snapshot failed (status %s)\n' "$rc" >&2
+      return "$rc"
+    fi
+    return 0
+  fi
   _global_live_list ""
+}
+
+_global_glob_quote() {
+  REPLY=${1//\\/\\\\}
+  REPLY=${REPLY//\*/\\*}; REPLY=${REPLY//\?/\\?}
+  REPLY=${REPLY//\[/\\[}; REPLY=${REPLY//\]/\\]}
 }
 
 _global_regex_quote() {
@@ -707,50 +763,103 @@ _global_regex_quote() {
   REPLY=''
   for ((index=0; index<${#value}; index++)); do
     char=${value:index:1}
-    case "$char" in
-      '.'|'['|']'|'('|')'|'{'|'}'|'*'|'+'|'?'|'^'|'$'|'|'|\\) REPLY+=\\ ;;
-    esac
+    case "$char" in '.'|'['|']'|'('|')'|'{'|'}'|'*'|'+'|'?'|'^'|'$'|'|'|\\) REPLY+=\\ ;; esac
     REPLY+=$char
   done
 }
 
+_global_locate_regex() {
+  local locate_bin=$1 query=$2 root scope='' pattern
+  shift 2
+  for root in "${GLOBAL_ROOTS[@]}"; do
+    _global_regex_quote "$root"
+    [[ -z $scope ]] || scope+='|'
+    if [[ $root == / ]]; then scope+='/'; else scope+="$REPLY($|/)"; fi
+  done
+  _global_regex_quote "$query"; pattern=$REPLY
+  [[ $FZD_GLOBAL_FULLPATH == 1 ]] || pattern="(^|/)[^/]*${pattern}[^/]*$"
+  env -u LOCATE_PATH "$locate_bin" "$@" -0 -i --regex -- "^($scope)" "$pattern"
+}
+
+_global_locate_read() {
+  # Bounded candidate probes must reap their producer and preserve its status.
+  local fd producer rc=0
+  exec {fd}< <(env -u LOCATE_PATH "$@") || return 2
+  producer=$!
+  FZD_GLOBAL_PRODUCER=$producer
+  mapfile -d '' -t hits <&"$fd" || rc=2
+  exec {fd}<&-
+  wait "$producer" || rc=$?
+  FZD_GLOBAL_PRODUCER=''
+  ((rc <= 1)) || return 2
+  return 0
+}
+
+_global_locate_candidates() {
+  local locate_bin=$1 query=$2 root other pattern candidate covered
+  local arguments=() roots=() hits=() candidates=()
+  [[ -z $FZD_LOCATE_DBS ]] || arguments+=(-d "$FZD_LOCATE_DBS")
+  _global_glob_quote "$query"; pattern=$REPLY
+  if [[ ${locate_bin##*/} != plocate ]]; then
+    [[ $FZD_GLOBAL_FULLPATH != 0 ]] || arguments+=(-b)
+    env -u LOCATE_PATH "$locate_bin" "${arguments[@]}" -0 -i -- "*$pattern*"
+    return
+  fi
+  # Two/three-byte queries are often broad; keep the single scoped scan. Probe
+  # longer strings with a ceiling so a common parent name cannot make Bash
+  # inspect hundreds of thousands of irrelevant descendant filenames.
+  if ((${#query} < 4)); then _global_locate_regex "$locate_bin" "$query" "${arguments[@]}"; return; fi
+  # One anchored glob per disjoint root lets plocate use its trigram index.
+  # The scope is part of the producer's pattern, before visibility checks; a
+  # broad system query followed by shell filtering can stall on Windows mounts.
+  for root in "${GLOBAL_ROOTS[@]}"; do
+    covered=0
+    for other in "${GLOBAL_ROOTS[@]}"; do
+      [[ $root == "$other" ]] && continue
+      if [[ $other == / || $root == "$other/"* ]]; then covered=1; break; fi
+    done
+    ((covered)) && continue
+    for other in "${roots[@]}"; do [[ $root != "$other" ]] || covered=1; done
+    ((covered)) || roots+=("$root")
+  done
+  for root in "${roots[@]}"; do
+    _global_glob_quote "${root%/}/"; candidate="$REPLY*$pattern*"
+    _global_locate_read "$locate_bin" "${arguments[@]}" -0 -i -l 129 -- "$candidate" || return 2
+    if ((${#candidates[@]} + ${#hits[@]} > 128)); then
+      _global_locate_regex "$locate_bin" "$query" "${arguments[@]}"
+      return
+    fi
+    candidates+=("${hits[@]}")
+    # A root itself can be indexed too. [/] forces exact glob matching rather
+    # than plocate's implicit substring search when no metacharacters occur.
+    candidate=${root##*/}
+    [[ -n $candidate ]] || candidate=/
+    [[ $FZD_GLOBAL_FULLPATH != 1 ]] || candidate=$root
+    if [[ ${candidate,,} == *"${query,,}"* ]]; then
+      _global_glob_quote "${root#/}"
+      _global_locate_read "$locate_bin" "${arguments[@]}" -0 -i -- "[/]$REPLY" || return 2
+      candidates+=("${hits[@]}")
+    fi
+  done
+  if ((${#candidates[@]})); then printf '%s\0' "${candidates[@]}"; fi
+  return 0
+}
+
 _global_list() {
-  local query=$* locate_bin='' source_file error_file pattern root scope='' rc=0
+  local query=$* locate_bin='' source_file error_file rc=0
   _global_prepare || return
   ((${#query} >= FZD_GLOBAL_MINLEN)) || return 0
   if [[ "$FZD_GLOBAL_BACKEND" != live && "$FZD_GLOBAL_BACKEND" != cache ]]; then
     locate_bin=$(command -v plocate 2>/dev/null || command -v locate 2>/dev/null || true)
   fi
   if [[ "$FZD_GLOBAL_BACKEND" != live && "$FZD_GLOBAL_BACKEND" != cache && -n "$locate_bin" ]]; then
-    local arguments=()
-    [[ -n "$FZD_LOCATE_DBS" ]] && arguments+=(-d "$FZD_LOCATE_DBS")
-    # Locate glob syntax is escaped so every backend searches a literal substring.
-    pattern=${query//\\/\\\\}; pattern=${pattern//\*/\\*}; pattern=${pattern//\?/\\?}
-    pattern=${pattern//\[/\\[}; pattern=${pattern//\]/\\]}
-    if [[ ${locate_bin##*/} == plocate ]]; then
-      # plocate checks directory visibility even without -e. Restrict its
-      # candidates before those checks, avoiding unrelated WSL/network mounts.
-      for root in "${GLOBAL_ROOTS[@]}"; do
-        _global_regex_quote "$root"
-        [[ -z $scope ]] || scope+='|'
-        if [[ $root == / ]]; then scope+='/'; else scope+="$REPLY($|/)"; fi
-      done
-      _global_regex_quote "$query"
-      pattern=$REPLY
-      [[ $FZD_GLOBAL_FULLPATH == 1 ]] || pattern="(^|/)[^/]*${pattern}[^/]*$"
-      # Multiple plocate patterns are ANDed. Both are literal escaped EREs.
-      arguments+=(-0 -i --regex -- "^($scope)" "$pattern")
-    else
-      [[ "$FZD_GLOBAL_FULLPATH" == 0 ]] && arguments+=(-b)
-      arguments+=(-0 -i -- "*$pattern*")
-    fi
     _make_temp || return 1; source_file=$REPLY
     _make_temp || return 1; error_file=$REPLY
     # Do not ask locate to stat every match across the system. In particular,
     # Windows/network mounts can stall WSL before we discard out-of-scope paths.
     # Validate the producer first, then stream formatting; _global_format checks
     # existence only after roots/exclusions have been applied.
-    if env -u LOCATE_PATH "$locate_bin" "${arguments[@]}" > "$source_file" 2> "$error_file"; then
+    if _global_locate_candidates "$locate_bin" "$query" > "$source_file" 2> "$error_file"; then
       rc=0
     else
       rc=$?
@@ -762,6 +871,8 @@ _global_list() {
         rc=1
       fi
     fi
+    # plocate reports both no matches and a database failure with status 1.
+    [[ ! -s $error_file ]] || rc=1
     cat -- "$error_file" >&2
     _remove_temp "$error_file"
     if ((rc == 0)); then
@@ -784,8 +895,8 @@ _run_global_overlay() {
 }
 
 _global_overlay_once() {
-  dbg "GLOBAL overlay start (backend=${FZD_GLOBAL_BACKEND:-auto})"
-  local backend="${FZD_GLOBAL_BACKEND:-auto}"
+  dbg "GLOBAL overlay start (backend=${FZD_GLOBAL_BACKEND:-cache})"
+  local backend="${FZD_GLOBAL_BACKEND:-cache}"
   _global_prepare || return 0
   local have_loc=''
   if [[ "$backend" == auto ]]; then
@@ -815,14 +926,13 @@ _global_overlay_once() {
       --preview "$self_command --_preview {1}" \
       --preview-window=right,60%:wrap \
       --bind "change:reload:$self_command --_global_list --q {q} || true" \
-      --bind "start:reload:$self_command --_global_list --q {q} || true" \
       --bind "esc:abort" \
       --bind "f1:execute($self_command --_help global)" \
       "${EXPLORER_BINDS[@]}" \
       --bind "enter:execute-silent(echo A:G_ENTER:{1} > $control_command)+abort" \
       --bind "left:execute-silent(echo A:G_LEFT:{1} > $control_command)+abort" \
       --bind "right:execute-silent(echo A:G_RIGHT:{1} > $control_command)+abort" \
-      </dev/null >"$query_file" || true
+      < <("$FZD_SELF" --_global_list --q "$query" || true) >"$query_file" || true
 
   elif [[ "$backend" == "cache" ]]; then
     _make_temp || return 0; CTRL=$REPLY
@@ -1119,6 +1229,7 @@ _fzd_entry() {
   RECENT_PENDING=()
   FZD_ZOXIDE_PENDING=()
   FZD_SESSION_TMP=''
+  FZD_GLOBAL_PRODUCER=''
   FZD_SCREEN_OPTS=(); FZD_SCREEN_ACTIVE=0; FZD_SCREEN_RESTORE=''
   trap _cleanup EXIT
   trap 'exit 130' INT

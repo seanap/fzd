@@ -158,7 +158,7 @@ shells() { printf '%s\n' bash "$FZD_REAL_ZSH"; }
   [ "$output" = "$FIXTURE_ROOT/elsewhere" ]
 }
 
-@test "seeded discovery binds initial reload for live and locate and supplies cache query" {
+@test "seeded discovery preserves literal queries without duplicate startup reloads" {
   export FZD_STUB_FZF_LOG="$BATS_TEST_TMPDIR/fzf-args"
   local backend
   for backend in live locate cache; do
@@ -168,7 +168,7 @@ shells() { printf '%s\n' bash "$FZD_REAL_ZSH"; }
     [ "$status" -eq 130 ]
     run cat "$FZD_STUB_FZF_LOG"
     [[ "$output" == *'--query=imm $(touch BAD)'* ]]
-    if [[ $backend != cache ]]; then [[ "$output" == *'start:reload:'* ]]; fi
+    [[ "$output" != *'start:reload:'* ]]
     [ ! -e BAD ]
   done
 }

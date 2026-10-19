@@ -46,6 +46,7 @@ package_for() {
   fd) [[ $PM == pacman ]] && REPLY=fd || REPLY=fd-find ;;
   bat) REPLY=bat ;;
   eza) REPLY=eza ;;
+  python3) [[ $PM == pacman ]] && REPLY=python || REPLY=python3 ;;
   wl-copy) REPLY=wl-clipboard ;;
   fc-list | fc-cache) REPLY=fontconfig ;;
   xz) [[ $PM == apt ]] && REPLY=xz-utils || REPLY=xz ;;
@@ -134,6 +135,7 @@ collect_missing() {
 
 collect_recommended() {
   MISSING=()
+  have python3 || MISSING+=(python3)
   have eza || MISSING+=(eza)
   have file || MISSING+=(file)
   have tree || MISSING+=(tree)

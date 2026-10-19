@@ -1,0 +1,1402 @@
+[
+  {
+    "scope": "host",
+    "size": null,
+    "name": "cache-build-5000",
+    "query": "",
+    "samples": 3,
+    "median_ms": 724.182985,
+    "min_ms": 709.214834,
+    "max_ms": 726.222253
+  },
+  {
+    "scope": "host",
+    "size": null,
+    "name": "live",
+    "query": "immich",
+    "samples": 3,
+    "median_ms": 58.969323,
+    "min_ms": 56.536257,
+    "max_ms": 60.327778
+  },
+  {
+    "scope": "host",
+    "size": null,
+    "name": "locate",
+    "query": "immich",
+    "samples": 3,
+    "median_ms": 156.255367,
+    "min_ms": 154.099129,
+    "max_ms": 164.464682
+  },
+  {
+    "scope": "host",
+    "size": null,
+    "name": "cached-fzf-fuzzy",
+    "query": "immich",
+    "samples": 3,
+    "median_ms": 10.357692,
+    "min_ms": 10.343737,
+    "max_ms": 13.367539
+  },
+  {
+    "scope": "host",
+    "size": null,
+    "name": "cached-fzf-exact",
+    "query": "immich",
+    "samples": 3,
+    "median_ms": 14.411894,
+    "min_ms": 13.20833,
+    "max_ms": 15.122257
+  },
+  {
+    "scope": "host",
+    "size": null,
+    "name": "live",
+    "query": "docker",
+    "samples": 3,
+    "median_ms": 88.64547,
+    "min_ms": 85.363405,
+    "max_ms": 88.847532
+  },
+  {
+    "scope": "host",
+    "size": null,
+    "name": "locate",
+    "query": "docker",
+    "samples": 3,
+    "median_ms": 205.383037,
+    "min_ms": 187.388352,
+    "max_ms": 213.231839
+  },
+  {
+    "scope": "host",
+    "size": null,
+    "name": "cached-fzf-fuzzy",
+    "query": "docker",
+    "samples": 3,
+    "median_ms": 16.248866,
+    "min_ms": 16.046615,
+    "max_ms": 16.330981
+  },
+  {
+    "scope": "host",
+    "size": null,
+    "name": "cached-fzf-exact",
+    "query": "docker",
+    "samples": 3,
+    "median_ms": 15.789487,
+    "min_ms": 15.277237,
+    "max_ms": 16.613199
+  },
+  {
+    "scope": "host",
+    "size": null,
+    "name": "live",
+    "query": "co",
+    "samples": 3,
+    "median_ms": 159.628515,
+    "min_ms": 157.419491,
+    "max_ms": 167.420671
+  },
+  {
+    "scope": "host",
+    "size": null,
+    "name": "locate",
+    "query": "co",
+    "samples": 3,
+    "median_ms": 748.006159,
+    "min_ms": 735.611636,
+    "max_ms": 752.740424
+  },
+  {
+    "scope": "host",
+    "size": null,
+    "name": "cached-fzf-fuzzy",
+    "query": "co",
+    "samples": 3,
+    "median_ms": 9.844265,
+    "min_ms": 9.678277,
+    "max_ms": 10.570553
+  },
+  {
+    "scope": "host",
+    "size": null,
+    "name": "cached-fzf-exact",
+    "query": "co",
+    "samples": 3,
+    "median_ms": 8.95243,
+    "min_ms": 8.891518,
+    "max_ms": 9.780439
+  },
+  {
+    "scope": "host",
+    "size": null,
+    "name": "live",
+    "query": "imch",
+    "samples": 3,
+    "median_ms": 58.108523,
+    "min_ms": 57.224861,
+    "max_ms": 58.383571
+  },
+  {
+    "scope": "host",
+    "size": null,
+    "name": "locate",
+    "query": "imch",
+    "samples": 3,
+    "median_ms": 146.976746,
+    "min_ms": 136.478539,
+    "max_ms": 147.082298
+  },
+  {
+    "scope": "host",
+    "size": null,
+    "name": "cached-fzf-fuzzy",
+    "query": "imch",
+    "samples": 3,
+    "median_ms": 11.145317,
+    "min_ms": 10.130762,
+    "max_ms": 12.486444
+  },
+  {
+    "scope": "host",
+    "size": null,
+    "name": "cached-fzf-exact",
+    "query": "imch",
+    "samples": 3,
+    "median_ms": 8.119856,
+    "min_ms": 7.846549,
+    "max_ms": 9.103432
+  },
+  {
+    "scope": "acquire",
+    "size": 1000,
+    "name": "fd-raw",
+    "query": "",
+    "samples": 3,
+    "median_ms": 5.133727,
+    "min_ms": 4.793241,
+    "max_ms": 9.443718
+  },
+  {
+    "scope": "acquire",
+    "size": 1000,
+    "name": "find-raw",
+    "query": "",
+    "samples": 3,
+    "median_ms": 2.242106,
+    "min_ms": 2.210006,
+    "max_ms": 2.460902
+  },
+  {
+    "scope": "acquire",
+    "size": 1000,
+    "name": "plocate-snapshot-raw",
+    "query": "",
+    "samples": 3,
+    "median_ms": 1.680479,
+    "min_ms": 1.656657,
+    "max_ms": 1.814213
+  },
+  {
+    "scope": "acquire",
+    "size": 1000,
+    "name": "fd-snapshot-formatted",
+    "query": "",
+    "samples": 3,
+    "median_ms": 175.74882,
+    "min_ms": 164.717501,
+    "max_ms": 189.181863
+  },
+  {
+    "scope": "acquire",
+    "size": 1000,
+    "name": "plocate-snapshot-formatted",
+    "query": "",
+    "samples": 3,
+    "median_ms": 136.863306,
+    "min_ms": 135.876493,
+    "max_ms": 139.27525
+  },
+  {
+    "scope": "query",
+    "size": 1000,
+    "name": "live",
+    "query": "needle",
+    "samples": 3,
+    "median_ms": 54.654616,
+    "min_ms": 45.345333,
+    "max_ms": 55.441607
+  },
+  {
+    "scope": "query",
+    "size": 1000,
+    "name": "locate",
+    "query": "needle",
+    "samples": 3,
+    "median_ms": 25.094505,
+    "min_ms": 23.138384,
+    "max_ms": 27.502344
+  },
+  {
+    "scope": "query",
+    "size": 1000,
+    "name": "cached-fzf-fuzzy",
+    "query": "needle",
+    "samples": 3,
+    "median_ms": 3.852457,
+    "min_ms": 3.70909,
+    "max_ms": 4.240796
+  },
+  {
+    "scope": "query",
+    "size": 1000,
+    "name": "cached-fzf-exact",
+    "query": "needle",
+    "samples": 3,
+    "median_ms": 4.188157,
+    "min_ms": 3.912829,
+    "max_ms": 4.383714
+  },
+  {
+    "scope": "query",
+    "size": 1000,
+    "name": "live",
+    "query": "entry-000",
+    "samples": 3,
+    "median_ms": 195.874701,
+    "min_ms": 187.05804,
+    "max_ms": 202.533573
+  },
+  {
+    "scope": "query",
+    "size": 1000,
+    "name": "locate",
+    "query": "entry-000",
+    "samples": 3,
+    "median_ms": 161.781282,
+    "min_ms": 157.10128,
+    "max_ms": 168.183139
+  },
+  {
+    "scope": "query",
+    "size": 1000,
+    "name": "cached-fzf-fuzzy",
+    "query": "entry-000",
+    "samples": 3,
+    "median_ms": 5.889056,
+    "min_ms": 5.86964,
+    "max_ms": 6.676026
+  },
+  {
+    "scope": "query",
+    "size": 1000,
+    "name": "cached-fzf-exact",
+    "query": "entry-000",
+    "samples": 3,
+    "median_ms": 6.271503,
+    "min_ms": 4.961635,
+    "max_ms": 8.9456
+  },
+  {
+    "scope": "query",
+    "size": 1000,
+    "name": "live",
+    "query": "imch",
+    "samples": 3,
+    "median_ms": 54.376635,
+    "min_ms": 51.724249,
+    "max_ms": 55.151043
+  },
+  {
+    "scope": "query",
+    "size": 1000,
+    "name": "locate",
+    "query": "imch",
+    "samples": 3,
+    "median_ms": 21.276603,
+    "min_ms": 20.564402,
+    "max_ms": 27.179424
+  },
+  {
+    "scope": "query",
+    "size": 1000,
+    "name": "cached-fzf-fuzzy",
+    "query": "imch",
+    "samples": 3,
+    "median_ms": 4.701422,
+    "min_ms": 4.183101,
+    "max_ms": 5.012524
+  },
+  {
+    "scope": "query",
+    "size": 1000,
+    "name": "cached-fzf-exact",
+    "query": "imch",
+    "samples": 3,
+    "median_ms": 4.98836,
+    "min_ms": 4.244698,
+    "max_ms": 7.525583
+  },
+  {
+    "scope": "terminal",
+    "size": 1000,
+    "name": "locate",
+    "query": "open",
+    "samples": 3,
+    "median_ms": 23.083594,
+    "min_ms": 23.019272,
+    "max_ms": 70.204732
+  },
+  {
+    "scope": "terminal",
+    "size": 1000,
+    "name": "locate",
+    "query": "needle",
+    "samples": 3,
+    "median_ms": 172.623154,
+    "min_ms": 71.407636,
+    "max_ms": 174.275881
+  },
+  {
+    "scope": "terminal",
+    "size": 1000,
+    "name": "locate",
+    "query": "immich",
+    "samples": 3,
+    "median_ms": 202.732354,
+    "min_ms": 201.531722,
+    "max_ms": 204.764379
+  },
+  {
+    "scope": "terminal",
+    "size": 1000,
+    "name": "locate",
+    "query": "imch",
+    "samples": 3,
+    "median_ms": 203.479131,
+    "min_ms": 202.649714,
+    "max_ms": 204.271554
+  },
+  {
+    "scope": "terminal",
+    "size": 1000,
+    "name": "live",
+    "query": "open",
+    "samples": 3,
+    "median_ms": 21.152964,
+    "min_ms": 20.832451,
+    "max_ms": 43.012452
+  },
+  {
+    "scope": "terminal",
+    "size": 1000,
+    "name": "live",
+    "query": "needle",
+    "samples": 3,
+    "median_ms": 174.766074,
+    "min_ms": 172.154638,
+    "max_ms": 191.81218
+  },
+  {
+    "scope": "terminal",
+    "size": 1000,
+    "name": "live",
+    "query": "immich",
+    "samples": 3,
+    "median_ms": 202.882163,
+    "min_ms": 202.565539,
+    "max_ms": 203.400363
+  },
+  {
+    "scope": "terminal",
+    "size": 1000,
+    "name": "live",
+    "query": "imch",
+    "samples": 3,
+    "median_ms": 202.553254,
+    "min_ms": 101.494471,
+    "max_ms": 204.411146
+  },
+  {
+    "scope": "terminal",
+    "size": 1000,
+    "name": "cache",
+    "query": "open",
+    "samples": 3,
+    "median_ms": 222.225405,
+    "min_ms": 200.60232,
+    "max_ms": 238.628872
+  },
+  {
+    "scope": "terminal",
+    "size": 1000,
+    "name": "cache",
+    "query": "needle",
+    "samples": 3,
+    "median_ms": 2.291808,
+    "min_ms": 2.284418,
+    "max_ms": 2.506285
+  },
+  {
+    "scope": "terminal",
+    "size": 1000,
+    "name": "cache",
+    "query": "immich",
+    "samples": 3,
+    "median_ms": 1.370243,
+    "min_ms": 0.8322,
+    "max_ms": 1.797496
+  },
+  {
+    "scope": "terminal",
+    "size": 1000,
+    "name": "cache",
+    "query": "imch",
+    "samples": 3,
+    "median_ms": 1.232677,
+    "min_ms": 0.734258,
+    "max_ms": 1.774306
+  },
+  {
+    "scope": "terminal",
+    "size": 1000,
+    "name": "plocate-snapshot-prototype",
+    "query": "open",
+    "samples": 3,
+    "median_ms": 23.49749,
+    "min_ms": 19.886709,
+    "max_ms": 35.255589
+  },
+  {
+    "scope": "terminal",
+    "size": 1000,
+    "name": "plocate-snapshot-prototype",
+    "query": "needle",
+    "samples": 3,
+    "median_ms": 2.35083,
+    "min_ms": 2.321868,
+    "max_ms": 3.790508
+  },
+  {
+    "scope": "terminal",
+    "size": 1000,
+    "name": "plocate-snapshot-prototype",
+    "query": "immich",
+    "samples": 3,
+    "median_ms": 0.791678,
+    "min_ms": 0.647839,
+    "max_ms": 2.158605
+  },
+  {
+    "scope": "terminal",
+    "size": 1000,
+    "name": "plocate-snapshot-prototype",
+    "query": "imch",
+    "samples": 3,
+    "median_ms": 1.1608,
+    "min_ms": 0.557978,
+    "max_ms": 1.210032
+  },
+  {
+    "scope": "acquire",
+    "size": 10000,
+    "name": "fd-raw",
+    "query": "",
+    "samples": 3,
+    "median_ms": 8.807486,
+    "min_ms": 8.574594,
+    "max_ms": 12.214763
+  },
+  {
+    "scope": "acquire",
+    "size": 10000,
+    "name": "find-raw",
+    "query": "",
+    "samples": 3,
+    "median_ms": 5.715677,
+    "min_ms": 5.60151,
+    "max_ms": 6.032461
+  },
+  {
+    "scope": "acquire",
+    "size": 10000,
+    "name": "plocate-snapshot-raw",
+    "query": "",
+    "samples": 3,
+    "median_ms": 6.175528,
+    "min_ms": 5.82461,
+    "max_ms": 9.634953
+  },
+  {
+    "scope": "acquire",
+    "size": 10000,
+    "name": "fd-snapshot-formatted",
+    "query": "",
+    "samples": 3,
+    "median_ms": 1848.646696,
+    "min_ms": 1847.508969,
+    "max_ms": 1976.15388
+  },
+  {
+    "scope": "acquire",
+    "size": 10000,
+    "name": "plocate-snapshot-formatted",
+    "query": "",
+    "samples": 3,
+    "median_ms": 1667.843929,
+    "min_ms": 1654.681002,
+    "max_ms": 1742.581058
+  },
+  {
+    "scope": "query",
+    "size": 10000,
+    "name": "live",
+    "query": "needle",
+    "samples": 3,
+    "median_ms": 55.870615,
+    "min_ms": 55.574661,
+    "max_ms": 67.449432
+  },
+  {
+    "scope": "query",
+    "size": 10000,
+    "name": "locate",
+    "query": "needle",
+    "samples": 3,
+    "median_ms": 38.507196,
+    "min_ms": 35.375465,
+    "max_ms": 40.090776
+  },
+  {
+    "scope": "query",
+    "size": 10000,
+    "name": "cached-fzf-fuzzy",
+    "query": "needle",
+    "samples": 3,
+    "median_ms": 22.204212,
+    "min_ms": 17.846476,
+    "max_ms": 24.656136
+  },
+  {
+    "scope": "query",
+    "size": 10000,
+    "name": "cached-fzf-exact",
+    "query": "needle",
+    "samples": 3,
+    "median_ms": 21.418029,
+    "min_ms": 21.195186,
+    "max_ms": 26.515664
+  },
+  {
+    "scope": "query",
+    "size": 10000,
+    "name": "live",
+    "query": "entry-000",
+    "samples": 3,
+    "median_ms": 227.806333,
+    "min_ms": 221.72348,
+    "max_ms": 235.09014
+  },
+  {
+    "scope": "query",
+    "size": 10000,
+    "name": "locate",
+    "query": "entry-000",
+    "samples": 3,
+    "median_ms": 173.049709,
+    "min_ms": 164.857981,
+    "max_ms": 178.534765
+  },
+  {
+    "scope": "query",
+    "size": 10000,
+    "name": "cached-fzf-fuzzy",
+    "query": "entry-000",
+    "samples": 3,
+    "median_ms": 24.723018,
+    "min_ms": 21.366695,
+    "max_ms": 25.233775
+  },
+  {
+    "scope": "query",
+    "size": 10000,
+    "name": "cached-fzf-exact",
+    "query": "entry-000",
+    "samples": 3,
+    "median_ms": 19.879721,
+    "min_ms": 17.834003,
+    "max_ms": 21.157907
+  },
+  {
+    "scope": "query",
+    "size": 10000,
+    "name": "live",
+    "query": "imch",
+    "samples": 3,
+    "median_ms": 81.47965,
+    "min_ms": 79.612029,
+    "max_ms": 83.898651
+  },
+  {
+    "scope": "query",
+    "size": 10000,
+    "name": "locate",
+    "query": "imch",
+    "samples": 3,
+    "median_ms": 37.832661,
+    "min_ms": 37.787028,
+    "max_ms": 39.461333
+  },
+  {
+    "scope": "query",
+    "size": 10000,
+    "name": "cached-fzf-fuzzy",
+    "query": "imch",
+    "samples": 3,
+    "median_ms": 25.016629,
+    "min_ms": 22.128488,
+    "max_ms": 27.923593
+  },
+  {
+    "scope": "query",
+    "size": 10000,
+    "name": "cached-fzf-exact",
+    "query": "imch",
+    "samples": 3,
+    "median_ms": 22.331532,
+    "min_ms": 22.010052,
+    "max_ms": 23.304086
+  },
+  {
+    "scope": "terminal",
+    "size": 10000,
+    "name": "locate",
+    "query": "open",
+    "samples": 3,
+    "median_ms": 34.602088,
+    "min_ms": 34.238136,
+    "max_ms": 43.865661
+  },
+  {
+    "scope": "terminal",
+    "size": 10000,
+    "name": "locate",
+    "query": "needle",
+    "samples": 3,
+    "median_ms": 72.331641,
+    "min_ms": 71.664918,
+    "max_ms": 172.404041
+  },
+  {
+    "scope": "terminal",
+    "size": 10000,
+    "name": "locate",
+    "query": "immich",
+    "samples": 3,
+    "median_ms": 203.470043,
+    "min_ms": 102.371287,
+    "max_ms": 203.938563
+  },
+  {
+    "scope": "terminal",
+    "size": 10000,
+    "name": "locate",
+    "query": "imch",
+    "samples": 3,
+    "median_ms": 102.774214,
+    "min_ms": 101.717469,
+    "max_ms": 202.559461
+  },
+  {
+    "scope": "terminal",
+    "size": 10000,
+    "name": "live",
+    "query": "open",
+    "samples": 3,
+    "median_ms": 32.970556,
+    "min_ms": 31.107162,
+    "max_ms": 48.279318
+  },
+  {
+    "scope": "terminal",
+    "size": 10000,
+    "name": "live",
+    "query": "needle",
+    "samples": 3,
+    "median_ms": 174.978218,
+    "min_ms": 174.62457,
+    "max_ms": 212.141155
+  },
+  {
+    "scope": "terminal",
+    "size": 10000,
+    "name": "live",
+    "query": "immich",
+    "samples": 3,
+    "median_ms": 129.533617,
+    "min_ms": 102.063654,
+    "max_ms": 203.599878
+  },
+  {
+    "scope": "terminal",
+    "size": 10000,
+    "name": "live",
+    "query": "imch",
+    "samples": 3,
+    "median_ms": 202.561657,
+    "min_ms": 100.931592,
+    "max_ms": 266.42776
+  },
+  {
+    "scope": "terminal",
+    "size": 10000,
+    "name": "cache",
+    "query": "open",
+    "samples": 3,
+    "median_ms": 2105.544677,
+    "min_ms": 2019.588274,
+    "max_ms": 2180.583456
+  },
+  {
+    "scope": "terminal",
+    "size": 10000,
+    "name": "cache",
+    "query": "needle",
+    "samples": 3,
+    "median_ms": 3.485953,
+    "min_ms": 3.316061,
+    "max_ms": 5.217186
+  },
+  {
+    "scope": "terminal",
+    "size": 10000,
+    "name": "cache",
+    "query": "immich",
+    "samples": 3,
+    "median_ms": 1.067247,
+    "min_ms": 1.063272,
+    "max_ms": 1.840012
+  },
+  {
+    "scope": "terminal",
+    "size": 10000,
+    "name": "cache",
+    "query": "imch",
+    "samples": 3,
+    "median_ms": 1.124099,
+    "min_ms": 0.986577,
+    "max_ms": 2.680092
+  },
+  {
+    "scope": "terminal",
+    "size": 10000,
+    "name": "plocate-snapshot-prototype",
+    "query": "open",
+    "samples": 3,
+    "median_ms": 37.202499,
+    "min_ms": 36.162012,
+    "max_ms": 38.665259
+  },
+  {
+    "scope": "terminal",
+    "size": 10000,
+    "name": "plocate-snapshot-prototype",
+    "query": "needle",
+    "samples": 3,
+    "median_ms": 2.663105,
+    "min_ms": 2.375077,
+    "max_ms": 3.49401
+  },
+  {
+    "scope": "terminal",
+    "size": 10000,
+    "name": "plocate-snapshot-prototype",
+    "query": "immich",
+    "samples": 3,
+    "median_ms": 1.270974,
+    "min_ms": 1.178484,
+    "max_ms": 2.024639
+  },
+  {
+    "scope": "terminal",
+    "size": 10000,
+    "name": "plocate-snapshot-prototype",
+    "query": "imch",
+    "samples": 3,
+    "median_ms": 1.000851,
+    "min_ms": 0.843979,
+    "max_ms": 1.165259
+  },
+  {
+    "scope": "acquire",
+    "size": 100000,
+    "name": "fd-raw",
+    "query": "",
+    "samples": 3,
+    "median_ms": 74.779116,
+    "min_ms": 72.765954,
+    "max_ms": 75.288548
+  },
+  {
+    "scope": "acquire",
+    "size": 100000,
+    "name": "find-raw",
+    "query": "",
+    "samples": 3,
+    "median_ms": 105.278147,
+    "min_ms": 105.155428,
+    "max_ms": 110.605938
+  },
+  {
+    "scope": "acquire",
+    "size": 100000,
+    "name": "plocate-snapshot-raw",
+    "query": "",
+    "samples": 3,
+    "median_ms": 47.275474,
+    "min_ms": 41.917323,
+    "max_ms": 48.719074
+  },
+  {
+    "scope": "acquire",
+    "size": 100000,
+    "name": "fd-snapshot-formatted",
+    "query": "",
+    "samples": 3,
+    "median_ms": 20159.722367,
+    "min_ms": 20107.462051,
+    "max_ms": 20284.421946
+  },
+  {
+    "scope": "acquire",
+    "size": 100000,
+    "name": "plocate-snapshot-formatted",
+    "query": "",
+    "samples": 3,
+    "median_ms": 19714.074982,
+    "min_ms": 18151.845847,
+    "max_ms": 20577.948837
+  },
+  {
+    "scope": "query",
+    "size": 100000,
+    "name": "live",
+    "query": "needle",
+    "samples": 3,
+    "median_ms": 121.723087,
+    "min_ms": 113.087078,
+    "max_ms": 123.037415
+  },
+  {
+    "scope": "query",
+    "size": 100000,
+    "name": "locate",
+    "query": "needle",
+    "samples": 3,
+    "median_ms": 52.972106,
+    "min_ms": 51.818788,
+    "max_ms": 59.334027
+  },
+  {
+    "scope": "query",
+    "size": 100000,
+    "name": "cached-fzf-fuzzy",
+    "query": "needle",
+    "samples": 3,
+    "median_ms": 86.640388,
+    "min_ms": 82.701623,
+    "max_ms": 89.604572
+  },
+  {
+    "scope": "query",
+    "size": 100000,
+    "name": "cached-fzf-exact",
+    "query": "needle",
+    "samples": 3,
+    "median_ms": 81.51349,
+    "min_ms": 79.988293,
+    "max_ms": 83.374033
+  },
+  {
+    "scope": "query",
+    "size": 100000,
+    "name": "live",
+    "query": "entry-000",
+    "samples": 3,
+    "median_ms": 287.164604,
+    "min_ms": 284.954826,
+    "max_ms": 293.989449
+  },
+  {
+    "scope": "query",
+    "size": 100000,
+    "name": "locate",
+    "query": "entry-000",
+    "samples": 3,
+    "median_ms": 189.763149,
+    "min_ms": 186.089157,
+    "max_ms": 203.468602
+  },
+  {
+    "scope": "query",
+    "size": 100000,
+    "name": "cached-fzf-fuzzy",
+    "query": "entry-000",
+    "samples": 3,
+    "median_ms": 94.309349,
+    "min_ms": 86.939888,
+    "max_ms": 99.509242
+  },
+  {
+    "scope": "query",
+    "size": 100000,
+    "name": "cached-fzf-exact",
+    "query": "entry-000",
+    "samples": 3,
+    "median_ms": 82.81218,
+    "min_ms": 82.259322,
+    "max_ms": 86.569629
+  },
+  {
+    "scope": "query",
+    "size": 100000,
+    "name": "live",
+    "query": "imch",
+    "samples": 3,
+    "median_ms": 120.307086,
+    "min_ms": 116.062809,
+    "max_ms": 125.619908
+  },
+  {
+    "scope": "query",
+    "size": 100000,
+    "name": "locate",
+    "query": "imch",
+    "samples": 3,
+    "median_ms": 72.973342,
+    "min_ms": 69.558059,
+    "max_ms": 85.772593
+  },
+  {
+    "scope": "query",
+    "size": 100000,
+    "name": "cached-fzf-fuzzy",
+    "query": "imch",
+    "samples": 3,
+    "median_ms": 148.178818,
+    "min_ms": 144.041658,
+    "max_ms": 148.206753
+  },
+  {
+    "scope": "query",
+    "size": 100000,
+    "name": "cached-fzf-exact",
+    "query": "imch",
+    "samples": 3,
+    "median_ms": 155.786909,
+    "min_ms": 154.400152,
+    "max_ms": 156.012544
+  },
+  {
+    "scope": "terminal",
+    "size": 100000,
+    "name": "locate",
+    "query": "open",
+    "samples": 3,
+    "median_ms": 36.885774,
+    "min_ms": 32.360112,
+    "max_ms": 46.243176
+  },
+  {
+    "scope": "terminal",
+    "size": 100000,
+    "name": "locate",
+    "query": "needle",
+    "samples": 3,
+    "median_ms": 192.939643,
+    "min_ms": 73.389342,
+    "max_ms": 204.350828
+  },
+  {
+    "scope": "terminal",
+    "size": 100000,
+    "name": "locate",
+    "query": "immich",
+    "samples": 3,
+    "median_ms": 201.690156,
+    "min_ms": 101.96458,
+    "max_ms": 202.940559
+  },
+  {
+    "scope": "terminal",
+    "size": 100000,
+    "name": "locate",
+    "query": "imch",
+    "samples": 3,
+    "median_ms": 203.114058,
+    "min_ms": 202.521633,
+    "max_ms": 203.351821
+  },
+  {
+    "scope": "terminal",
+    "size": 100000,
+    "name": "live",
+    "query": "open",
+    "samples": 3,
+    "median_ms": 48.234711,
+    "min_ms": 41.557462,
+    "max_ms": 63.635377
+  },
+  {
+    "scope": "terminal",
+    "size": 100000,
+    "name": "live",
+    "query": "needle",
+    "samples": 3,
+    "median_ms": 250.2513,
+    "min_ms": 169.332678,
+    "max_ms": 259.556866
+  },
+  {
+    "scope": "terminal",
+    "size": 100000,
+    "name": "live",
+    "query": "immich",
+    "samples": 3,
+    "median_ms": 270.380775,
+    "min_ms": 269.176107,
+    "max_ms": 270.954244
+  },
+  {
+    "scope": "terminal",
+    "size": 100000,
+    "name": "live",
+    "query": "imch",
+    "samples": 3,
+    "median_ms": 230.62318,
+    "min_ms": 170.122121,
+    "max_ms": 269.508602
+  },
+  {
+    "scope": "terminal",
+    "size": 100000,
+    "name": "cache",
+    "query": "open",
+    "samples": 3,
+    "median_ms": 20786.373016,
+    "min_ms": 19203.133807,
+    "max_ms": 21326.756109
+  },
+  {
+    "scope": "terminal",
+    "size": 100000,
+    "name": "cache",
+    "query": "needle",
+    "samples": 3,
+    "median_ms": 5.047226,
+    "min_ms": 4.191695,
+    "max_ms": 7.716823
+  },
+  {
+    "scope": "terminal",
+    "size": 100000,
+    "name": "cache",
+    "query": "immich",
+    "samples": 3,
+    "median_ms": 1.978833,
+    "min_ms": 1.975978,
+    "max_ms": 2.28815
+  },
+  {
+    "scope": "terminal",
+    "size": 100000,
+    "name": "cache",
+    "query": "imch",
+    "samples": 3,
+    "median_ms": 2.007355,
+    "min_ms": 1.744541,
+    "max_ms": 2.597877
+  },
+  {
+    "scope": "terminal",
+    "size": 100000,
+    "name": "plocate-snapshot-prototype",
+    "query": "open",
+    "samples": 3,
+    "median_ms": 175.246666,
+    "min_ms": 157.692482,
+    "max_ms": 178.014957
+  },
+  {
+    "scope": "terminal",
+    "size": 100000,
+    "name": "plocate-snapshot-prototype",
+    "query": "needle",
+    "samples": 3,
+    "median_ms": 5.048225,
+    "min_ms": 3.743833,
+    "max_ms": 6.594969
+  },
+  {
+    "scope": "terminal",
+    "size": 100000,
+    "name": "plocate-snapshot-prototype",
+    "query": "immich",
+    "samples": 3,
+    "median_ms": 2.47702,
+    "min_ms": 2.012871,
+    "max_ms": 3.101147
+  },
+  {
+    "scope": "terminal",
+    "size": 100000,
+    "name": "plocate-snapshot-prototype",
+    "query": "imch",
+    "samples": 3,
+    "median_ms": 2.371658,
+    "min_ms": 1.925761,
+    "max_ms": 3.197196
+  },
+  {
+    "scope": "terminal",
+    "size": 1000,
+    "name": "matcher-exact",
+    "query": "open",
+    "samples": 3,
+    "median_ms": 36.138827,
+    "min_ms": 35.774146,
+    "max_ms": 36.387686
+  },
+  {
+    "scope": "terminal",
+    "size": 1000,
+    "name": "matcher-exact",
+    "query": "needle",
+    "samples": 3,
+    "median_ms": 4.109064,
+    "min_ms": 3.61526,
+    "max_ms": 4.121718
+  },
+  {
+    "scope": "terminal",
+    "size": 1000,
+    "name": "matcher-exact",
+    "query": "immich",
+    "samples": 3,
+    "median_ms": 1.076672,
+    "min_ms": 0.914678,
+    "max_ms": 1.670347
+  },
+  {
+    "scope": "terminal",
+    "size": 1000,
+    "name": "matcher-exact",
+    "query": "imch",
+    "samples": 3,
+    "median_ms": 1.025339,
+    "min_ms": 0.938673,
+    "max_ms": 1.567738
+  },
+  {
+    "scope": "terminal",
+    "size": 1000,
+    "name": "matcher-fuzzy",
+    "query": "open",
+    "samples": 3,
+    "median_ms": 34.911287,
+    "min_ms": 20.585759,
+    "max_ms": 36.779405
+  },
+  {
+    "scope": "terminal",
+    "size": 1000,
+    "name": "matcher-fuzzy",
+    "query": "needle",
+    "samples": 3,
+    "median_ms": 2.397069,
+    "min_ms": 2.175349,
+    "max_ms": 2.744774
+  },
+  {
+    "scope": "terminal",
+    "size": 1000,
+    "name": "matcher-fuzzy",
+    "query": "immich",
+    "samples": 3,
+    "median_ms": 1.15751,
+    "min_ms": 0.86364,
+    "max_ms": 2.097099
+  },
+  {
+    "scope": "terminal",
+    "size": 1000,
+    "name": "matcher-fuzzy",
+    "query": "imch",
+    "samples": 3,
+    "median_ms": 0.961634,
+    "min_ms": 0.747955,
+    "max_ms": 1.090828
+  },
+  {
+    "scope": "terminal",
+    "size": 10000,
+    "name": "matcher-exact",
+    "query": "open",
+    "samples": 3,
+    "median_ms": 35.600036,
+    "min_ms": 23.566795,
+    "max_ms": 37.759676
+  },
+  {
+    "scope": "terminal",
+    "size": 10000,
+    "name": "matcher-exact",
+    "query": "needle",
+    "samples": 3,
+    "median_ms": 2.85855,
+    "min_ms": 2.628738,
+    "max_ms": 3.031743
+  },
+  {
+    "scope": "terminal",
+    "size": 10000,
+    "name": "matcher-exact",
+    "query": "immich",
+    "samples": 3,
+    "median_ms": 1.40866,
+    "min_ms": 1.133023,
+    "max_ms": 1.430079
+  },
+  {
+    "scope": "terminal",
+    "size": 10000,
+    "name": "matcher-exact",
+    "query": "imch",
+    "samples": 3,
+    "median_ms": 1.181184,
+    "min_ms": 0.80223,
+    "max_ms": 1.605918
+  },
+  {
+    "scope": "terminal",
+    "size": 10000,
+    "name": "matcher-fuzzy",
+    "query": "open",
+    "samples": 3,
+    "median_ms": 22.804529,
+    "min_ms": 21.821652,
+    "max_ms": 23.0287
+  },
+  {
+    "scope": "terminal",
+    "size": 10000,
+    "name": "matcher-fuzzy",
+    "query": "needle",
+    "samples": 3,
+    "median_ms": 3.906692,
+    "min_ms": 3.837905,
+    "max_ms": 4.20403
+  },
+  {
+    "scope": "terminal",
+    "size": 10000,
+    "name": "matcher-fuzzy",
+    "query": "immich",
+    "samples": 3,
+    "median_ms": 2.006515,
+    "min_ms": 1.064866,
+    "max_ms": 2.110354
+  },
+  {
+    "scope": "terminal",
+    "size": 10000,
+    "name": "matcher-fuzzy",
+    "query": "imch",
+    "samples": 3,
+    "median_ms": 1.402998,
+    "min_ms": 1.01461,
+    "max_ms": 2.545017
+  },
+  {
+    "scope": "terminal",
+    "size": 100000,
+    "name": "matcher-exact",
+    "query": "open",
+    "samples": 3,
+    "median_ms": 163.655899,
+    "min_ms": 129.625209,
+    "max_ms": 165.839276
+  },
+  {
+    "scope": "terminal",
+    "size": 100000,
+    "name": "matcher-exact",
+    "query": "needle",
+    "samples": 3,
+    "median_ms": 6.688228,
+    "min_ms": 5.665431,
+    "max_ms": 9.980107
+  },
+  {
+    "scope": "terminal",
+    "size": 100000,
+    "name": "matcher-exact",
+    "query": "immich",
+    "samples": 3,
+    "median_ms": 3.137207,
+    "min_ms": 2.335516,
+    "max_ms": 4.967533
+  },
+  {
+    "scope": "terminal",
+    "size": 100000,
+    "name": "matcher-exact",
+    "query": "imch",
+    "samples": 3,
+    "median_ms": 2.426743,
+    "min_ms": 2.190845,
+    "max_ms": 2.562839
+  },
+  {
+    "scope": "terminal",
+    "size": 100000,
+    "name": "matcher-fuzzy",
+    "query": "open",
+    "samples": 3,
+    "median_ms": 161.388193,
+    "min_ms": 160.590001,
+    "max_ms": 178.202871
+  },
+  {
+    "scope": "terminal",
+    "size": 100000,
+    "name": "matcher-fuzzy",
+    "query": "needle",
+    "samples": 3,
+    "median_ms": 6.288546,
+    "min_ms": 5.953232,
+    "max_ms": 6.664597
+  },
+  {
+    "scope": "terminal",
+    "size": 100000,
+    "name": "matcher-fuzzy",
+    "query": "immich",
+    "samples": 3,
+    "median_ms": 2.5289,
+    "min_ms": 2.18017,
+    "max_ms": 2.661456
+  },
+  {
+    "scope": "terminal",
+    "size": 100000,
+    "name": "matcher-fuzzy",
+    "query": "imch",
+    "samples": 3,
+    "median_ms": 2.407574,
+    "min_ms": 1.964359,
+    "max_ms": 3.56977
+  }
+]

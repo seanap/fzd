@@ -67,6 +67,25 @@ setup() { setup_fixture; }
   [ "$output" = 1 ]
 }
 
+@test "runtime defaults match the shipped fast-search configuration without a config file" {
+  run bash -euc '
+    source "$1"
+    unset FZD_GLOBAL_BACKEND FZD_GLOBAL_MINLEN FZD_GLOBAL_MAXDEPTH FZD_GLOBAL_MAXRESULTS
+    unset FZD_GLOBAL_PATHS FZD_GLOBAL_XEXCLUDES FZD_EXCLUDES
+    _fzd_paths; _fzd_init --_preview
+    variables=(FZD_GLOBAL_BACKEND FZD_GLOBAL_MINLEN FZD_GLOBAL_MAXDEPTH FZD_GLOBAL_MAXRESULTS FZD_GLOBAL_PATHS FZD_GLOBAL_XEXCLUDES FZD_EXCLUDES)
+    defaults=()
+    for variable in "${variables[@]}"; do defaults+=("${!variable}"); done
+    [[ $FZD_GLOBAL_BACKEND == cache && $FZD_GLOBAL_MAXRESULTS == 5000 ]]
+    source "$2"
+    for index in "${!variables[@]}"; do
+      variable=${variables[index]}
+      [[ ${!variable} == "${defaults[index]}" ]] || { printf "Default mismatch: %s\n" "$variable"; exit 1; }
+    done
+  ' _ "$FZD_SCRIPT" "$FZD_REPO/fzd.conf.example"
+  [ "$status" -eq 0 ]
+}
+
 @test "root arrays preserve spaces and override the legacy root string" {
   local root="$BATS_TEST_TMPDIR/root with spaces"
   mkdir -p "$root"

@@ -15,7 +15,7 @@ setup_file() {
 @test "Debian payload includes all Explorer modules and opt-in integration" {
   for path in bin/fzd share/fzd/integration.sh share/fzd/integration.zsh share/fzd/inline.sh share/fzd/fzd.conf.example \
     share/fzd/lib/state.bash share/fzd/lib/operations.bash share/fzd/lib/ui.bash \
-    share/fzd/lib/theme.bash share/fzd/lib/command.bash share/fzd/lib/integrations.bash \
+    share/fzd/lib/theme.bash share/fzd/lib/command.bash share/fzd/lib/integrations.bash share/fzd/lib/global_format.py \
     share/doc/fzd/copyright share/doc/fzd/README.md.gz share/doc/fzd/TECHNICAL.md.gz share/man/man1/fzd.1.gz; do
     [ -f "$PACKAGE_FIXTURE/root/usr/$path" ]
   done
@@ -44,6 +44,7 @@ setup_file() {
   run dpkg-deb -f "$PACKAGE_DEB" Recommends
   [[ "$output" == *'libglib2.0-bin | trash-cli'* ]]
   [[ "$output" == *'eza'* ]]
+  [[ "$output" == *'python3'* ]]
 }
 
 @test "Debian downloadable filename is GitHub safe while metadata retains Debian prerelease ordering" {

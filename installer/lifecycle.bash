@@ -168,7 +168,7 @@ delete_file() {
 owned_file() {
   case "$1" in
   "$PREFIX/bin/glow") return 0 ;;
-  "$PREFIX/bin/fzd" | "$PREFIX/bin/fzf" | "$DATA/integration.sh" | "$DATA/integration.zsh" | "$DATA/inline.sh" | "$DATA/fzd.conf.example" | "$DATA/LICENSE.txt" | "$DATA/install.sh" | "$DATA/installer/dependencies.bash" | "$DATA/installer/lifecycle.bash" | "$DATA/installer/inline.bash" | "$DATA/installer/fonts.bash" | "$DATA/lib/state.bash" | "$DATA/lib/operations.bash" | "$DATA/launcher.bash" | "$DATA/launcher.conf" | "$DATA/installer/desktop.bash" | "$DATA/lib/ui.bash" | "$DATA/lib/command.bash" | "$DATA/lib/theme.bash" | "$DATA/lib/integrations.bash") return 0 ;;
+  "$PREFIX/bin/fzd" | "$PREFIX/bin/fzf" | "$DATA/integration.sh" | "$DATA/integration.zsh" | "$DATA/inline.sh" | "$DATA/fzd.conf.example" | "$DATA/LICENSE.txt" | "$DATA/install.sh" | "$DATA/installer/dependencies.bash" | "$DATA/installer/lifecycle.bash" | "$DATA/installer/inline.bash" | "$DATA/installer/fonts.bash" | "$DATA/lib/state.bash" | "$DATA/lib/operations.bash" | "$DATA/launcher.bash" | "$DATA/launcher.conf" | "$DATA/installer/desktop.bash" | "$DATA/lib/ui.bash" | "$DATA/lib/command.bash" | "$DATA/lib/theme.bash" | "$DATA/lib/integrations.bash" | "$DATA/lib/global_format.py") return 0 ;;
   *) return 1 ;;
   esac
 }

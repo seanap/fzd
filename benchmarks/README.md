@@ -1,5 +1,40 @@
 # Performance measurements
 
+To measure launch-to-first-result through the actual `lf`/`lff` wrapper, compare
+against a saved baseline executable with its matching `lib/` directory:
+
+```bash
+python3 benchmarks/global-first-result.py /absolute/baseline/fzd.sh .test-work/first-results 7
+python3 benchmarks/global-first-result.py /absolute/baseline/fzd.sh .test-work/first-cache 3 --backend cache --sizes 1005 10000 100000 --skip-host
+```
+
+Use `--fzf /absolute/path/to/fzf` for a second fzf version. The runner alternates
+before/after order, starts each terminal with fresh private application state,
+and distinguishes first result from completed result count. It measures one-key
+narrowing separately from query replacement. Private fixtures are outside the
+host search roots. Host probes assert identical returned path identities between
+revisions. Kernel caches are not dropped; these are not reboot/cold-disk claims.
+The cache matrix raises its private cap to retain the complete fixture.
+Use `--omarchy` for the pinned desktop palette/utility fixture. The recorded
+[first-use results](results/global-first-result/README.md) include both fzf
+versions, the tagged v2.0 snapshot path, host path-identity checks and validation.
+
+For global-search backend, fuzzy/exact matching, startup and coverage comparisons:
+
+```bash
+python3 benchmarks/global-search-options.py .test-work/global-options-main 3
+python3 benchmarks/global-search-options.py .test-work/global-options-matchers 3 --matching-only
+python3 benchmarks/global-search-options.py .test-work/global-options-coverage 3 --host-coverage-only
+```
+
+Run these sequentially with fresh output directories. They use private fixtures
+and databases and do not update the system index or installed configuration.
+Host probes read the current user's FZD configuration and the system database.
+The main run includes equal-coverage 1,000/10,000/100,000-file fixtures and actual
+fzf terminal observations. The separate matcher control excludes acquisition.
+See [the measured search-options report](results/global-search-options/README.md)
+for results, methodology and limits.
+
 For a Phase 4A source-versus-Debian comparison, with all tests/containers stopped:
 
 ```bash
