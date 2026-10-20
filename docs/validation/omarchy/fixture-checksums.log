@@ -1,9 +1,0 @@
-tests/fixtures/omarchy/omarchy-launch-editor: OK
-tests/fixtures/omarchy/omarchy-theme-color: OK
-tests/fixtures/omarchy/omarchy-tui-install: OK
-tests/fixtures/omarchy/catppuccin-latte.toml: OK
-tests/fixtures/omarchy/tokyo-night.toml: OK
-tests/fixtures/omarchy/bash-aliases: OK
-tests/fixtures/omarchy/bash-init: OK
-tests/fixtures/omarchy/bash-inputrc: OK
-tests/fixtures/omarchy/bash-rc: OK

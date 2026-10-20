@@ -1,3 +1,0 @@
-version=0.1.0-rc.1
-commit=e848a484aa726800c0d487b1c6414b175a018b13
-source_date_epoch=1791761434

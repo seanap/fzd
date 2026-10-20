@@ -193,7 +193,8 @@ in the Git checkout.
 
 These are genuine distro userspaces sharing the WSL kernel, not native desktop,
 SELinux or ARM64 coverage. Four older distributions.bats profiles remain
-explicitly simulated checks. See [executed evidence](phase-four-a.md).
+explicitly simulated checks. See the [validation index](validation/README.md)
+for recorded hosted results and the historical evidence archive.
 
 ## CI and future work
 
