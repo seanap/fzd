@@ -510,7 +510,7 @@ Python is not needed to open `lf`, run selective indexed searches, or use any
 existing feature. No snapshot is persisted between overlays. The snapshot depth,
 ignore-file behavior and pre-query result cap remain the same, so increasing
 preparation speed does not expand its coverage.
-See the [first-use performance report](../benchmarks/results/global-first-result/README.md)
+See the [first-use performance report](../benchmarks/results/README.md)
 for measured opening costs, individual-key response and indexed-search tradeoffs.
 
 Prefer Linux roots under WSL; scanning Windows mounts
@@ -670,20 +670,56 @@ Open a new terminal afterward to clear previously loaded functions.
 
 ## Development and packaging
 
-See the [Simple/Enhanced implementation and validation report](validation/simple-enhanced/README.md)
-for the current checkout, complete local results, performance samples and pending
-hosted/native checks.
+See the [validation index](validation/README.md) for the supported test matrix,
+recorded hosted results, coverage limits and historical evidence archive.
 
 Run `bash tests/run.sh`; see [test instructions](../tests/README.md) and
 [benchmarks](../benchmarks/README.md). Installer tests use disposable homes and
 controlled package-manager commands.
-See the [Explorer engineering report](phase-three-five.md) for architecture,
-safety behavior, validation and performance comparisons.
 
 Distribution packages stage standard files with
 `bash install.sh --stage "$PWD/package-root" --prefix /usr`. They must not run
 the user installer in post-install scripts or edit users' homes. See the
 [packaging architecture and readiness checklist](packaging.md).
+
+### Runtime and installer architecture
+
+`fzd.sh` owns the Bash/fzf navigation loop, directory listings, global discovery
+and the final directory-return protocol. Key callbacks pass fixed actions and
+base64 pathname identities through private control files; display labels escape
+control characters independently of pathname identity. Prompts and command
+output are captured so stdout remains the directory-return channel.
+
+| Component | Responsibility |
+| --- | --- |
+| `lib/state.bash` | Versioned recents/clipboard records, locking and reference updates |
+| `lib/operations.bash` | Single-item Copy/Cut/Paste, Rename, Create Directory and recoverable Trash |
+| `lib/ui.bash` | Byte-preserving name prompts, help and recent-directory selection |
+| `lib/command.bash` | Editor argument parsing and interactive command execution |
+| `lib/theme.bash` | Conditional Omarchy palette resolution and explicit color overrides |
+| `lib/integrations.bash` | Display clipboard and Lazygit actions |
+| `lib/global_format.py` | Optional byte-preserving snapshot formatter |
+| `shell/` | Shell navigation, completion, inline-engine setup and the optional launcher |
+| `install.sh` and `installer/` | Dependency setup, owned-file lifecycle, shell/font/desktop setup and package staging |
+
+Bash modules load on first feature use. Navigation history keeps up to 100
+visits in memory; recents retain 25 accessible unique directories. Visits queue
+in memory and flush at exit or feature use. Upstream zoxide learning is also
+batched at exit, outside the redraw loop. Global snapshots are private to each
+overlay and are not persisted between launches.
+
+Explorer state uses versioned NUL-delimited records in a user-owned mode-0700
+directory with mode-0600 files. Writers use bounded `flock` acquisition and
+same-directory atomic publication. Malformed or symlinked state is rejected.
+File operations use quoted argument arrays and no-clobber publication; Copy
+stages privately, and Cut/rename/move update affected state references. Trash
+uses the available recoverable backend after confirmation.
+
+The installer records owned paths and hashes in a NUL-delimited manifest, with
+locking, journaling, backups, rollback and interrupted-install recovery.
+Configuration is syntax-checked without execution and existing settings are
+preserved. Package staging creates distribution files without editing homes or
+performing dependency transactions.
 
 ## Navigation performance
 
@@ -699,7 +735,7 @@ jumps use Python's monotonic clock; one-time shell/source startup is amortized.
 No tests or local containers ran during benchmarking. Explorer learning is
 batched on exit and adds no zoxide process to the redraw loop.
 
-[Retained measurements](../benchmarks/results/zoxide-navigation/README.md) include
+[Archived measurements](validation/README.md#historical-development-evidence) include
 all groups and terminal trials, baseline revision and reproduction commands.
 
 
@@ -815,9 +851,9 @@ Plocate is required by the source installer and Debian/Arch package metadata.
 Existing installations are reused. A bounded `plocate --count --limit 1 -- /`
 probe checks whether an accessible populated index is available, respecting an
 exported `FZD_LOCATE_DBS`. Indexes still missing, empty or unreadable after setup
-produce guidance without failing an otherwise usable installation. Runtime discovery retains its
-existing locate-first behavior and filesystem fallbacks for failures or manual
-installations. No global search redesign is involved.
+produce guidance without failing an otherwise usable installation. Runtime
+discovery defaults to the in-memory snapshot. Explicit `auto`/`locate` modes
+use the index, with filesystem fallback when indexed search fails.
 
 Simple and Enhanced install missing plocate packages without an extra authorization
 flag. The package supplies `plocate` and `updatedb`; native setup may itself build
@@ -845,8 +881,8 @@ FZD never edits `/etc/updatedb.conf`, indexing exclusions, service settings or
 timers. It does not enable, disable or reschedule indexing independently of the
 package manager. An exported `FZD_LOCATE_DBS` is probed but its custom databases
 are never initialized or rewritten by the installer. Runtime searches never run
-`updatedb`; they retain locate-first discovery and filesystem fallbacks.
+`updatedb`.
 
-The [Omarchy implementation and validation report](validation/omarchy/README.md)
+The [historical evidence archive](validation/README.md#historical-development-evidence)
 retains historical release evidence, including the earlier authorization guard
 that this installer behavior replaces.

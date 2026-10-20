@@ -41,7 +41,7 @@ fuzzy-filters each keystroke in memory. Simple and Enhanced installs include the
 recommended Python accelerator when available. The default scope covers Linux
 roots with a depth of six and up to 5,000 results; larger scopes can use indexed
 search by setting `FZD_GLOBAL_BACKEND=auto` in `~/.config/fzd/fzd.conf`.
-See the [measured search performance](benchmarks/results/global-first-result/README.md).
+See the [measured search performance](benchmarks/results/README.md).
 
 ## Why FZD exists
 

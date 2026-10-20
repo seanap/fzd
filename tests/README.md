@@ -1,7 +1,7 @@
 # Regression checks
 
-Phase 4A adds eight packaging checks to the original 201 tests (209 total).
-Debian builds are checked for complete payloads, runtime identity, metadata,
+The suite covers application behavior, installers, shell integration and
+packaging. Debian builds are checked for complete payloads, runtime identity, metadata,
 ownership, absence of maintainer hooks/home edits, revision ordering, immutable
 source selection, checksums and byte reproducibility.
 
@@ -27,7 +27,7 @@ bash tests/run.sh
 Use upstream zoxide >= 0.9.0, Bash 4.4 or later, Bats-core 1.5 or later, and GNU utilities. Real backend
 tests additionally use fd/fdfind and plocate. Terminal tests use tmux and fzf;
 shell integration tests use zsh when available. Missing optional tools produce
-explicit skips. The phase-one environment uses Bash 5.2 and Bats 1.10.
+explicit skips. Hosted validation runs both supported fzf versions and rejects skips.
 Captured icon regressions also require eza; hosted/distribution validation
 installs it and rejects skips. Installer fixtures also expect fzf, micro, file, tree, curl, tar and gzip in the
 development environment. Distribution-profile isolation additionally uses
@@ -89,13 +89,13 @@ Use the prepared official binary to exercise the same suite with fzf 0.65.2:
 PATH="$PWD/.test-work/phase-three/fzf-0.65-bin:$PATH" bash tests/run.sh
 ```
 
-The directory above is the development fixture used for this phase; another
+The directory above holds the development fixture; another
 verified fzf installation can be selected through PATH instead. Both versions
 receive real Ctrl+C/X/V, Alt+C/X/V, Alt+arrow, F1/F2/F7/F8, Ctrl+R/N and Delete
 key events. The older Ctrl+C-aborts test now verifies safe refusal on the
 synthetic parent row followed by Esc cleanup, matching the approved Copy binding.
-The completed Explorer suite has 201 tests, all passing without skips on both
-versions; [the report](../docs/phase-three-five.md) links the full TAP results.
+The [validation index](../docs/validation/README.md) records the supported matrix,
+hosted results and archived TAP evidence.
 
 For a subset, pass Bats paths or options to the runner:
 

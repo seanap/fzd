@@ -1,3 +1,0 @@
-command,mean,stddev,median,user,system,min,max,parameter_script
-bash benchmarks/candidates.sh '/home/htpc/projects/fzd/fzd.sh' 10000,0.39291397922000004,0.019768686166781072,0.3970662112200001,0.37687934,0.07757386,0.36266715722000004,0.41179503422,/home/htpc/projects/fzd/fzd.sh
-bash benchmarks/candidates.sh '/home/htpc/projects/fzd/.test-work/explorer/no-file-check.sh' 10000,0.37227896842,0.01887553317322395,0.37650349022000007,0.35307553999999997,0.08855466,0.34933770522000007,0.39320826822000005,/home/htpc/projects/fzd/.test-work/explorer/no-file-check.sh

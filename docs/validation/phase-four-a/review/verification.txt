@@ -1,1 +1,0 @@
-PASS: identical repeat build; frozen runtime, all modules and integration; checksums; static checks; actionlint

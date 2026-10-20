@@ -16,8 +16,9 @@ host search roots. Host probes assert identical returned path identities between
 revisions. Kernel caches are not dropped; these are not reboot/cold-disk claims.
 The cache matrix raises its private cap to retain the complete fixture.
 Use `--omarchy` for the pinned desktop palette/utility fixture. The recorded
-[first-use results](results/global-first-result/README.md) include both fzf
-versions, the tagged v2.0 snapshot path, host path-identity checks and validation.
+[current performance summary](results/README.md) covers snapshot and indexed
+discovery. Original reports, source hashes and raw samples are in the
+[historical evidence archive](../docs/validation/README.md#historical-development-evidence).
 
 For global-search backend, fuzzy/exact matching, startup and coverage comparisons:
 
@@ -32,13 +33,13 @@ and databases and do not update the system index or installed configuration.
 Host probes read the current user's FZD configuration and the system database.
 The main run includes equal-coverage 1,000/10,000/100,000-file fixtures and actual
 fzf terminal observations. The separate matcher control excludes acquisition.
-See [the measured search-options report](results/global-search-options/README.md)
-for results, methodology and limits.
+The original search-options report and its coverage comparisons are preserved
+under `benchmarks/results/global-search-options/` in the historical archive.
 
-For a Phase 4A source-versus-Debian comparison, with all tests/containers stopped:
+For a source-versus-Debian comparison, with all tests/containers stopped:
 
 ```bash
-bash packaging/benchmark.sh .test-work/my-candidate/fzd-0.1.0-rc.2-debian-all.deb \
+bash packaging/benchmark.sh .test-work/my-candidate/fzd-2.1.1-debian-all.deb \
   .test-work/package-benchmarks 3
 ```
 
@@ -84,7 +85,7 @@ for size in 10 100 1000 10000; do
 done
 ```
 
-The recorded 10,000-entry Phase One PTY baseline uses **one sample** because its
+The archived 10,000-entry Phase One PTY baseline uses **one sample** because its
 navigation is slow. The final version uses three. Smaller sizes use three for
 each revision. Do not treat these small samples as distributions or percentiles.
 These are warm cache observations in
@@ -131,12 +132,12 @@ A gated producer verifies that the first result does not wait for scan EOF.
 
 The first terminal harness used `EPOCHREALTIME`. A negative elapsed result
 exposed a WSL wall-clock adjustment; all those measurements were discarded from
-performance conclusions. Raw trials remain in `results/phase-two/discarded-wall-clock/`.
+performance conclusions. Raw trials are preserved under
+`benchmarks/results/phase-two/discarded-wall-clock/` in the historical archive.
 The main terminal matrix and direct-preview comparison were rerun with uptime.
 
-Phase-one artifacts remain in `results/`. Phase-two measurements and process
-profiles are in `results/phase-two/`; the engineering report is
-[../docs/phase-two.md](../docs/phase-two.md).
+Phase-one and phase-two measurements, process profiles and engineering reports
+are preserved at their original relative paths in the historical archive.
 
 For Phase Three comparisons against the protected Phase Two revision, keep its
 historical results intact and choose a new output directory:
@@ -167,8 +168,10 @@ done
 Recents are queued in memory during navigation; state writes occur at exit or
 feature use. The existing codec process-budget tests continue to protect the
 candidate path. Explorer's history test also asserts that visits create no
-persistent state directory before a flush. See
-[the Explorer report](../docs/phase-three-five.md) for measured costs and limits.
+persistent state directory before a flush. The archived Explorer report
+`docs/phase-three-five.md` retains its measured costs and limits; current
+[architecture notes](../docs/TECHNICAL.md#runtime-and-installer-architecture)
+describe the component responsibilities and state contracts.
 
 For integrated zoxide navigation, with other local tests/containers stopped:
 
@@ -203,10 +206,11 @@ query-to-first-text-preview, Down-arrow-to-next-preview, and Esc-to-shell exit
 using Python's monotonic clock. Raw terminal streams stay in the output directory;
 timings are written incrementally. Measurements describe observed response time,
 including query work and scheduling, not physical rendering or selected fonts.
-[Installation experience results](results/simple-enhanced/README.md) retain the
-full timing arrays, versions and limitations.
+The archived installation-experience results under
+`benchmarks/results/simple-enhanced/` retain the full timing arrays, versions
+and limitations.
 
 For the Omarchy integration workload, set `FZD_BENCH_OMARCHY=1` when invoking the
 same runner. It stages the current upstream theme utility and Tokyo Night palette
-in each private home. The [Omarchy results](results/omarchy/README.md) retain normal
-and themed trials, exact provenance, and WSL2 limitations.
+in each private home. Archived results under `benchmarks/results/omarchy/`
+retain normal and themed trials, exact provenance, and WSL2 limitations.
